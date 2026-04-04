@@ -82,8 +82,10 @@ export function RichTextEditor({
     return <div className="h-72 w-full animate-pulse rounded-md border border-zinc-200 bg-zinc-100" />;
   }
 
+  const activeEditor = editor;
+
   function setLink() {
-    const previousUrl = editor.getAttributes("link").href as string | undefined;
+    const previousUrl = activeEditor.getAttributes("link").href as string | undefined;
     const url = window.prompt("URL", previousUrl ?? "https://");
 
     if (url === null) {
@@ -91,65 +93,65 @@ export function RichTextEditor({
     }
 
     if (url.trim() === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      activeEditor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
 
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
+    activeEditor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
   }
 
   return (
     <div className={cn("overflow-hidden rounded-md border border-zinc-200", className)}>
       <div className="flex flex-wrap gap-1 border-b border-zinc-200 bg-zinc-50 p-2">
-        <Button type="button" variant={editor.isActive("bold") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleBold().run()}>
+        <Button type="button" variant={activeEditor.isActive("bold") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleBold().run()}>
           <Bold className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("italic") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleItalic().run()}>
+        <Button type="button" variant={activeEditor.isActive("italic") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleItalic().run()}>
           <Italic className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("underline") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleUnderline().run()}>
+        <Button type="button" variant={activeEditor.isActive("underline") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleUnderline().run()}>
           <UnderlineIcon className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("highlight") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleHighlight().run()}>
+        <Button type="button" variant={activeEditor.isActive("highlight") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleHighlight().run()}>
           <Highlighter className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>
+        <Button type="button" variant={activeEditor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleHeading({ level: 2 }).run()}>
           <Heading2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("bulletList") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleBulletList().run()}>
+        <Button type="button" variant={activeEditor.isActive("bulletList") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleBulletList().run()}>
           <List className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("orderedList") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+        <Button type="button" variant={activeEditor.isActive("orderedList") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleOrderedList().run()}>
           <ListOrdered className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("blockquote") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleBlockquote().run()}>
+        <Button type="button" variant={activeEditor.isActive("blockquote") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleBlockquote().run()}>
           <Quote className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("codeBlock") ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().toggleCodeBlock().run()}>
+        <Button type="button" variant={activeEditor.isActive("codeBlock") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleCodeBlock().run()}>
           <Code className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive({ textAlign: "left" }) ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+        <Button type="button" variant={activeEditor.isActive({ textAlign: "left" }) ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().setTextAlign("left").run()}>
           <AlignLeft className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive({ textAlign: "center" }) ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+        <Button type="button" variant={activeEditor.isActive({ textAlign: "center" }) ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().setTextAlign("center").run()}>
           <AlignCenter className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive({ textAlign: "right" }) ? "secondary" : "ghost"} size="icon" onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+        <Button type="button" variant={activeEditor.isActive({ textAlign: "right" }) ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().setTextAlign("right").run()}>
           <AlignRight className="h-4 w-4" />
         </Button>
-        <Button type="button" variant={editor.isActive("link") ? "secondary" : "ghost"} size="icon" onClick={setLink}>
+        <Button type="button" variant={activeEditor.isActive("link") ? "secondary" : "ghost"} size="icon" onClick={setLink}>
           <Link2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
+        <Button type="button" variant="ghost" size="icon" onClick={() => activeEditor.chain().focus().undo().run()}>
           <Undo2 className="h-4 w-4" />
         </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().redo().run()}>
+        <Button type="button" variant="ghost" size="icon" onClick={() => activeEditor.chain().focus().redo().run()}>
           <Redo2 className="h-4 w-4" />
         </Button>
       </div>
 
-      <EditorContent editor={editor} />
-      {!editor.getText().trim() && <p className="-mt-64 px-4 py-3 text-sm text-zinc-400">{placeholder}</p>}
+      <EditorContent editor={activeEditor} />
+      {!activeEditor.getText().trim() && <p className="-mt-64 px-4 py-3 text-sm text-zinc-400">{placeholder}</p>}
     </div>
   );
 }
