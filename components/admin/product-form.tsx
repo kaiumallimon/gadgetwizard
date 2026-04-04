@@ -20,6 +20,7 @@ interface ProductFormProps {
 }
 
 type SpecRow = { key: string; value: string };
+type SpecGroup = { title: string; rows: SpecRow[] };
 
 function normalizeSpecValue(value: unknown): string {
   if (typeof value === "string") return value;
@@ -45,15 +46,62 @@ function toSpecRows(specifications: Record<string, unknown> | null | undefined):
   return rows.length > 0 ? rows : [{ key: "", value: "" }];
 }
 
-function toSpecificationObject(rows: SpecRow[]): Record<string, string> | null {
-  const output: Record<string, string> = {};
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
-  for (const row of rows) {
-    const key = row.key.trim();
-    if (!key) {
+function toSpecGroups(specifications: Record<string, unknown> | null | undefined): SpecGroup[] {
+  if (!specifications) {
+    return [{ title: "General", rows: [{ key: "", value: "" }] }];
+  }
+
+  const entries = Object.entries(specifications);
+  if (entries.length === 0) {
+    return [{ title: "General", rows: [{ key: "", value: "" }] }];
+  }
+
+  const allNestedObjects = entries.every(([, value]) => isPlainObject(value));
+  if (allNestedObjects) {
+    const groups = entries.map(([title, value]) => {
+      const rows = toSpecRows(value as Record<string, unknown>);
+      return {
+        title,
+        rows,
+      };
+    });
+
+    return groups.length > 0 ? groups : [{ title: "General", rows: [{ key: "", value: "" }] }];
+  }
+
+  return [
+    {
+      title: "General",
+      rows: toSpecRows(specifications),
+    },
+  ];
+}
+
+function toSpecificationObject(groups: SpecGroup[]): Record<string, Record<string, string>> | null {
+  const output: Record<string, Record<string, string>> = {};
+
+  for (const group of groups) {
+    const title = group.title.trim();
+    if (!title) {
       continue;
     }
-    output[key] = row.value.trim();
+
+    const rows: Record<string, string> = {};
+    for (const row of group.rows) {
+      const key = row.key.trim();
+      if (!key) {
+        continue;
+      }
+      rows[key] = row.value.trim();
+    }
+
+    if (Object.keys(rows).length > 0) {
+      output[title] = rows;
+    }
   }
 
   return Object.keys(output).length > 0 ? output : null;
@@ -77,7 +125,7 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
   );
   const [images, setImages] = useState<string[]>(initialProduct?.images ?? []);
   const [description, setDescription] = useState(initialProduct?.description ?? "<p></p>");
-  const [specRows, setSpecRows] = useState<SpecRow[]>(toSpecRows(initialProduct?.specifications));
+  const [specGroups, setSpecGroups] = useState<SpecGroup[]>(toSpecGroups(initialProduct?.specifications));
   const [isActive, setIsActive] = useState(initialProduct?.isActive ?? true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -88,19 +136,73 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
     [categories],
   );
 
-  function updateSpecRow(index: number, patch: Partial<SpecRow>) {
-    setSpecRows((previous) => previous.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+  function updateSpecGroup(index: number, patch: Partial<SpecGroup>) {
+    setSpecGroups((previous) =>
+      previous.map((group, groupIndex) => (groupIndex === index ? { ...group, ...patch } : group)),
+    );
   }
 
-  function addSpecRow() {
-    setSpecRows((previous) => [...previous, { key: "", value: "" }]);
+  function updateSpecRow(groupIndex: number, rowIndex: number, patch: Partial<SpecRow>) {
+    setSpecGroups((previous) =>
+      previous.map((group, currentGroupIndex) => {
+        if (currentGroupIndex !== groupIndex) {
+          return group;
+        }
+
+        return {
+          ...group,
+          rows: group.rows.map((row, currentRowIndex) =>
+            currentRowIndex === rowIndex ? { ...row, ...patch } : row,
+          ),
+        };
+      }),
+    );
   }
 
-  function removeSpecRow(index: number) {
-    setSpecRows((previous) => {
-      const filtered = previous.filter((_, rowIndex) => rowIndex !== index);
-      return filtered.length > 0 ? filtered : [{ key: "", value: "" }];
+  function addSpecGroup() {
+    setSpecGroups((previous) => [
+      ...previous,
+      {
+        title: `Section ${previous.length + 1}`,
+        rows: [{ key: "", value: "" }],
+      },
+    ]);
+  }
+
+  function removeSpecGroup(index: number) {
+    setSpecGroups((previous) => {
+      const filtered = previous.filter((_, groupIndex) => groupIndex !== index);
+      return filtered.length > 0 ? filtered : [{ title: "General", rows: [{ key: "", value: "" }] }];
     });
+  }
+
+  function addSpecRow(groupIndex: number) {
+    setSpecGroups((previous) =>
+      previous.map((group, currentGroupIndex) =>
+        currentGroupIndex === groupIndex
+          ? {
+              ...group,
+              rows: [...group.rows, { key: "", value: "" }],
+            }
+          : group,
+      ),
+    );
+  }
+
+  function removeSpecRow(groupIndex: number, rowIndex: number) {
+    setSpecGroups((previous) =>
+      previous.map((group, currentGroupIndex) => {
+        if (currentGroupIndex !== groupIndex) {
+          return group;
+        }
+
+        const filteredRows = group.rows.filter((_, currentRowIndex) => currentRowIndex !== rowIndex);
+        return {
+          ...group,
+          rows: filteredRows.length > 0 ? filteredRows : [{ key: "", value: "" }],
+        };
+      }),
+    );
   }
 
   async function handleImageUpload(file: File | null) {
@@ -156,7 +258,7 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
         stock: parsedStock,
         categoryId: parsedCategoryId,
         images,
-        specifications: toSpecificationObject(specRows),
+        specifications: toSpecificationObject(specGroups),
         isActive,
       };
 
