@@ -36,7 +36,7 @@ export default async function HomePage() {
   ];
 
   return (
-    <div className="bg-zinc-100 py-6">
+    <div className="bg-white py-6">
       <div className="mx-auto w-full max-w-6xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
@@ -63,12 +63,12 @@ export default async function HomePage() {
                 key={category.id}
                 className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="h-28 w-full overflow-hidden bg-zinc-100">
+                <div className="flex h-28 w-full items-center justify-center bg-white p-2">
                   {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
                     <img
                       src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
                       alt={category.name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="h-full w-full object-contain"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
