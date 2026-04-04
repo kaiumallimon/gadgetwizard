@@ -8,6 +8,7 @@ import {
 } from "@/lib/server/repositories/category-repository";
 import { badRequest, notFound } from "@/lib/server/core/errors";
 import { slugify } from "@/lib/server/utils/slug";
+import { assertValidCdnUrls } from "@/lib/server/utils/cdn";
 
 export interface CategoryTreeNode extends CategoryRecord {
   children: CategoryTreeNode[];
@@ -55,6 +56,7 @@ export async function createCategoryAdmin(input: {
   name: string;
   slug?: string;
   icon?: string | null;
+  imageUrl?: string | null;
   parentId?: number | null;
   sortOrder?: number;
   isActive?: boolean;
@@ -71,10 +73,15 @@ export async function createCategoryAdmin(input: {
     }
   }
 
+  if (input.imageUrl) {
+    assertValidCdnUrls([input.imageUrl]);
+  }
+
   return createCategory({
     name: input.name.trim(),
     slug: normalizedSlug,
     icon: input.icon ?? null,
+    imageUrl: input.imageUrl ?? null,
     parentId: input.parentId ?? null,
     sortOrder: input.sortOrder ?? 0,
     isActive: input.isActive ?? true,
@@ -87,6 +94,7 @@ export async function updateCategoryAdmin(
     name: string;
     slug?: string;
     icon?: string | null;
+    imageUrl?: string | null;
     parentId?: number | null;
     sortOrder?: number;
     isActive?: boolean;
@@ -114,10 +122,15 @@ export async function updateCategoryAdmin(
     }
   }
 
+  if (input.imageUrl) {
+    assertValidCdnUrls([input.imageUrl]);
+  }
+
   const updated = await updateCategory(id, {
     name: input.name.trim(),
     slug: normalizedSlug,
     icon: input.icon ?? null,
+    imageUrl: input.imageUrl ?? existing.imageUrl,
     parentId: nextParent,
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,

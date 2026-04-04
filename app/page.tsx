@@ -64,9 +64,9 @@ export default async function HomePage() {
                 className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="h-28 w-full overflow-hidden bg-zinc-100">
-                  {category.icon || categoryImageById.get(category.id) ? (
+                  {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
                     <img
-                      src={category.icon ?? categoryImageById.get(category.id)}
+                      src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
                       alt={category.name}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />

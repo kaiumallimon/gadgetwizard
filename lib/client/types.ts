@@ -25,6 +25,7 @@ export interface Category {
   name: string;
   slug: string;
   icon: string | null;
+  imageUrl: string | null;
   parentId: number | null;
   sortOrder: number;
   isActive: boolean;

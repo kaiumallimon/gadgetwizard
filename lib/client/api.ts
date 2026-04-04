@@ -135,6 +135,7 @@ export const apiClient = {
     name: string;
     slug?: string;
     icon?: string | null;
+    imageUrl?: string | null;
     parentId?: number | null;
     sortOrder?: number;
     isActive?: boolean;
@@ -152,6 +153,7 @@ export const apiClient = {
       name: string;
       slug?: string;
       icon?: string | null;
+      imageUrl?: string | null;
       parentId?: number | null;
       sortOrder?: number;
       isActive?: boolean;

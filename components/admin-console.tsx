@@ -36,6 +36,7 @@ export function AdminConsole({
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     slug: "",
+    imageUrl: "",
     parentId: "",
   });
 
@@ -84,11 +85,12 @@ export function AdminConsole({
         {
           name: categoryForm.name,
           slug: categoryForm.slug || undefined,
+          imageUrl: categoryForm.imageUrl || null,
           parentId: categoryForm.parentId ? Number(categoryForm.parentId) : null,
         },
         token ?? undefined,
       );
-      setCategoryForm({ name: "", slug: "", parentId: "" });
+      setCategoryForm({ name: "", slug: "", imageUrl: "", parentId: "" });
       await refreshCategories();
       setNotice("Category created.");
     } catch (error) {
@@ -107,6 +109,7 @@ export function AdminConsole({
           name,
           slug: category.slug,
           icon: category.icon,
+          imageUrl: category.imageUrl,
           parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
@@ -317,7 +320,7 @@ export function AdminConsole({
 
       {tab === "categories" && (
         <section className="space-y-4">
-          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-4">
+          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-5">
             <input
               value={categoryForm.name}
               onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -328,6 +331,12 @@ export function AdminConsole({
               value={categoryForm.slug}
               onChange={(event) => setCategoryForm((prev) => ({ ...prev, slug: event.target.value }))}
               placeholder="Slug (optional)"
+              className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
+            />
+            <input
+              value={categoryForm.imageUrl}
+              onChange={(event) => setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
+              placeholder="Category image URL (optional)"
               className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
             />
             <input

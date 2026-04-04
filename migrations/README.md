@@ -11,6 +11,7 @@ These SQL files are ordered and should be executed sequentially.
 5. 005_create_cart_activity.sql
 6. 006_create_reward_ledger.sql
 7. 007_create_banners.sql
+8. 008_add_category_image_url.sql
 
 ## Run Migrations Manually
 
@@ -24,6 +25,7 @@ mysql -u <username> -p <database_name> < migrations/004_create_carts.sql
 mysql -u <username> -p <database_name> < migrations/005_create_cart_activity.sql
 mysql -u <username> -p <database_name> < migrations/006_create_reward_ledger.sql
 mysql -u <username> -p <database_name> < migrations/007_create_banners.sql
+mysql -u <username> -p <database_name> < migrations/008_add_category_image_url.sql
 ```
 
 ## Notes
@@ -35,3 +37,4 @@ mysql -u <username> -p <database_name> < migrations/007_create_banners.sql
 - Cart activity logs support basic admin analytics.
 - Reward points ledger is future-ready for purchase integration.
 - Banners support desktop/mobile images, active windows, and click-through URLs.
+- Categories now support optional image_url for richer storefront category cards.
