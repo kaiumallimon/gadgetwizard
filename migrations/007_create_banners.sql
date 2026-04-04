@@ -1,5 +1,5 @@
 -- 007_create_banners.sql
--- Home page promotional banners with separate desktop/mobile images and click target.
+-- Home page promotional banners (mobile image column is removed in a later migration).
 
 CREATE TABLE IF NOT EXISTS banners (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

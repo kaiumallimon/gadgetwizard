@@ -1,0 +1,40 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+
+import { CategoryCreateForm } from "@/components/admin/category-create-form";
+import { Button } from "@/components/ui/button";
+import { requireServerRole } from "@/lib/server/auth/server-session";
+import { getAdminCategories } from "@/lib/server/services/category-service";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminAddCategoryPage() {
+  try {
+    await requireServerRole(["admin"]);
+  } catch {
+    redirect("/dashboard");
+  }
+
+  const categories = await getAdminCategories();
+
+  return (
+    <div className="w-full space-y-6">
+      <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Category</h1>
+            <p className="mt-2 text-sm text-zinc-600">
+              Create categories from this dedicated page, then manage status and pinning from category management.
+            </p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/categories">Back To Categories</Link>
+          </Button>
+        </div>
+      </header>
+
+      <CategoryCreateForm categories={categories} />
+    </div>
+  );
+}

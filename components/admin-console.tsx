@@ -50,14 +50,6 @@ export function AdminConsole({
   const [notice, setNotice] = useState<string>("");
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
 
-  const [categoryForm, setCategoryForm] = useState({
-    name: "",
-    slug: "",
-    imageUrl: "",
-    isHeaderCategory: false,
-    parentId: "",
-  });
-
   const [bannerForm, setBannerForm] = useState({
     title: "",
     desktopImageUrl: "",
@@ -96,32 +88,6 @@ export function AdminConsole({
     }
   }
 
-  async function handleCreateCategory() {
-    if (!categoryForm.name.trim()) {
-      setNotice("Category name is required.");
-      return;
-    }
-
-    try {
-      await apiClient.adminCreateCategory(
-        {
-          name: categoryForm.name.trim(),
-          slug: categoryForm.slug || undefined,
-          imageUrl: categoryForm.imageUrl || null,
-          isHeaderCategory: categoryForm.isHeaderCategory,
-          parentId: categoryForm.parentId ? Number(categoryForm.parentId) : null,
-        },
-        token ?? undefined,
-      );
-
-      setCategoryForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false, parentId: "" });
-      await refreshCategories();
-      setNotice("Category created.");
-    } catch (error) {
-      setNotice(safeErrorMessage(error, "Category create failed"));
-    }
-  }
-
   async function handleQuickEditCategory(category: Category) {
     const name = window.prompt("Category name", category.name);
     if (!name) return;
@@ -148,20 +114,6 @@ export function AdminConsole({
       setNotice("Category updated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category update failed"));
-    }
-  }
-
-  async function handleCategoryImageUpload(file: File | null) {
-    if (!file) {
-      return;
-    }
-
-    try {
-      const url = await uploadCdnImage(file, "category-create");
-      setCategoryForm((prev) => ({ ...prev, imageUrl: url }));
-      setNotice("Category image uploaded.");
-    } catch (error) {
-      setNotice(safeErrorMessage(error, "Category image upload failed"));
     }
   }
 
@@ -558,61 +510,39 @@ export function AdminConsole({
         <TabsContent value="categories" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Boxes className="h-4 w-4" /> Create Category
-              </CardTitle>
-              <CardDescription>Manage hierarchy, CDN-backed images, and header navigation visibility.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
-              <Input
-                value={categoryForm.name}
-                onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
-                placeholder="Category name"
-              />
-              <Input
-                value={categoryForm.slug}
-                onChange={(event) => setCategoryForm((prev) => ({ ...prev, slug: event.target.value }))}
-                placeholder="Slug (optional)"
-              />
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-                <Upload className="h-4 w-4" />
-                {uploadingTarget === "category-create" ? "Uploading image..." : "Upload Category Image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploadingTarget === "category-create"}
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    await handleCategoryImageUpload(file);
-                    event.currentTarget.value = "";
-                  }}
-                />
-              </label>
-              <Input
-                value={categoryForm.parentId}
-                onChange={(event) => setCategoryForm((prev) => ({ ...prev, parentId: event.target.value }))}
-                placeholder="Parent ID (optional)"
-              />
-              <label className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={categoryForm.isHeaderCategory}
-                  onChange={(event) => setCategoryForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
-                />
-                Add to header
-              </label>
-              <Button onClick={handleCreateCategory}>Create Category</Button>
-
-              {categoryForm.imageUrl && (
-                <div className="col-span-full overflow-hidden rounded-md border border-zinc-200 sm:col-span-2 xl:col-span-3">
-                  <div className="h-28 bg-zinc-50 p-2">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={categoryForm.imageUrl} alt="Category upload preview" className="h-full w-full object-contain" />
-                  </div>
-                  <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">CDN image ready</p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Boxes className="h-4 w-4" /> Category Statistics
+                  </CardTitle>
+                  <CardDescription>Category overview and quick action to open the separate add category page.</CardDescription>
                 </div>
-              )}
+                <Button asChild>
+                  <Link href="/admin/categories/new">Open Add Category Page</Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Total Categories</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">{categories.length}</p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Active</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">
+                  {categories.filter((category) => category.isActive).length}
+                </p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Header Pinned</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">{headerCategoryCount}/8</p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">With Image</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">
+                  {categories.filter((category) => category.imageUrl?.trim()).length}
+                </p>
+              </div>
             </CardContent>
           </Card>
 

@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AdminConsole } from "@/components/admin-console";
+import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminDashboardBundle } from "@/lib/server/services/admin-service";
 
@@ -18,9 +20,16 @@ export default async function AdminCategoriesPage() {
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
-        <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Category Management</h1>
-        <p className="mt-2 text-sm text-zinc-600">Create, update, activate/deactivate, and pin categories to header navigation.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Category Management</h1>
+            <p className="mt-2 text-sm text-zinc-600">Review stats, update categories, and pin items to header navigation.</p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/admin/categories/new">Open Add Category Page</Link>
+          </Button>
+        </div>
       </header>
 
       <AdminConsole
