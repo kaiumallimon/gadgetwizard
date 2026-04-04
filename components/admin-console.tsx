@@ -1,10 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, ShieldCheck, Trash2 } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Banner, Category, Product } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 interface AdminConsoleProps {
   initialAnalytics: {
@@ -16,18 +24,26 @@ interface AdminConsoleProps {
   initialCategories: Category[];
   initialProducts: Product[];
   initialBanners: Banner[];
+  initialTab?: TabId;
+  lockedTab?: TabId;
 }
 
 type TabId = "analytics" | "categories" | "products" | "banners";
+
+function safeErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
 
 export function AdminConsole({
   initialAnalytics,
   initialCategories,
   initialProducts,
   initialBanners,
+  initialTab = "analytics",
+  lockedTab,
 }: AdminConsoleProps) {
   const { token } = useAuthStore();
-  const [tab, setTab] = useState<TabId>("analytics");
+  const [tab, setTab] = useState<TabId>(initialTab);
   const [categories, setCategories] = useState(initialCategories);
   const [products, setProducts] = useState(initialProducts);
   const [banners, setBanners] = useState(initialBanners);
@@ -60,10 +76,12 @@ export function AdminConsole({
     sortOrder: "0",
   });
 
-  const rootCategories = useMemo(
-    () => categories.filter((category) => category.parentId === null),
+  const rootCategories = useMemo(() => categories.filter((category) => category.parentId === null), [categories]);
+  const headerCategoryCount = useMemo(
+    () => categories.filter((category) => category.isHeaderCategory).length,
     [categories],
   );
+  const activeTab = lockedTab ?? tab;
 
   async function refreshCategories() {
     const response = await apiClient.adminGetCategories(token ?? undefined);
@@ -81,10 +99,15 @@ export function AdminConsole({
   }
 
   async function handleCreateCategory() {
+    if (!categoryForm.name.trim()) {
+      setNotice("Category name is required.");
+      return;
+    }
+
     try {
       await apiClient.adminCreateCategory(
         {
-          name: categoryForm.name,
+          name: categoryForm.name.trim(),
           slug: categoryForm.slug || undefined,
           imageUrl: categoryForm.imageUrl || null,
           isHeaderCategory: categoryForm.isHeaderCategory,
@@ -92,26 +115,32 @@ export function AdminConsole({
         },
         token ?? undefined,
       );
+
       setCategoryForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false, parentId: "" });
       await refreshCategories();
       setNotice("Category created.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Category create failed");
+      setNotice(safeErrorMessage(error, "Category create failed"));
     }
   }
 
-  async function handleUpdateCategory(category: Category) {
+  async function handleQuickEditCategory(category: Category) {
     const name = window.prompt("Category name", category.name);
     if (!name) return;
+
+    const slug = window.prompt("Category slug", category.slug);
+    if (!slug) return;
+
+    const imageUrl = window.prompt("Category image URL", category.imageUrl ?? "") ?? "";
 
     try {
       await apiClient.adminUpdateCategory(
         category.id,
         {
           name,
-          slug: category.slug,
+          slug,
           icon: category.icon,
-          imageUrl: category.imageUrl,
+          imageUrl: imageUrl || null,
           isHeaderCategory: category.isHeaderCategory,
           parentId: category.parentId,
           sortOrder: category.sortOrder,
@@ -122,7 +151,7 @@ export function AdminConsole({
       await refreshCategories();
       setNotice("Category updated.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Category update failed");
+      setNotice(safeErrorMessage(error, "Category update failed"));
     }
   }
 
@@ -136,7 +165,7 @@ export function AdminConsole({
       await refreshCategories();
       setNotice("Category deleted.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Category delete failed");
+      setNotice(safeErrorMessage(error, "Category delete failed"));
     }
   }
 
@@ -163,15 +192,43 @@ export function AdminConsole({
           : "Category removed from header navigation.",
       );
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Header category update failed");
+      setNotice(safeErrorMessage(error, "Header category update failed"));
+    }
+  }
+
+  async function handleToggleCategoryActive(category: Category) {
+    try {
+      await apiClient.adminUpdateCategory(
+        category.id,
+        {
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+          imageUrl: category.imageUrl,
+          isHeaderCategory: category.isHeaderCategory,
+          parentId: category.parentId,
+          sortOrder: category.sortOrder,
+          isActive: !category.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshCategories();
+      setNotice(!category.isActive ? "Category activated." : "Category deactivated.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Category status update failed"));
     }
   }
 
   async function handleCreateProduct() {
+    if (!productForm.name.trim() || !productForm.categoryId || !productForm.price || !productForm.stock || !productForm.imageUrl) {
+      setNotice("Product name, category, price, stock, and image URL are required.");
+      return;
+    }
+
     try {
       await apiClient.adminCreateProduct(
         {
-          name: productForm.name,
+          name: productForm.name.trim(),
           slug: productForm.slug || undefined,
           description: productForm.description || null,
           price: Number(productForm.price),
@@ -184,6 +241,7 @@ export function AdminConsole({
         },
         token ?? undefined,
       );
+
       setProductForm({
         name: "",
         slug: "",
@@ -197,13 +255,19 @@ export function AdminConsole({
       await refreshProducts();
       setNotice("Product created.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Product create failed");
+      setNotice(safeErrorMessage(error, "Product create failed"));
     }
   }
 
-  async function handleUpdateProduct(product: Product) {
+  async function handleQuickEditProduct(product: Product) {
     const name = window.prompt("Product name", product.name);
     if (!name) return;
+
+    const priceInput = window.prompt("Price", String(product.price));
+    if (!priceInput) return;
+
+    const stockInput = window.prompt("Stock", String(product.stock));
+    if (!stockInput) return;
 
     try {
       await apiClient.adminUpdateProduct(
@@ -212,9 +276,9 @@ export function AdminConsole({
           name,
           slug: product.slug,
           description: product.description,
-          price: product.price,
+          price: Number(priceInput),
           discountedPrice: product.discountedPrice,
-          stock: product.stock,
+          stock: Number(stockInput),
           categoryId: product.categoryId,
           images: product.images,
           specifications: product.specifications,
@@ -225,7 +289,32 @@ export function AdminConsole({
       await refreshProducts();
       setNotice("Product updated.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Product update failed");
+      setNotice(safeErrorMessage(error, "Product update failed"));
+    }
+  }
+
+  async function handleToggleProductActive(product: Product) {
+    try {
+      await apiClient.adminUpdateProduct(
+        product.id,
+        {
+          name: product.name,
+          slug: product.slug,
+          description: product.description,
+          price: product.price,
+          discountedPrice: product.discountedPrice,
+          stock: product.stock,
+          categoryId: product.categoryId,
+          images: product.images,
+          specifications: product.specifications,
+          isActive: !product.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshProducts();
+      setNotice(!product.isActive ? "Product activated." : "Product deactivated.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Product status update failed"));
     }
   }
 
@@ -239,15 +328,20 @@ export function AdminConsole({
       await refreshProducts();
       setNotice("Product deleted.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Product delete failed");
+      setNotice(safeErrorMessage(error, "Product delete failed"));
     }
   }
 
   async function handleCreateBanner() {
+    if (!bannerForm.title.trim() || !bannerForm.desktopImageUrl || !bannerForm.mobileImageUrl) {
+      setNotice("Banner title, desktop image, and mobile image are required.");
+      return;
+    }
+
     try {
       await apiClient.adminCreateBanner(
         {
-          title: bannerForm.title,
+          title: bannerForm.title.trim(),
           desktopImageUrl: bannerForm.desktopImageUrl,
           mobileImageUrl: bannerForm.mobileImageUrl,
           clickUrl: bannerForm.clickUrl || null,
@@ -260,13 +354,16 @@ export function AdminConsole({
       await refreshBanners();
       setNotice("Banner created.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Banner create failed");
+      setNotice(safeErrorMessage(error, "Banner create failed"));
     }
   }
 
-  async function handleUpdateBanner(banner: Banner) {
+  async function handleQuickEditBanner(banner: Banner) {
     const title = window.prompt("Banner title", banner.title);
     if (!title) return;
+
+    const sortOrderInput = window.prompt("Sort order", String(banner.sortOrder));
+    if (!sortOrderInput) return;
 
     try {
       await apiClient.adminUpdateBanner(
@@ -276,7 +373,7 @@ export function AdminConsole({
           desktopImageUrl: banner.desktopImageUrl,
           mobileImageUrl: banner.mobileImageUrl,
           clickUrl: banner.clickUrl,
-          sortOrder: banner.sortOrder,
+          sortOrder: Number(sortOrderInput),
           isActive: banner.isActive,
           startsAt: banner.startsAt,
           endsAt: banner.endsAt,
@@ -286,7 +383,30 @@ export function AdminConsole({
       await refreshBanners();
       setNotice("Banner updated.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Banner update failed");
+      setNotice(safeErrorMessage(error, "Banner update failed"));
+    }
+  }
+
+  async function handleToggleBannerActive(banner: Banner) {
+    try {
+      await apiClient.adminUpdateBanner(
+        banner.id,
+        {
+          title: banner.title,
+          desktopImageUrl: banner.desktopImageUrl,
+          mobileImageUrl: banner.mobileImageUrl,
+          clickUrl: banner.clickUrl,
+          sortOrder: banner.sortOrder,
+          isActive: !banner.isActive,
+          startsAt: banner.startsAt,
+          endsAt: banner.endsAt,
+        },
+        token ?? undefined,
+      );
+      await refreshBanners();
+      setNotice(!banner.isActive ? "Banner activated." : "Banner deactivated.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner status update failed"));
     }
   }
 
@@ -300,183 +420,310 @@ export function AdminConsole({
       await refreshBanners();
       setNotice("Banner deleted.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Banner delete failed");
+      setNotice(safeErrorMessage(error, "Banner delete failed"));
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-2">
-        {(["analytics", "categories", "products", "banners"] as TabId[]).map((tabId) => (
-          <button
-            key={tabId}
-            type="button"
-            onClick={() => setTab(tabId)}
-            className={`rounded-full px-4 py-2 text-sm font-medium ${
-              tabId === tab
-                ? "bg-(--accent) text-black"
-                : "border border-white/20 text-white"
-            }`}
-          >
-            {tabId}
-          </button>
-        ))}
-      </div>
-
-      {notice && <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-(--muted)">{notice}</p>}
-
-      {tab === "analytics" && (
-        <section className="grid gap-4 sm:grid-cols-2">
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-sm text-(--muted)">Total Users</p>
-            <p className="text-2xl font-semibold text-white">{initialAnalytics.totalUsers}</p>
-          </article>
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-            <p className="text-sm text-(--muted)">Total Products</p>
-            <p className="text-2xl font-semibold text-white">{initialAnalytics.totalProducts}</p>
-          </article>
-          <article className="rounded-2xl border border-white/10 bg-white/5 p-5 sm:col-span-2">
-            <p className="mb-2 text-sm text-(--muted)">Cart Activity</p>
-            <div className="flex flex-wrap gap-2">
-              {initialAnalytics.cartActivity.map((item) => (
-                <span key={item.action} className="rounded-full border border-white/20 px-3 py-1 text-sm">
-                  {item.action}: {item.total}
-                </span>
-              ))}
-            </div>
-          </article>
-        </section>
+      {notice && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-orange-700">{notice}</p>
+          </CardContent>
+        </Card>
       )}
 
-      {tab === "categories" && (
-        <section className="space-y-4">
-          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-6">
-            <input
-              value={categoryForm.name}
-              onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
-              placeholder="Category name"
-              className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
-            />
-            <input
-              value={categoryForm.slug}
-              onChange={(event) => setCategoryForm((prev) => ({ ...prev, slug: event.target.value }))}
-              placeholder="Slug (optional)"
-              className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
-            />
-            <input
-              value={categoryForm.imageUrl}
-              onChange={(event) => setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
-              placeholder="Category image URL (optional)"
-              className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
-            />
-            <input
-              value={categoryForm.parentId}
-              onChange={(event) => setCategoryForm((prev) => ({ ...prev, parentId: event.target.value }))}
-              placeholder="Parent ID (optional)"
-              className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
-            />
-            <label className="flex items-center gap-2 rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-sm">
-              <input
-                type="checkbox"
-                checked={categoryForm.isHeaderCategory}
-                onChange={(event) => setCategoryForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
+      <Tabs value={activeTab} onValueChange={(value) => !lockedTab && setTab(value as TabId)}>
+        {!lockedTab && (
+          <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 md:inline-flex md:w-auto md:grid-cols-4">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="products">Products</TabsTrigger>
+            <TabsTrigger value="banners">Banners</TabsTrigger>
+          </TabsList>
+        )}
+
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Users</CardDescription>
+                <CardTitle className="text-2xl">{initialAnalytics.totalUsers}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-zinc-500">Registered users in platform</CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Products</CardDescription>
+                <CardTitle className="text-2xl">{initialAnalytics.totalProducts}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-zinc-500">Active and inactive products</CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Header Categories</CardDescription>
+                <CardTitle className="text-2xl">{headerCategoryCount}/8</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-zinc-500">Pinned categories in top navigation</CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Live Banners</CardDescription>
+                <CardTitle className="text-2xl">{banners.filter((item) => item.isActive).length}</CardTitle>
+              </CardHeader>
+              <CardContent className="text-xs text-zinc-500">Currently active marketing banners</CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Activity className="h-4 w-4" /> Cart Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {initialAnalytics.cartActivity.length === 0 && (
+                  <p className="text-sm text-zinc-500">No cart events captured yet.</p>
+                )}
+                {initialAnalytics.cartActivity.map((item) => (
+                  <div key={item.action} className="flex items-center justify-between rounded-lg border border-zinc-200 px-3 py-2">
+                    <span className="text-sm font-medium text-zinc-700">{item.action}</span>
+                    <Badge variant="secondary">{item.total}</Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <BarChart3 className="h-4 w-4" /> Reward Distribution
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {initialAnalytics.rewardDistribution.length === 0 && (
+                  <p className="text-sm text-zinc-500">No reward data yet.</p>
+                )}
+                {initialAnalytics.rewardDistribution.map((item) => (
+                  <div key={item.tier} className="rounded-lg border border-zinc-200 px-3 py-2">
+                    <p className="text-sm font-semibold text-zinc-900">{item.tier}</p>
+                    <p className="text-xs text-zinc-500">
+                      Users: {item.totalUsers} | Avg Points: {Math.round(item.averagePoints)}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="categories" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Boxes className="h-4 w-4" /> Create Category
+              </CardTitle>
+              <CardDescription>Manage hierarchy, image URLs, and header navigation visibility.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+              <Input
+                value={categoryForm.name}
+                onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
+                placeholder="Category name"
               />
-              Header Category
-            </label>
-            <button type="button" onClick={handleCreateCategory} className="rounded-xl bg-(--accent) px-3 py-2 font-medium text-black">
-              Create
-            </button>
-          </div>
+              <Input
+                value={categoryForm.slug}
+                onChange={(event) => setCategoryForm((prev) => ({ ...prev, slug: event.target.value }))}
+                placeholder="Slug (optional)"
+              />
+              <Input
+                value={categoryForm.imageUrl}
+                onChange={(event) => setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
+                placeholder="Category image URL"
+              />
+              <Input
+                value={categoryForm.parentId}
+                onChange={(event) => setCategoryForm((prev) => ({ ...prev, parentId: event.target.value }))}
+                placeholder="Parent ID (optional)"
+              />
+              <label className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={categoryForm.isHeaderCategory}
+                  onChange={(event) => setCategoryForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
+                />
+                Add to header
+              </label>
+              <Button onClick={handleCreateCategory}>Create Category</Button>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {categories.map((category) => (
-              <article key={category.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <div>
-                  <p className="font-medium text-white">
-                    {category.name}
-                    {category.isHeaderCategory ? " (Header)" : ""}
-                  </p>
-                  <p className="text-xs text-(--muted)">ID: {category.id} | Slug: {category.slug}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleToggleHeaderCategory(category)}
-                    className="rounded-lg border border-orange-300/40 px-3 py-1 text-sm text-orange-200"
-                  >
-                    {category.isHeaderCategory ? "Unpin Header" : "Pin Header"}
-                  </button>
-                  <button type="button" onClick={() => handleUpdateCategory(category)} className="rounded-lg border border-white/20 px-3 py-1 text-sm">Edit</button>
-                  <button type="button" onClick={() => handleDeleteCategory(category.id)} className="rounded-lg border border-red-300/30 px-3 py-1 text-sm text-red-200">Delete</button>
-                </div>
-              </article>
+              <Card key={category.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base">{category.name}</CardTitle>
+                    <Badge variant={category.isActive ? "default" : "outline"}>
+                      {category.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <CardDescription>#{category.id} | {category.slug}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {category.isHeaderCategory ? (
+                      <Badge variant="secondary" className="gap-1">
+                        <Pin className="h-3 w-3" /> Header Pinned
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1">
+                        <PinOff className="h-3 w-3" /> Not Pinned
+                      </Badge>
+                    )}
+                    {category.parentId !== null && <Badge variant="outline">Parent: {category.parentId}</Badge>}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleToggleHeaderCategory(category)}>
+                      {category.isHeaderCategory ? "Unpin" : "Pin"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleToggleCategoryActive(category)}>
+                      {category.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => handleQuickEditCategory(category)}>
+                      Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteCategory(category.id)}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </section>
-      )}
+        </TabsContent>
 
-      {tab === "products" && (
-        <section className="space-y-4">
-          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-4">
-            <input value={productForm.name} onChange={(event) => setProductForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Product name" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.categoryId} onChange={(event) => setProductForm((prev) => ({ ...prev, categoryId: event.target.value }))} placeholder="Category ID" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.price} onChange={(event) => setProductForm((prev) => ({ ...prev, price: event.target.value }))} placeholder="Price" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.stock} onChange={(event) => setProductForm((prev) => ({ ...prev, stock: event.target.value }))} placeholder="Stock" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.slug} onChange={(event) => setProductForm((prev) => ({ ...prev, slug: event.target.value }))} placeholder="Slug" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.discountedPrice} onChange={(event) => setProductForm((prev) => ({ ...prev, discountedPrice: event.target.value }))} placeholder="Discounted price" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={productForm.imageUrl} onChange={(event) => setProductForm((prev) => ({ ...prev, imageUrl: event.target.value }))} placeholder="CDN image URL" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2 sm:col-span-2" />
-            <textarea value={productForm.description} onChange={(event) => setProductForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Description" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2 sm:col-span-3" />
-            <button type="button" onClick={handleCreateProduct} className="rounded-xl bg-(--accent) px-3 py-2 font-medium text-black">Create</button>
-          </div>
+        <TabsContent value="products" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <ShieldCheck className="h-4 w-4" /> Create Product
+              </CardTitle>
+              <CardDescription>All products require one category and one CDN image URL.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Input value={productForm.name} onChange={(event) => setProductForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Product name" />
+              <Input value={productForm.categoryId} onChange={(event) => setProductForm((prev) => ({ ...prev, categoryId: event.target.value }))} placeholder="Category ID" />
+              <Input value={productForm.price} onChange={(event) => setProductForm((prev) => ({ ...prev, price: event.target.value }))} placeholder="Price" />
+              <Input value={productForm.stock} onChange={(event) => setProductForm((prev) => ({ ...prev, stock: event.target.value }))} placeholder="Stock" />
+              <Input value={productForm.slug} onChange={(event) => setProductForm((prev) => ({ ...prev, slug: event.target.value }))} placeholder="Slug" />
+              <Input value={productForm.discountedPrice} onChange={(event) => setProductForm((prev) => ({ ...prev, discountedPrice: event.target.value }))} placeholder="Discounted price" />
+              <Input value={productForm.imageUrl} onChange={(event) => setProductForm((prev) => ({ ...prev, imageUrl: event.target.value }))} placeholder="CDN image URL" className="xl:col-span-2" />
+              <Textarea value={productForm.description} onChange={(event) => setProductForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Description" className="xl:col-span-3" />
+              <Button onClick={handleCreateProduct}>Create Product</Button>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
+          {rootCategories.length === 0 && (
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="p-4 text-sm text-amber-700">
+                Create at least one root category before adding products.
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => (
-              <article key={product.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <div>
-                  <p className="font-medium text-white">{product.name}</p>
-                  <p className="text-xs text-(--muted)">ID: {product.id} | ৳ {product.price}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => handleUpdateProduct(product)} className="rounded-lg border border-white/20 px-3 py-1 text-sm">Edit</button>
-                  <button type="button" onClick={() => handleDeleteProduct(product.id)} className="rounded-lg border border-red-300/30 px-3 py-1 text-sm text-red-200">Delete</button>
-                </div>
-              </article>
+              <Card key={product.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base">{product.name}</CardTitle>
+                    <Badge variant={product.isActive ? "default" : "outline"}>
+                      {product.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <CardDescription>
+                    #{product.id} | {product.categoryName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-zinc-600">
+                    Price: ৳ {product.price.toLocaleString()} | Stock: {product.stock}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleToggleProductActive(product)}>
+                      {product.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => handleQuickEditProduct(product)}>
+                      Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteProduct(product.id)}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </section>
-      )}
+        </TabsContent>
 
-      {tab === "banners" && (
-        <section className="space-y-4">
-          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-4">
-            <input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={bannerForm.desktopImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, desktopImageUrl: event.target.value }))} placeholder="Desktop image URL" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={bannerForm.mobileImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, mobileImageUrl: event.target.value }))} placeholder="Mobile image URL" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" className="rounded-xl border border-white/20 bg-black/20 px-3 py-2" />
-            <button type="button" onClick={handleCreateBanner} className="rounded-xl bg-(--accent) px-3 py-2 font-medium text-black sm:col-span-3">Create Banner</button>
-          </div>
+        <TabsContent value="banners" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Megaphone className="h-4 w-4" /> Create Banner
+              </CardTitle>
+              <CardDescription>Use both desktop and mobile images for responsive campaign delivery.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <Input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" />
+              <Input value={bannerForm.desktopImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, desktopImageUrl: event.target.value }))} placeholder="Desktop image URL" />
+              <Input value={bannerForm.mobileImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, mobileImageUrl: event.target.value }))} placeholder="Mobile image URL" />
+              <Input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" />
+              <Input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" />
+              <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-3">
+                <ImageIcon className="h-4 w-4" /> Create Banner
+              </Button>
+            </CardContent>
+          </Card>
 
-          <div className="space-y-2">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {banners.map((banner) => (
-              <article key={banner.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-                <div>
-                  <p className="font-medium text-white">{banner.title}</p>
-                  <p className="text-xs text-(--muted)">ID: {banner.id} | Sort: {banner.sortOrder}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button type="button" onClick={() => handleUpdateBanner(banner)} className="rounded-lg border border-white/20 px-3 py-1 text-sm">Edit</button>
-                  <button type="button" onClick={() => handleDeleteBanner(banner.id)} className="rounded-lg border border-red-300/30 px-3 py-1 text-sm text-red-200">Delete</button>
-                </div>
-              </article>
+              <Card key={banner.id}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <CardTitle className="text-base">{banner.title}</CardTitle>
+                    <Badge variant={banner.isActive ? "default" : "outline"}>
+                      {banner.isActive ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <CardDescription>#{banner.id} | Sort: {banner.sortOrder}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="text-sm text-zinc-600">
+                    <p className="truncate">Desktop: {banner.desktopImageUrl}</p>
+                    <p className="truncate">Mobile: {banner.mobileImageUrl}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
+                      {banner.isActive ? "Deactivate" : "Activate"}
+                    </Button>
+                    <Button variant="secondary" size="sm" onClick={() => handleQuickEditBanner(banner)}>
+                      Edit
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
+                      <Trash2 className="h-3.5 w-3.5" /> Delete
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
-        </section>
-      )}
-
-      {tab === "products" && rootCategories.length === 0 && (
-        <p className="text-sm text-amber-300">Create at least one root category before adding products.</p>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

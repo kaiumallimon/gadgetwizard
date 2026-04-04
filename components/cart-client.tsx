@@ -7,6 +7,8 @@ import { apiClient } from "@/lib/client/api";
 import type { Cart } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface CartClientProps {
   initialCart: Cart;
@@ -56,60 +58,69 @@ export function CartClient({ initialCart }: CartClientProps) {
 
   if (activeCart.items.length === 0) {
     return (
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center">
-        <p className="text-(--muted)">Your cart is currently empty.</p>
-        <Link href="/" className="mt-4 inline-block rounded-full bg-(--accent) px-5 py-2 font-medium text-black">
-          Explore Products
-        </Link>
-      </section>
+      <Card>
+        <CardContent className="p-8 text-center">
+          <p className="text-zinc-600">Your cart is currently empty.</p>
+          <Button asChild className="mt-4">
+            <Link href="/">Explore Products</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <section className="space-y-4">
       {activeCart.items.map((item) => (
-        <article key={item.id} className="grid gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div>
-            <p className="font-medium text-white">{item.productName}</p>
-            <p className="text-sm text-(--muted)">
+        <Card key={item.id}>
+          <CardContent className="grid gap-3 p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div>
+              <p className="font-medium text-zinc-900">{item.productName}</p>
+              <p className="text-sm text-zinc-600">
               Unit: ৳ {(item.appliedDiscountedPrice ?? item.unitPrice).toLocaleString()} | Stock: {item.stock}
-            </p>
-          </div>
+              </p>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <button
+            <div className="flex items-center gap-2">
+              <Button
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
               disabled={busyItemId === item.productId}
-              className="h-9 w-9 rounded-full border border-white/20 text-white"
             >
               -
-            </button>
-            <span className="min-w-8 text-center">{item.quantity}</span>
-            <button
+              </Button>
+              <span className="min-w-8 text-center">{item.quantity}</span>
+              <Button
               type="button"
+              variant="outline"
+              size="icon"
               onClick={() => updateQuantity(item.productId, Math.min(item.stock, item.quantity + 1))}
               disabled={busyItemId === item.productId || item.quantity >= item.stock}
-              className="h-9 w-9 rounded-full border border-white/20 text-white"
             >
               +
-            </button>
-            <button
+              </Button>
+              <Button
               type="button"
+              variant="destructive"
+              size="sm"
               onClick={() => removeItem(item.productId)}
               disabled={busyItemId === item.productId}
-              className="rounded-full border border-red-300/30 px-3 py-1 text-red-200"
             >
               Remove
-            </button>
-          </div>
-        </article>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       ))}
 
-      <div className="rounded-2xl border border-emerald-200/20 bg-emerald-100/10 p-4 text-right">
-        <p className="text-sm text-(--muted)">Cart Total</p>
-        <p className="text-2xl font-semibold text-white">৳ {total.toLocaleString()}</p>
-      </div>
+      <Card className="border-emerald-200 bg-emerald-50">
+        <CardContent className="p-4 text-right">
+          <p className="text-sm text-emerald-700">Cart Total</p>
+          <p className="text-2xl font-semibold text-emerald-900">৳ {total.toLocaleString()}</p>
+        </CardContent>
+      </Card>
     </section>
   );
 }

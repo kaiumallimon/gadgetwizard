@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 
-import { SiteFooter } from "@/components/site-footer";
-import { SiteHeader } from "@/components/site-header";
+import { LayoutChrome } from "@/components/layout-chrome";
 
 import "./globals.css";
 
@@ -29,11 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${bricolageGrotesque.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <div className="flex min-h-screen flex-col">
-          <SiteHeader />
-          <main className="flex-1">{children}</main>
-          <SiteFooter />
-        </div>
+        <LayoutChrome>{children}</LayoutChrome>
       </body>
     </html>
   );

@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Award, Shield, ShoppingCart, Sparkles } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getCartForUser } from "@/lib/server/services/cart-service";
@@ -18,41 +22,74 @@ export default async function DashboardPage() {
   const cartItemCount = cart.items.reduce((count, item) => count + item.quantity, 0);
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6">
-      <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
-        <p className="text-sm uppercase tracking-[0.2em] text-(--muted)">User Dashboard</p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">Welcome back, {user.name}</h1>
-        <p className="mt-2 text-(--muted)">Reward points: {user.rewardPoints}. Reach 100 points to unlock loyalty pricing.</p>
+    <div className="w-full space-y-6">
+      <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">User Dashboard</p>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Welcome back, {user.name}</h1>
+            <p className="mt-2 text-zinc-600">
+              Reward points: {user.rewardPoints}. Reach 100 points to unlock loyalty pricing.
+            </p>
+          </div>
+          <Badge variant="secondary">{user.role}</Badge>
+        </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-3">
-        <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-(--muted)">Role</p>
-          <p className="text-xl font-semibold text-white">{user.role}</p>
-        </article>
-        <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-(--muted)">Cart Items</p>
-          <p className="text-xl font-semibold text-white">{cartItemCount}</p>
-        </article>
-        <article className="rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="text-sm text-(--muted)">Purchase History</p>
-          <p className="text-base font-medium text-amber-300">Coming soon</p>
-        </article>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Shield className="h-4 w-4" /> Role
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">{user.role}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ShoppingCart className="h-4 w-4" /> Cart Items
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">{cartItemCount}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Award className="h-4 w-4" /> Reward Points
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">{user.rewardPoints}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="h-4 w-4" /> Purchase History
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-sm font-medium text-zinc-600">Coming soon</CardContent>
+        </Card>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/5 p-5">
-        <h2 className="text-xl font-semibold text-white">Quick Actions</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link href="/cart" className="rounded-full bg-(--accent) px-5 py-2 font-medium text-black">
-            Manage Cart
-          </Link>
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Continue shopping or manage your account tools.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button asChild>
+            <Link href="/cart">Manage Cart</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/">Browse Storefront</Link>
+          </Button>
           {user.role === "admin" && (
-            <Link href="/admin" className="rounded-full border border-white/20 px-5 py-2 font-medium text-white">
-              Open Admin Dashboard
-            </Link>
+            <Button asChild variant="secondary">
+              <Link href="/admin">Open Admin Dashboard</Link>
+            </Button>
           )}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }

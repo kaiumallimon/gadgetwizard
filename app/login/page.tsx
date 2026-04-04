@@ -7,6 +7,9 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfi
 import { apiClient } from "@/lib/client/api";
 import { getFirebaseClientAuth } from "@/lib/client/firebase";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -63,58 +66,54 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-8 sm:px-6">
-      <section className="w-full rounded-3xl border border-white/10 bg-white/5 p-6">
-        <p className="text-sm uppercase tracking-[0.2em] text-(--muted)">Authentication</p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
+      <Card className="w-full">
+        <CardHeader>
+          <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Authentication</p>
+          <CardTitle className="text-3xl">{mode === "login" ? "Welcome back" : "Create your account"}</CardTitle>
+        </CardHeader>
 
-        <form onSubmit={onSubmit} className="mt-6 space-y-3">
+        <CardContent>
+          <form onSubmit={onSubmit} className="space-y-3">
           {mode === "signup" && (
-            <input
+            <Input
               value={name}
               onChange={(event) => setName(event.target.value)}
               placeholder="Full name"
-              className="w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3"
             />
           )}
-          <input
+          <Input
             type="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3"
             required
           />
-          <input
+          <Input
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             placeholder="Password"
-            className="w-full rounded-xl border border-white/20 bg-black/30 px-4 py-3"
             required
             minLength={6}
           />
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded-xl bg-(--accent) px-4 py-3 font-semibold text-black"
-          >
+          <Button type="submit" disabled={pending} className="w-full">
             {pending ? "Please wait..." : mode === "login" ? "Login" : "Create Account"}
-          </button>
+          </Button>
         </form>
 
-        {error && <p className="mt-3 text-sm text-red-300">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-        <button
-          type="button"
-          onClick={() => setMode((prev) => (prev === "login" ? "signup" : "login"))}
-          className="mt-4 text-sm text-(--muted) underline underline-offset-4"
-        >
-          {mode === "login" ? "Need an account? Sign up" : "Already registered? Login"}
-        </button>
-      </section>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setMode((prev) => (prev === "login" ? "signup" : "login"))}
+            className="mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900"
+          >
+            {mode === "login" ? "Need an account? Sign up" : "Already registered? Login"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

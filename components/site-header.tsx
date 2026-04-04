@@ -16,22 +16,25 @@ import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+function flattenCategories(items: Category[]): Category[] {
+  const flat: Category[] = [];
+  for (const item of items) {
+    flat.push(item);
+    if (item.children && item.children.length > 0) {
+      flat.push(...flattenCategories(item.children));
+    }
+  }
+  return flat;
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
-
-  function flattenCategories(items: Category[]): Category[] {
-    const flat: Category[] = [];
-    for (const item of items) {
-      flat.push(item);
-      if (item.children && item.children.length > 0) {
-        flat.push(...flattenCategories(item.children));
-      }
-    }
-    return flat;
-  }
 
   useEffect(() => {
     let active = true;
@@ -112,63 +115,51 @@ export function SiteHeader() {
           </span>
         </Link>
 
-        <label className="hidden flex-1 items-center rounded-full border border-zinc-200 bg-zinc-50 px-4 py-2 text-sm text-zinc-500 md:flex">
-          <FiSearch className="mr-2 h-4 w-4" />
-          <input
-            type="text"
-            placeholder="Phones, tablets, accessories..."
-            className="w-full bg-transparent text-sm text-zinc-900 outline-none placeholder:text-zinc-500"
-          />
-        </label>
+        <div className="relative hidden flex-1 md:block">
+          <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+          <Input type="text" placeholder="Phones, tablets, accessories..." className="rounded-full pl-9" />
+        </div>
 
         <nav className="ml-auto flex items-center gap-2 text-sm sm:gap-3">
-          <Link
-            href="/cart"
-            className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 hover:border-zinc-400"
-          >
-            <FiShoppingCart className="h-4 w-4" />
-            <span className="hidden sm:inline">Cart</span>
-          </Link>
+          <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Link href="/cart">
+              <FiShoppingCart className="h-4 w-4" />
+              <span className="hidden sm:inline">Cart</span>
+            </Link>
+          </Button>
 
           {session && (
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 hover:border-zinc-400"
-            >
-              <FiUser className="h-4 w-4" />
-              <span className="hidden sm:inline">Dashboard</span>
-            </Link>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/dashboard">
+                <FiUser className="h-4 w-4" />
+                <span className="hidden sm:inline">Dashboard</span>
+              </Link>
+            </Button>
           )}
 
           {session?.role === "admin" && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 hover:border-zinc-400"
-            >
-              <FiShield className="h-4 w-4" />
-              <span className="hidden sm:inline">Admin</span>
-            </Link>
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/admin">
+                <FiShield className="h-4 w-4" />
+                <span className="hidden sm:inline">Admin</span>
+              </Link>
+            </Button>
           )}
 
           {!loading && !user && (
-            <Link
-              href="/login"
-              className="flex items-center gap-1.5 rounded-full bg-(--accent) px-3 py-1.5 font-semibold text-white hover:brightness-95"
-            >
-              <FiUser className="h-4 w-4" />
-              Login
-            </Link>
+            <Button asChild size="sm" className="rounded-full">
+              <Link href="/login">
+                <FiUser className="h-4 w-4" />
+                Login
+              </Link>
+            </Button>
           )}
 
           {!loading && user && (
-            <button
-              type="button"
-              onClick={onLogout}
-              className="flex items-center gap-1.5 rounded-full border border-zinc-200 px-3 py-1.5 text-zinc-700 transition hover:border-zinc-400 hover:text-zinc-950"
-            >
+            <Button type="button" onClick={onLogout} variant="outline" size="sm" className="rounded-full">
               <FiLogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Logout</span>
-            </button>
+            </Button>
           )}
         </nav>
       </div>

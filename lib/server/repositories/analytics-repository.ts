@@ -15,6 +15,23 @@ interface RewardDistributionRow {
   avg_points: number;
 }
 
+interface RecentActivityRow {
+  id: number;
+  action: "add" | "update" | "remove";
+  quantity_before: number | null;
+  quantity_after: number | null;
+  created_at: Date | string;
+  user_id: number | null;
+  user_name: string | null;
+  user_email: string | null;
+  product_id: number | null;
+  product_name: string | null;
+}
+
+function toIso(value: Date | string): string {
+  return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
+}
+
 export async function getAnalyticsSummary() {
   const users = await queryOne<CountRow>("SELECT COUNT(*) AS total FROM users");
   const products = await queryOne<CountRow>("SELECT COUNT(*) AS total FROM products");
@@ -48,4 +65,41 @@ export async function getAnalyticsSummary() {
       averagePoints: Number(row.avg_points ?? 0),
     })),
   };
+}
+
+export async function getRecentCartActivity(limit = 30) {
+  const rows = await queryRows<RecentActivityRow>(
+    `
+      SELECT
+        logs.id,
+        logs.action,
+        logs.quantity_before,
+        logs.quantity_after,
+        logs.created_at,
+        users.id AS user_id,
+        users.name AS user_name,
+        users.email AS user_email,
+        products.id AS product_id,
+        products.name AS product_name
+      FROM cart_activity_logs AS logs
+      LEFT JOIN users ON users.id = logs.user_id
+      LEFT JOIN products ON products.id = logs.product_id
+      ORDER BY logs.created_at DESC, logs.id DESC
+      LIMIT ?
+    `,
+    [limit],
+  );
+
+  return rows.map((row) => ({
+    id: row.id,
+    action: row.action,
+    quantityBefore: row.quantity_before,
+    quantityAfter: row.quantity_after,
+    createdAt: toIso(row.created_at),
+    userId: row.user_id,
+    userName: row.user_name,
+    userEmail: row.user_email,
+    productId: row.product_id,
+    productName: row.product_name,
+  }));
 }

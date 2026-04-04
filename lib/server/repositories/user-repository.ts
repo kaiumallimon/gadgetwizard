@@ -1,4 +1,4 @@
-import { execute, queryOne } from "@/lib/server/core/db";
+import { execute, queryOne, queryRows } from "@/lib/server/core/db";
 import type { AppUser, UserRole } from "@/lib/server/types";
 
 interface UserRow {
@@ -11,6 +11,10 @@ interface UserRow {
   is_active: number;
   created_at: Date | string;
   updated_at: Date | string;
+}
+
+interface UserCountRow {
+  total: number;
 }
 
 function toIso(value: Date | string): string {
@@ -102,4 +106,53 @@ export async function upsertUserFromFirebase(input: {
   }
 
   return byEmail;
+}
+
+export async function listUsers(input: {
+  page: number;
+  pageSize: number;
+  search?: string;
+  role?: UserRole;
+}): Promise<{ items: AppUser[]; total: number }> {
+  const whereParts: string[] = [];
+  const whereParams: unknown[] = [];
+
+  if (input.search) {
+    whereParts.push("(name LIKE ? OR email LIKE ?)");
+    const term = `%${input.search}%`;
+    whereParams.push(term, term);
+  }
+
+  if (input.role) {
+    whereParts.push("role = ?");
+    whereParams.push(input.role);
+  }
+
+  const whereSql = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+  const offset = (input.page - 1) * input.pageSize;
+
+  const rows = await queryRows<UserRow>(
+    `
+      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      FROM users
+      ${whereSql}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `,
+    [...whereParams, input.pageSize, offset],
+  );
+
+  const count = await queryOne<UserCountRow>(
+    `
+      SELECT COUNT(*) AS total
+      FROM users
+      ${whereSql}
+    `,
+    whereParams,
+  );
+
+  return {
+    items: rows.map(mapUser),
+    total: count?.total ?? 0,
+  };
 }

@@ -7,6 +7,7 @@
   --surface-glass: rgba(255, 255, 255, 0.88);
   --muted: #6b7280;
   --accent: #f37021;
+  --border: #e4e4e7;
 }
 
 @theme inline {
@@ -38,5 +39,5 @@ button {
 }
 
 * {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: var(--border);
 }

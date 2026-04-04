@@ -17,8 +17,8 @@ export default async function CartPage() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6">
       <div>
-        <h1 className="text-3xl font-semibold text-white">Your Cart</h1>
-        <p className="text-sm text-(--muted)">Order placement is not enabled yet. Manage cart items only.</p>
+        <h1 className="text-3xl font-semibold text-zinc-900">Your Cart</h1>
+        <p className="text-sm text-zinc-600">Order placement is not enabled yet. Manage cart items only.</p>
       </div>
       <CartClient initialCart={cart} />
     </div>

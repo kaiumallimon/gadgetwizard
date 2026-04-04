@@ -9,6 +9,9 @@ import { apiClient } from "@/lib/client/api";
 import type { Product } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ProductCardProps {
   product: Product;
@@ -42,13 +45,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0] ?? "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+    <Card className="group overflow-hidden transition hover:-translate-y-0.5 hover:shadow-lg">
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative h-44 w-full overflow-hidden">
           <img src={image} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         </div>
       </Link>
-      <div className="space-y-3 p-4">
+      <CardContent className="space-y-3 p-4">
         <Link href={`/product/${product.slug}`} className="line-clamp-2 text-base font-semibold text-zinc-900 hover:text-(--accent)">
           {product.name}
         </Link>
@@ -56,20 +59,15 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="flex items-center gap-2">
           <span className="text-lg font-semibold text-zinc-900">৳ {product.price.toLocaleString()}</span>
           {product.discountedPrice !== null && (
-            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+            <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">
               Loyal: ৳ {product.discountedPrice.toLocaleString()}
-            </span>
+            </Badge>
           )}
         </div>
-        <button
-          type="button"
-          onClick={onAddToCart}
-          disabled={pending || product.stock === 0}
-          className="w-full rounded-xl bg-(--accent) px-4 py-2 font-medium text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="button" onClick={onAddToCart} disabled={pending || product.stock === 0} className="w-full">
           {product.stock === 0 ? "Out Of Stock" : pending ? "Adding..." : "Add To Cart"}
-        </button>
-      </div>
-    </article>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

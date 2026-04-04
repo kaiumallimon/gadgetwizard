@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
+import { DashboardShell } from "@/components/dashboard-shell";
 import { requireServerSession } from "@/lib/server/auth/server-session";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -9,5 +10,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/login");
   }
 
-  return <>{children}</>;
+  return <DashboardShell variant="user">{children}</DashboardShell>;
 }
