@@ -71,7 +71,7 @@ export function RichTextEditor({
     content: value,
     editorProps: {
       attributes: {
-        class: "tiptap-content min-h-64 w-full rounded-b-md bg-white px-4 py-3 text-sm text-zinc-900 focus:outline-none",
+        class: "tiptap-content min-h-56 w-full bg-white px-3 py-3 text-sm text-zinc-900 break-words focus:outline-none sm:min-h-64 sm:px-4",
       },
     },
     onUpdate({ editor: nextEditor }) {
@@ -156,7 +156,7 @@ export function RichTextEditor({
         onChange={onSelectImageFile}
       />
 
-      <div className="flex flex-wrap gap-1 border-b border-zinc-200 bg-zinc-50 p-2">
+      <div className="flex gap-1 overflow-x-auto border-b border-zinc-200 bg-zinc-50 p-2 sm:flex-wrap *:shrink-0">
         <Button type="button" variant={activeEditor.isActive("bold") ? "secondary" : "ghost"} size="icon" onClick={() => activeEditor.chain().focus().toggleBold().run()}>
           <Bold className="h-4 w-4" />
         </Button>
@@ -222,8 +222,14 @@ export function RichTextEditor({
         </Button>
       </div>
 
-      <EditorContent editor={activeEditor} />
-      {!activeEditor.getText().trim() && <p className="-mt-64 px-4 py-3 text-sm text-zinc-400">{placeholder}</p>}
+      <div className="relative">
+        <EditorContent editor={activeEditor} />
+        {activeEditor.isEmpty && (
+          <p className="pointer-events-none absolute left-3 top-3 text-sm text-zinc-400 sm:left-4">
+            {placeholder}
+          </p>
+        )}
+      </div>
       {imageUploadError && <p className="border-t border-zinc-200 px-4 py-2 text-xs text-red-600">{imageUploadError}</p>}
     </div>
   );
