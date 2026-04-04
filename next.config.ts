@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "adminapi.applegadgetsbd.com",
+      },
+      {
+        protocol: "https",
         hostname: "cdn.example.com",
       },
     ],

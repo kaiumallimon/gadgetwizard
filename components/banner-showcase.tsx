@@ -1,6 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 
 import type { Banner } from "@/lib/client/types";
@@ -46,16 +46,14 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
 
   const slideBody = (
     <article className="group relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-      <div className="relative h-52 w-full md:h-[360px]">
-        <img
+      <div className="relative h-52 w-full md:h-90">
+        <Image
           src={active.desktopImageUrl}
           alt={active.title}
-          className="hidden h-full w-full object-cover transition duration-700 group-hover:scale-105 md:block"
-        />
-        <img
-          src={active.mobileImageUrl}
-          alt={active.title}
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105 md:hidden"
+          fill
+          priority
+          sizes="(min-width: 1200px) 100vw, 50vw"
+          className="object-cover transition duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-linear-to-r from-black/65 via-black/20 to-transparent" />
         <div className="absolute bottom-0 left-0 p-5 text-white md:p-8">

@@ -37,4 +37,4 @@
   - `POST /api/admin/banners`
   - `PUT /api/admin/banners/{id}`
   - `DELETE /api/admin/banners/{id}`
-- Banners support desktop image, mobile image, optional click URL, scheduling window, and active flag
+- Banners support one responsive image source, optional click URL, scheduling window, and active flag

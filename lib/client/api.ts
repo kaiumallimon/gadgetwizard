@@ -258,7 +258,6 @@ export const apiClient = {
   async adminCreateBanner(payload: {
     title: string;
     desktopImageUrl: string;
-    mobileImageUrl: string;
     clickUrl?: string | null;
     sortOrder?: number;
     isActive?: boolean;
@@ -277,7 +276,6 @@ export const apiClient = {
     payload: {
       title: string;
       desktopImageUrl: string;
-      mobileImageUrl: string;
       clickUrl?: string | null;
       sortOrder?: number;
       isActive?: boolean;

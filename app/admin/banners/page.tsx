@@ -20,7 +20,7 @@ export default async function AdminBannersPage() {
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
         <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Banner Management</h1>
-        <p className="mt-2 text-sm text-zinc-600">Control homepage campaign banners for desktop and mobile placements.</p>
+        <p className="mt-2 text-sm text-zinc-600">Control homepage campaign banners with one responsive image source.</p>
       </header>
 
       <AdminConsole

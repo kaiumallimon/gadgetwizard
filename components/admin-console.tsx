@@ -61,7 +61,6 @@ export function AdminConsole({
   const [bannerForm, setBannerForm] = useState({
     title: "",
     desktopImageUrl: "",
-    mobileImageUrl: "",
     clickUrl: "",
     sortOrder: "0",
   });
@@ -332,8 +331,8 @@ export function AdminConsole({
   }
 
   async function handleCreateBanner() {
-    if (!bannerForm.title.trim() || !bannerForm.desktopImageUrl || !bannerForm.mobileImageUrl) {
-      setNotice("Banner title, desktop image, and mobile image are required.");
+    if (!bannerForm.title.trim() || !bannerForm.desktopImageUrl) {
+      setNotice("Banner title and banner image are required.");
       return;
     }
 
@@ -342,14 +341,13 @@ export function AdminConsole({
         {
           title: bannerForm.title.trim(),
           desktopImageUrl: bannerForm.desktopImageUrl,
-          mobileImageUrl: bannerForm.mobileImageUrl,
           clickUrl: bannerForm.clickUrl || null,
           sortOrder: Number(bannerForm.sortOrder || 0),
           isActive: true,
         },
         token ?? undefined,
       );
-      setBannerForm({ title: "", desktopImageUrl: "", mobileImageUrl: "", clickUrl: "", sortOrder: "0" });
+      setBannerForm({ title: "", desktopImageUrl: "", clickUrl: "", sortOrder: "0" });
       await refreshBanners();
       setNotice("Banner created.");
     } catch (error) {
@@ -357,37 +355,32 @@ export function AdminConsole({
     }
   }
 
-  async function handleBannerImageUpload(file: File | null, target: "desktopImageUrl" | "mobileImageUrl") {
+  async function handleBannerImageUpload(file: File | null) {
     if (!file) {
       return;
     }
 
     try {
-      const url = await uploadCdnImage(file, `banner-create-${target}`);
-      setBannerForm((prev) => ({ ...prev, [target]: url }));
-      setNotice(target === "desktopImageUrl" ? "Desktop banner image uploaded." : "Mobile banner image uploaded.");
+      const url = await uploadCdnImage(file, "banner-create");
+      setBannerForm((prev) => ({ ...prev, desktopImageUrl: url }));
+      setNotice("Banner image uploaded.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Banner image upload failed"));
     }
   }
 
-  async function handleReplaceBannerImage(
-    banner: Banner,
-    file: File | null,
-    target: "desktopImageUrl" | "mobileImageUrl",
-  ) {
+  async function handleReplaceBannerImage(banner: Banner, file: File | null) {
     if (!file) {
       return;
     }
 
     try {
-      const url = await uploadCdnImage(file, `banner-${banner.id}-${target}`);
+      const url = await uploadCdnImage(file, `banner-${banner.id}`);
       await apiClient.adminUpdateBanner(
         banner.id,
         {
           title: banner.title,
-          desktopImageUrl: target === "desktopImageUrl" ? url : banner.desktopImageUrl,
-          mobileImageUrl: target === "mobileImageUrl" ? url : banner.mobileImageUrl,
+          desktopImageUrl: url,
           clickUrl: banner.clickUrl,
           sortOrder: banner.sortOrder,
           isActive: banner.isActive,
@@ -397,7 +390,7 @@ export function AdminConsole({
         token ?? undefined,
       );
       await refreshBanners();
-      setNotice(target === "desktopImageUrl" ? "Desktop image updated." : "Mobile image updated.");
+      setNotice("Banner image updated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Banner image update failed"));
     }
@@ -416,7 +409,6 @@ export function AdminConsole({
         {
           title,
           desktopImageUrl: banner.desktopImageUrl,
-          mobileImageUrl: banner.mobileImageUrl,
           clickUrl: banner.clickUrl,
           sortOrder: Number(sortOrderInput),
           isActive: banner.isActive,
@@ -439,7 +431,6 @@ export function AdminConsole({
         {
           title: banner.title,
           desktopImageUrl: banner.desktopImageUrl,
-          mobileImageUrl: banner.mobileImageUrl,
           clickUrl: banner.clickUrl,
           sortOrder: banner.sortOrder,
           isActive: !banner.isActive,
@@ -758,66 +749,40 @@ export function AdminConsole({
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Megaphone className="h-4 w-4" /> Create Banner
               </CardTitle>
-              <CardDescription>Use both desktop and mobile images for responsive campaign delivery.</CardDescription>
+              <CardDescription>Upload one banner image. The storefront uses responsive optimization for all screens.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" />
               <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
                 <Upload className="h-4 w-4" />
-                {uploadingTarget === "banner-create-desktopImageUrl" ? "Uploading desktop..." : "Upload Desktop Image"}
+                {uploadingTarget === "banner-create" ? "Uploading image..." : "Upload Banner Image"}
                 <input
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  disabled={uploadingTarget === "banner-create-desktopImageUrl"}
+                  disabled={uploadingTarget === "banner-create"}
                   onChange={async (event) => {
                     const file = event.target.files?.[0] ?? null;
-                    await handleBannerImageUpload(file, "desktopImageUrl");
-                    event.currentTarget.value = "";
-                  }}
-                />
-              </label>
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-                <Upload className="h-4 w-4" />
-                {uploadingTarget === "banner-create-mobileImageUrl" ? "Uploading mobile..." : "Upload Mobile Image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploadingTarget === "banner-create-mobileImageUrl"}
-                  onChange={async (event) => {
-                    const file = event.target.files?.[0] ?? null;
-                    await handleBannerImageUpload(file, "mobileImageUrl");
+                    await handleBannerImageUpload(file);
                     event.currentTarget.value = "";
                   }}
                 />
               </label>
               <Input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" />
               <Input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" />
-              <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-3">
+              <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-2">
                 <ImageIcon className="h-4 w-4" /> Create Banner
               </Button>
 
-              {(bannerForm.desktopImageUrl || bannerForm.mobileImageUrl) && (
-                <div className="col-span-full grid gap-3 sm:grid-cols-2">
-                  {bannerForm.desktopImageUrl && (
-                    <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-28 bg-zinc-50 p-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={bannerForm.desktopImageUrl} alt="Desktop banner preview" className="h-full w-full object-contain" />
-                      </div>
-                      <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Desktop preview</p>
+              {bannerForm.desktopImageUrl && (
+                <div className="col-span-full">
+                  <div className="overflow-hidden rounded-md border border-zinc-200">
+                    <div className="h-28 bg-zinc-50 p-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={bannerForm.desktopImageUrl} alt="Banner preview" className="h-full w-full object-contain" />
                     </div>
-                  )}
-                  {bannerForm.mobileImageUrl && (
-                    <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-28 bg-zinc-50 p-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={bannerForm.mobileImageUrl} alt="Mobile banner preview" className="h-full w-full object-contain" />
-                      </div>
-                      <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Mobile preview</p>
-                    </div>
-                  )}
+                    <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Responsive preview source</p>
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -837,20 +802,13 @@ export function AdminConsole({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-sm text-zinc-600">
-                    <p className="truncate">Desktop: {banner.desktopImageUrl}</p>
-                    <p className="truncate">Mobile: {banner.mobileImageUrl}</p>
+                    <p className="truncate">Image: {banner.desktopImageUrl}</p>
                   </div>
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="grid gap-2">
                     <div className="overflow-hidden rounded-md border border-zinc-200">
                       <div className="h-24 bg-zinc-50 p-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={banner.desktopImageUrl} alt={`${banner.title} desktop`} className="h-full w-full object-contain" />
-                      </div>
-                    </div>
-                    <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-24 bg-zinc-50 p-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={banner.mobileImageUrl} alt={`${banner.title} mobile`} className="h-full w-full object-contain" />
+                        <img src={banner.desktopImageUrl} alt={`${banner.title} banner`} className="h-full w-full object-contain" />
                       </div>
                     </div>
                   </div>
@@ -865,29 +823,15 @@ export function AdminConsole({
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
                     <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
-                      <Upload className="h-3.5 w-3.5" /> Desktop
+                      <Upload className="h-3.5 w-3.5" /> Replace Image
                       <input
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        disabled={uploadingTarget === `banner-${banner.id}-desktopImageUrl`}
+                        disabled={uploadingTarget === `banner-${banner.id}`}
                         onChange={async (event) => {
                           const file = event.target.files?.[0] ?? null;
-                          await handleReplaceBannerImage(banner, file, "desktopImageUrl");
-                          event.currentTarget.value = "";
-                        }}
-                      />
-                    </label>
-                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
-                      <Upload className="h-3.5 w-3.5" /> Mobile
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploadingTarget === `banner-${banner.id}-mobileImageUrl`}
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0] ?? null;
-                          await handleReplaceBannerImage(banner, file, "mobileImageUrl");
+                          await handleReplaceBannerImage(banner, file);
                           event.currentTarget.value = "";
                         }}
                       />
