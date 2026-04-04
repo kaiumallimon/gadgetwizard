@@ -1,5 +1,7 @@
 -- 002_create_categories.sql
 -- Self-referencing category tree supports categories and subcategories.
+-- Self-parent validation is enforced in service layer for compatibility with MySQL/MariaDB variants
+-- that reject CHECK constraints referencing AUTO_INCREMENT columns.
 
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -20,6 +22,5 @@ CREATE TABLE IF NOT EXISTS categories (
         FOREIGN KEY (parent_id)
         REFERENCES categories (id)
         ON UPDATE CASCADE
-        ON DELETE SET NULL,
-    CONSTRAINT chk_categories_parent_self CHECK (parent_id IS NULL OR parent_id <> id)
+        ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

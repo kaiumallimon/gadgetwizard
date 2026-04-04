@@ -59,6 +59,20 @@ export async function findUserByFirebaseUid(firebaseUid: string): Promise<AppUse
   return row ? mapUser(row) : null;
 }
 
+export async function findUserByEmail(email: string): Promise<AppUser | null> {
+  const row = await queryOne<UserRow>(
+    `
+      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      FROM users
+      WHERE email = ?
+      LIMIT 1
+    `,
+    [email],
+  );
+
+  return row ? mapUser(row) : null;
+}
+
 export async function upsertUserFromFirebase(input: {
   firebaseUid: string;
   email: string;
@@ -69,6 +83,7 @@ export async function upsertUserFromFirebase(input: {
       INSERT INTO users (firebase_uid, email, name)
       VALUES (?, ?, ?)
       ON DUPLICATE KEY UPDATE
+        firebase_uid = VALUES(firebase_uid),
         email = VALUES(email),
         name = VALUES(name),
         is_active = 1
@@ -76,10 +91,15 @@ export async function upsertUserFromFirebase(input: {
     [input.firebaseUid, input.email, input.name],
   );
 
-  const user = await findUserByFirebaseUid(input.firebaseUid);
-  if (!user) {
+  const byFirebaseUid = await findUserByFirebaseUid(input.firebaseUid);
+  if (byFirebaseUid) {
+    return byFirebaseUid;
+  }
+
+  const byEmail = await findUserByEmail(input.email);
+  if (!byEmail) {
     throw new Error("Unable to upsert user");
   }
 
-  return user;
+  return byEmail;
 }
