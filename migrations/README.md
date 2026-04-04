@@ -12,6 +12,7 @@ These SQL files are ordered and should be executed sequentially.
 6. 006_create_reward_ledger.sql
 7. 007_create_banners.sql
 8. 008_add_category_image_url.sql
+9. 009_add_header_category_flag.sql
 
 ## Run Migrations Manually
 
@@ -26,6 +27,7 @@ mysql -u <username> -p <database_name> < migrations/005_create_cart_activity.sql
 mysql -u <username> -p <database_name> < migrations/006_create_reward_ledger.sql
 mysql -u <username> -p <database_name> < migrations/007_create_banners.sql
 mysql -u <username> -p <database_name> < migrations/008_add_category_image_url.sql
+mysql -u <username> -p <database_name> < migrations/009_add_header_category_flag.sql
 ```
 
 ## Notes
@@ -38,3 +40,4 @@ mysql -u <username> -p <database_name> < migrations/008_add_category_image_url.s
 - Reward points ledger is future-ready for purchase integration.
 - Banners support desktop/mobile images, active windows, and click-through URLs.
 - Categories now support optional image_url for richer storefront category cards.
+- Categories support is_header_category flag for curated header navigation links.

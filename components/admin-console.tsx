@@ -37,6 +37,7 @@ export function AdminConsole({
     name: "",
     slug: "",
     imageUrl: "",
+    isHeaderCategory: false,
     parentId: "",
   });
 
@@ -86,11 +87,12 @@ export function AdminConsole({
           name: categoryForm.name,
           slug: categoryForm.slug || undefined,
           imageUrl: categoryForm.imageUrl || null,
+          isHeaderCategory: categoryForm.isHeaderCategory,
           parentId: categoryForm.parentId ? Number(categoryForm.parentId) : null,
         },
         token ?? undefined,
       );
-      setCategoryForm({ name: "", slug: "", imageUrl: "", parentId: "" });
+      setCategoryForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false, parentId: "" });
       await refreshCategories();
       setNotice("Category created.");
     } catch (error) {
@@ -110,6 +112,7 @@ export function AdminConsole({
           slug: category.slug,
           icon: category.icon,
           imageUrl: category.imageUrl,
+          isHeaderCategory: category.isHeaderCategory,
           parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
@@ -134,6 +137,33 @@ export function AdminConsole({
       setNotice("Category deleted.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Category delete failed");
+    }
+  }
+
+  async function handleToggleHeaderCategory(category: Category) {
+    try {
+      await apiClient.adminUpdateCategory(
+        category.id,
+        {
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+          imageUrl: category.imageUrl,
+          isHeaderCategory: !category.isHeaderCategory,
+          parentId: category.parentId,
+          sortOrder: category.sortOrder,
+          isActive: category.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshCategories();
+      setNotice(
+        !category.isHeaderCategory
+          ? "Category added to header navigation."
+          : "Category removed from header navigation.",
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Header category update failed");
     }
   }
 
@@ -320,7 +350,7 @@ export function AdminConsole({
 
       {tab === "categories" && (
         <section className="space-y-4">
-          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-5">
+          <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/5 p-4 sm:grid-cols-6">
             <input
               value={categoryForm.name}
               onChange={(event) => setCategoryForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -345,6 +375,14 @@ export function AdminConsole({
               placeholder="Parent ID (optional)"
               className="rounded-xl border border-white/20 bg-black/20 px-3 py-2"
             />
+            <label className="flex items-center gap-2 rounded-xl border border-white/20 bg-black/20 px-3 py-2 text-sm">
+              <input
+                type="checkbox"
+                checked={categoryForm.isHeaderCategory}
+                onChange={(event) => setCategoryForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
+              />
+              Header Category
+            </label>
             <button type="button" onClick={handleCreateCategory} className="rounded-xl bg-(--accent) px-3 py-2 font-medium text-black">
               Create
             </button>
@@ -354,10 +392,20 @@ export function AdminConsole({
             {categories.map((category) => (
               <article key={category.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                 <div>
-                  <p className="font-medium text-white">{category.name}</p>
+                  <p className="font-medium text-white">
+                    {category.name}
+                    {category.isHeaderCategory ? " (Header)" : ""}
+                  </p>
                   <p className="text-xs text-(--muted)">ID: {category.id} | Slug: {category.slug}</p>
                 </div>
                 <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleHeaderCategory(category)}
+                    className="rounded-lg border border-orange-300/40 px-3 py-1 text-sm text-orange-200"
+                  >
+                    {category.isHeaderCategory ? "Unpin Header" : "Pin Header"}
+                  </button>
                   <button type="button" onClick={() => handleUpdateCategory(category)} className="rounded-lg border border-white/20 px-3 py-1 text-sm">Edit</button>
                   <button type="button" onClick={() => handleDeleteCategory(category.id)} className="rounded-lg border border-red-300/30 px-3 py-1 text-sm text-red-200">Delete</button>
                 </div>

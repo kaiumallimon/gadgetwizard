@@ -1,4 +1,5 @@
 import {
+  countHeaderCategories,
   createCategory,
   deleteCategory,
   findCategoryById,
@@ -9,6 +10,8 @@ import {
 import { badRequest, notFound } from "@/lib/server/core/errors";
 import { slugify } from "@/lib/server/utils/slug";
 import { assertValidCdnUrls } from "@/lib/server/utils/cdn";
+
+const MAX_HEADER_CATEGORIES = 8;
 
 export interface CategoryTreeNode extends CategoryRecord {
   children: CategoryTreeNode[];
@@ -57,6 +60,7 @@ export async function createCategoryAdmin(input: {
   slug?: string;
   icon?: string | null;
   imageUrl?: string | null;
+  isHeaderCategory?: boolean;
   parentId?: number | null;
   sortOrder?: number;
   isActive?: boolean;
@@ -77,6 +81,14 @@ export async function createCategoryAdmin(input: {
     assertValidCdnUrls([input.imageUrl]);
   }
 
+  const shouldBeHeaderCategory = input.isHeaderCategory ?? false;
+  if (shouldBeHeaderCategory) {
+    const selectedCount = await countHeaderCategories();
+    if (selectedCount >= MAX_HEADER_CATEGORIES) {
+      throw badRequest(`At most ${MAX_HEADER_CATEGORIES} header categories can be selected`);
+    }
+  }
+
   return createCategory({
     name: input.name.trim(),
     slug: normalizedSlug,
@@ -85,6 +97,7 @@ export async function createCategoryAdmin(input: {
     parentId: input.parentId ?? null,
     sortOrder: input.sortOrder ?? 0,
     isActive: input.isActive ?? true,
+    isHeaderCategory: shouldBeHeaderCategory,
   });
 }
 
@@ -95,6 +108,7 @@ export async function updateCategoryAdmin(
     slug?: string;
     icon?: string | null;
     imageUrl?: string | null;
+    isHeaderCategory?: boolean;
     parentId?: number | null;
     sortOrder?: number;
     isActive?: boolean;
@@ -126,6 +140,14 @@ export async function updateCategoryAdmin(
     assertValidCdnUrls([input.imageUrl]);
   }
 
+  const shouldBeHeaderCategory = input.isHeaderCategory ?? existing.isHeaderCategory;
+  if (shouldBeHeaderCategory && !existing.isHeaderCategory) {
+    const selectedCount = await countHeaderCategories(id);
+    if (selectedCount >= MAX_HEADER_CATEGORIES) {
+      throw badRequest(`At most ${MAX_HEADER_CATEGORIES} header categories can be selected`);
+    }
+  }
+
   const updated = await updateCategory(id, {
     name: input.name.trim(),
     slug: normalizedSlug,
@@ -134,6 +156,7 @@ export async function updateCategoryAdmin(
     parentId: nextParent,
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,
+    isHeaderCategory: shouldBeHeaderCategory,
   });
 
   if (!updated) {

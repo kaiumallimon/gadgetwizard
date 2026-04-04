@@ -4,34 +4,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  FiBox,
   FiGrid,
-  FiHeadphones,
   FiLogOut,
-  FiMonitor,
   FiSearch,
   FiShield,
   FiShoppingCart,
-  FiSmartphone,
-  FiTablet,
   FiUser,
 } from "react-icons/fi";
 
 import { apiClient } from "@/lib/client/api";
+import type { Category } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 export function SiteHeader() {
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
+  const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
 
-  const quickCategories = [
-    { label: "Apple Products", href: "/category/apple-products", icon: FiBox },
-    { label: "Phones", href: "/category/phones", icon: FiSmartphone },
-    { label: "Tablets", href: "/category/tablets-and-accessories", icon: FiTablet },
-    { label: "Computers", href: "/category/computer-and-laptops", icon: FiMonitor },
-    { label: "Accessories", href: "/category/gadgets-and-accessories", icon: FiHeadphones },
-  ];
+  function flattenCategories(items: Category[]): Category[] {
+    const flat: Category[] = [];
+    for (const item of items) {
+      flat.push(item);
+      if (item.children && item.children.length > 0) {
+        flat.push(...flattenCategories(item.children));
+      }
+    }
+    return flat;
+  }
 
   useEffect(() => {
     let active = true;
@@ -60,7 +60,32 @@ export function SiteHeader() {
       }
     }
 
+    async function loadHeaderCategories() {
+      try {
+        const response = await apiClient.getCategories();
+        if (!active) {
+          return;
+        }
+
+        const selected = flattenCategories(response.items)
+          .filter((category) => category.isHeaderCategory)
+          .slice(0, 8)
+          .map((category) => ({
+            label: category.name,
+            href: `/category/${category.slug}`,
+          }));
+
+        setHeaderCategories(selected);
+      } catch {
+        if (!active) {
+          return;
+        }
+        setHeaderCategories([]);
+      }
+    }
+
     void syncSession();
+    void loadHeaderCategories();
     return () => {
       active = false;
     };
@@ -150,20 +175,23 @@ export function SiteHeader() {
 
       <div className="hidden border-t border-zinc-200 bg-white text-sm text-zinc-700 md:block">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-5 overflow-x-auto px-6 py-2">
-          {quickCategories.map((entry) => (
+          {headerCategories.map((entry) => (
             <Link
               key={entry.label}
               href={entry.href}
-              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-1 font-medium transition ${
+              className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-1 font-medium transition ${
                 pathname === entry.href
                   ? "bg-orange-50 text-(--accent)"
                   : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >
-              <entry.icon className="h-4 w-4" />
               {entry.label}
             </Link>
           ))}
+
+          {headerCategories.length === 0 && (
+            <span className="text-xs text-zinc-500">No header categories selected yet.</span>
+          )}
         </div>
       </div>
     </header>

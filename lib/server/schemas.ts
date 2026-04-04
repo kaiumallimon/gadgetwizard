@@ -16,6 +16,7 @@ export const adminCategorySchema = z.object({
   slug: z.string().trim().min(2).max(150).optional(),
   icon: z.string().trim().url().max(255).nullable().optional(),
   imageUrl: z.string().trim().url().max(500).nullable().optional(),
+  isHeaderCategory: z.boolean().optional(),
   parentId: z.number().int().positive().nullable().optional(),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   isActive: z.boolean().optional(),

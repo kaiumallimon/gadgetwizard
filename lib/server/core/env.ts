@@ -7,7 +7,7 @@ const envSchema = z.object({
   DB_USER: z.string().min(1),
   DB_PASSWORD: z.string().default(""),
   DB_NAME: z.string().min(1),
-  DB_POOL_LIMIT: z.coerce.number().int().positive().default(10),
+  DB_POOL_LIMIT: z.coerce.number().int().positive().default(3),
   JWT_SECRET: z.string().min(32),
   JWT_ISSUER: z.string().default("gadgetwizard-api"),
   JWT_AUDIENCE: z.string().default("gadgetwizard-client"),
