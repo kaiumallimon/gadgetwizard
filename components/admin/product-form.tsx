@@ -1,0 +1,258 @@
+"use client";
+
+import { type FormEvent, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Trash2 } from "lucide-react";
+
+import { apiClient } from "@/lib/client/api";
+import type { Category, Product } from "@/lib/client/types";
+import { useAuthStore } from "@/lib/stores/auth-store";
+
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
+
+interface ProductFormProps {
+  mode: "create" | "edit";
+  categories: Category[];
+  initialProduct?: Product;
+}
+
+type SpecRow = { key: string; value: string };
+
+function normalizeSpecValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (value === null || value === undefined) return "";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
+  }
+}
+
+function toSpecRows(specifications: Record<string, unknown> | null | undefined): SpecRow[] {
+  if (!specifications) {
+    return [{ key: "", value: "" }];
+  }
+
+  const rows = Object.entries(specifications).map(([key, value]) => ({
+    key,
+    value: normalizeSpecValue(value),
+  }));
+
+  return rows.length > 0 ? rows : [{ key: "", value: "" }];
+}
+
+function toSpecificationObject(rows: SpecRow[]): Record<string, string> | null {
+  const output: Record<string, string> = {};
+
+  for (const row of rows) {
+    const key = row.key.trim();
+    if (!key) {
+      continue;
+    }
+    output[key] = row.value.trim();
+  }
+
+  return Object.keys(output).length > 0 ? output : null;
+}
+
+function normalizeImageList(input: string): string[] {
+  return input
+    .split(/\r?\n|,/) 
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function ProductForm({ mode, categories, initialProduct }: ProductFormProps) {
+  const router = useRouter();
+  const { token } = useAuthStore();
+
+  const [name, setName] = useState(initialProduct?.name ?? "");
+  const [slug, setSlug] = useState(initialProduct?.slug ?? "");
+  const [price, setPrice] = useState(initialProduct ? String(initialProduct.price) : "");
+  const [discountedPrice, setDiscountedPrice] = useState(
+    initialProduct?.discountedPrice !== null && initialProduct?.discountedPrice !== undefined
+      ? String(initialProduct.discountedPrice)
+      : "",
+  );
+  const [stock, setStock] = useState(initialProduct ? String(initialProduct.stock) : "");
+  const [categoryId, setCategoryId] = useState(
+    initialProduct?.categoryId ? String(initialProduct.categoryId) : String(categories[0]?.id ?? ""),
+  );
+  const [imagesText, setImagesText] = useState((initialProduct?.images ?? []).join("\n"));
+  const [description, setDescription] = useState(initialProduct?.description ?? "<p></p>");
+  const [specRows, setSpecRows] = useState<SpecRow[]>(toSpecRows(initialProduct?.specifications));
+  const [isActive, setIsActive] = useState(initialProduct?.isActive ?? true);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const rootCategories = useMemo(
+    () => categories.filter((category) => category.parentId === null || category.parentId === undefined),
+    [categories],
+  );
+
+  function updateSpecRow(index: number, patch: Partial<SpecRow>) {
+    setSpecRows((previous) => previous.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+  }
+
+  function addSpecRow() {
+    setSpecRows((previous) => [...previous, { key: "", value: "" }]);
+  }
+
+  function removeSpecRow(index: number) {
+    setSpecRows((previous) => {
+      const filtered = previous.filter((_, rowIndex) => rowIndex !== index);
+      return filtered.length > 0 ? filtered : [{ key: "", value: "" }];
+    });
+  }
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setNotice(null);
+
+    const parsedPrice = Number(price);
+    const parsedStock = Number(stock);
+    const parsedDiscountedPrice = discountedPrice.trim() ? Number(discountedPrice) : null;
+    const parsedCategoryId = Number(categoryId);
+    const images = normalizeImageList(imagesText);
+
+    if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
+      setNotice("Name, price, stock, category, and at least one image URL are required.");
+      return;
+    }
+
+    try {
+      setBusy(true);
+
+      const payload = {
+        name: name.trim(),
+        slug: slug.trim() || undefined,
+        description,
+        price: parsedPrice,
+        discountedPrice: parsedDiscountedPrice,
+        stock: parsedStock,
+        categoryId: parsedCategoryId,
+        images,
+        specifications: toSpecificationObject(specRows),
+        isActive,
+      };
+
+      if (mode === "create") {
+        await apiClient.adminCreateProduct(payload, token ?? undefined);
+      } else if (initialProduct) {
+        await apiClient.adminUpdateProduct(initialProduct.id, payload, token ?? undefined);
+      }
+
+      router.push("/admin/products");
+      router.refresh();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to save product");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-6">
+      {notice && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-4 text-sm text-red-700">{notice}</CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{mode === "create" ? "Create Product" : "Update Product"}</CardTitle>
+          <CardDescription>Use rich content for descriptions and structured key/value specifications.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 md:grid-cols-2">
+          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
+          <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="Slug (optional)" />
+          <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Price" />
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={discountedPrice}
+            onChange={(event) => setDiscountedPrice(event.target.value)}
+            placeholder="Discounted price (optional)"
+          />
+          <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
+          <select
+            value={categoryId}
+            onChange={(event) => setCategoryId(event.target.value)}
+            className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+          >
+            {rootCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+          <label className="col-span-full flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
+            <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+            Active product
+          </label>
+          <textarea
+            value={imagesText}
+            onChange={(event) => setImagesText(event.target.value)}
+            placeholder="Image URLs (one per line or comma-separated)"
+            className="col-span-full min-h-24 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Rich Description</CardTitle>
+          <CardDescription>Blog-like description area with headings, lists, links, and formatting controls.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RichTextEditor value={description} onChange={setDescription} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Specifications</CardTitle>
+          <CardDescription>Add technical details as key/value entries, for example Processor -> Apple M3.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {specRows.map((row, index) => (
+            <div key={`${index}-${row.key}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+              <Input
+                value={row.key}
+                onChange={(event) => updateSpecRow(index, { key: event.target.value })}
+                placeholder="Key"
+              />
+              <Input
+                value={row.value}
+                onChange={(event) => updateSpecRow(index, { value: event.target.value })}
+                placeholder="Value"
+              />
+              <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecRow(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+
+          <Button type="button" variant="outline" onClick={addSpecRow}>
+            <Plus className="h-4 w-4" /> Add Specification Entry
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit" disabled={busy}>
+          {busy ? "Saving..." : mode === "create" ? "Create Product" : "Update Product"}
+        </Button>
+        <Button type="button" variant="outline" onClick={() => router.push("/admin/products")}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}

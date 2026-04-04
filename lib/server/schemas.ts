@@ -25,7 +25,7 @@ export const adminCategorySchema = z.object({
 export const adminProductSchema = z.object({
   name: z.string().trim().min(2).max(200),
   slug: z.string().trim().min(2).max(220).optional(),
-  description: z.string().trim().max(10000).nullable().optional(),
+  description: z.string().trim().max(50000).nullable().optional(),
   price: z.number().nonnegative(),
   discountedPrice: z.number().nonnegative().nullable().optional(),
   stock: z.number().int().nonnegative(),

@@ -41,6 +41,15 @@ export async function getAdminProducts(input: {
   });
 }
 
+export async function getAdminProductById(id: number) {
+  const product = await findProductById(id, false);
+  if (!product) {
+    throw notFound("Product not found");
+  }
+
+  return product;
+}
+
 export async function getPublicProductBySlug(slug: string) {
   const product = await findProductBySlug(slug, true);
   if (!product) {

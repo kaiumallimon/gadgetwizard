@@ -72,7 +72,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             label: "Management",
             items: [
               { href: "/admin/categories", label: "Categories", icon: Boxes },
-              { href: "/admin/products", label: "Products", icon: Package },
+              { href: "/admin/products", label: "Products", icon: Package, exact: true },
+              { href: "/admin/products/new", label: "Add Product", icon: Package },
               { href: "/admin/banners", label: "Banners", icon: Megaphone },
               { href: "/admin/users", label: "Users", icon: UserRound },
               { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },

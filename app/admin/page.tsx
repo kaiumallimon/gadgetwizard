@@ -21,7 +21,12 @@ export default async function AdminPage() {
 
   const quickLinks = [
     { href: "/admin/categories", label: "Categories", description: "Create, update, delete, and pin header categories." },
-    { href: "/admin/products", label: "Products", description: "Add products and control price, stock, and active status." },
+    { href: "/admin/products", label: "Products", description: "View, update, and delete catalog products." },
+    {
+      href: "/admin/products/new",
+      label: "Add Product",
+      description: "Use rich-text descriptions and key/value specifications when creating products.",
+    },
     { href: "/admin/banners", label: "Banners", description: "Manage homepage campaigns for desktop and mobile." },
     { href: "/admin/users", label: "Users", description: "View registered users, roles, and reward point levels." },
     {

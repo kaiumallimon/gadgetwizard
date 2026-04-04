@@ -1,21 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ProductListManager } from "@/components/admin/product-list-manager";
+import { ProductForm } from "@/components/admin/product-form";
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
-import { getAdminProducts } from "@/lib/server/services/product-service";
+import { getAdminCategories } from "@/lib/server/services/category-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+export default async function AdminAddProductPage() {
   try {
     await requireServerRole(["admin"]);
   } catch {
     redirect("/dashboard");
   }
 
-  const products = await getAdminProducts({ page: 1, pageSize: 100 });
+  const categories = await getAdminCategories();
 
   return (
     <div className="w-full space-y-6">
@@ -23,18 +23,18 @@ export default async function AdminProductsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
-            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Product Management</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Product</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              View, update, activate/deactivate, and delete products. Creation is handled in a dedicated add page.
+              Create product entries with rich blog-style descriptions and specification key/value pairs.
             </p>
           </div>
-          <Button asChild>
-            <Link href="/admin/products/new">Add Product</Link>
+          <Button asChild variant="outline">
+            <Link href="/admin/products">Back To Products</Link>
           </Button>
         </div>
       </header>
 
-      <ProductListManager initialProducts={products.items} />
+      <ProductForm mode="create" categories={categories} />
     </div>
   );
 }

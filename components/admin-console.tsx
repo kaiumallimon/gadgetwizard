@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, ShieldCheck, Trash2 } from "lucide-react";
+import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2 } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Banner, Category, Product } from "@/lib/client/types";
@@ -12,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 
 interface AdminConsoleProps {
   initialAnalytics: {
@@ -57,17 +57,6 @@ export function AdminConsole({
     parentId: "",
   });
 
-  const [productForm, setProductForm] = useState({
-    name: "",
-    slug: "",
-    price: "",
-    discountedPrice: "",
-    stock: "",
-    categoryId: "",
-    imageUrl: "",
-    description: "",
-  });
-
   const [bannerForm, setBannerForm] = useState({
     title: "",
     desktopImageUrl: "",
@@ -76,7 +65,6 @@ export function AdminConsole({
     sortOrder: "0",
   });
 
-  const rootCategories = useMemo(() => categories.filter((category) => category.parentId === null), [categories]);
   const headerCategoryCount = useMemo(
     () => categories.filter((category) => category.isHeaderCategory).length,
     [categories],
@@ -216,46 +204,6 @@ export function AdminConsole({
       setNotice(!category.isActive ? "Category activated." : "Category deactivated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category status update failed"));
-    }
-  }
-
-  async function handleCreateProduct() {
-    if (!productForm.name.trim() || !productForm.categoryId || !productForm.price || !productForm.stock || !productForm.imageUrl) {
-      setNotice("Product name, category, price, stock, and image URL are required.");
-      return;
-    }
-
-    try {
-      await apiClient.adminCreateProduct(
-        {
-          name: productForm.name.trim(),
-          slug: productForm.slug || undefined,
-          description: productForm.description || null,
-          price: Number(productForm.price),
-          discountedPrice: productForm.discountedPrice ? Number(productForm.discountedPrice) : null,
-          stock: Number(productForm.stock),
-          categoryId: Number(productForm.categoryId),
-          images: [productForm.imageUrl],
-          specifications: null,
-          isActive: true,
-        },
-        token ?? undefined,
-      );
-
-      setProductForm({
-        name: "",
-        slug: "",
-        price: "",
-        discountedPrice: "",
-        stock: "",
-        categoryId: "",
-        imageUrl: "",
-        description: "",
-      });
-      await refreshProducts();
-      setNotice("Product created.");
-    } catch (error) {
-      setNotice(safeErrorMessage(error, "Product create failed"));
     }
   }
 
@@ -609,31 +557,17 @@ export function AdminConsole({
         <TabsContent value="products" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <ShieldCheck className="h-4 w-4" /> Create Product
-              </CardTitle>
-              <CardDescription>All products require one category and one CDN image URL.</CardDescription>
+              <CardTitle className="text-lg">Product Creation Moved</CardTitle>
+              <CardDescription>
+                Use the dedicated add product route for rich text descriptions and key/value specifications.
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Input value={productForm.name} onChange={(event) => setProductForm((prev) => ({ ...prev, name: event.target.value }))} placeholder="Product name" />
-              <Input value={productForm.categoryId} onChange={(event) => setProductForm((prev) => ({ ...prev, categoryId: event.target.value }))} placeholder="Category ID" />
-              <Input value={productForm.price} onChange={(event) => setProductForm((prev) => ({ ...prev, price: event.target.value }))} placeholder="Price" />
-              <Input value={productForm.stock} onChange={(event) => setProductForm((prev) => ({ ...prev, stock: event.target.value }))} placeholder="Stock" />
-              <Input value={productForm.slug} onChange={(event) => setProductForm((prev) => ({ ...prev, slug: event.target.value }))} placeholder="Slug" />
-              <Input value={productForm.discountedPrice} onChange={(event) => setProductForm((prev) => ({ ...prev, discountedPrice: event.target.value }))} placeholder="Discounted price" />
-              <Input value={productForm.imageUrl} onChange={(event) => setProductForm((prev) => ({ ...prev, imageUrl: event.target.value }))} placeholder="CDN image URL" className="xl:col-span-2" />
-              <Textarea value={productForm.description} onChange={(event) => setProductForm((prev) => ({ ...prev, description: event.target.value }))} placeholder="Description" className="xl:col-span-3" />
-              <Button onClick={handleCreateProduct}>Create Product</Button>
+            <CardContent>
+              <Button asChild>
+                <Link href="/admin/products/new">Open Add Product Page</Link>
+              </Button>
             </CardContent>
           </Card>
-
-          {rootCategories.length === 0 && (
-            <Card className="border-amber-200 bg-amber-50">
-              <CardContent className="p-4 text-sm text-amber-700">
-                Create at least one root category before adding products.
-              </CardContent>
-            </Card>
-          )}
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {products.map((product) => (
