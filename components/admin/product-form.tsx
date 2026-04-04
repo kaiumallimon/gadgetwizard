@@ -232,6 +232,11 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
     setImages((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
   }
 
+  async function handleDescriptionImageUpload(file: File): Promise<string> {
+    const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
+    return response.item.url;
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice(null);
@@ -369,7 +374,11 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
           <CardDescription>Blog-like description area with headings, lists, links, and formatting controls.</CardDescription>
         </CardHeader>
         <CardContent>
-          <RichTextEditor value={description} onChange={setDescription} />
+          <RichTextEditor
+            value={description}
+            onChange={setDescription}
+            onImageUpload={handleDescriptionImageUpload}
+          />
         </CardContent>
       </Card>
 

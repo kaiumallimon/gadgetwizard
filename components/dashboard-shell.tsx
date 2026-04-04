@@ -129,7 +129,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         };
     }, [variant]);
 
-    const currentNavLabel = useMemo(() => {
+    const currentNavLabel = (() => {
         for (const group of nav.groups) {
             for (const item of group.items) {
                 if (isActive(item)) {
@@ -139,7 +139,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         }
 
         return "Dashboard";
-    }, [nav, pathname]);
+    })();
 
     async function onLogout() {
         try {
