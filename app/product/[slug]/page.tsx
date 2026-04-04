@@ -6,10 +6,53 @@ import { getPublicProductBySlug } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function normalizeSpecificationSections(specifications: Record<string, unknown> | null) {
+  if (!specifications) {
+    return [] as Array<{ title: string; rows: Array<{ key: string; value: string }> }>;
+  }
+
+  const entries = Object.entries(specifications);
+  if (entries.length === 0) {
+    return [] as Array<{ title: string; rows: Array<{ key: string; value: string }> }>;
+  }
+
+  const allNestedObjects = entries.every(([, value]) => isPlainObject(value));
+
+  if (allNestedObjects) {
+    return entries
+      .map(([title, value]) => {
+        const rows = Object.entries(value as Record<string, unknown>).map(([key, rowValue]) => ({
+          key,
+          value: typeof rowValue === "string" ? rowValue : JSON.stringify(rowValue),
+        }));
+
+        return {
+          title,
+          rows,
+        };
+      })
+      .filter((section) => section.rows.length > 0);
+  }
+
+  return [
+    {
+      title: "General",
+      rows: entries.map(([key, value]) => ({
+        key,
+        value: typeof value === "string" ? value : JSON.stringify(value),
+      })),
+    },
+  ];
+}
+
 export default async function ProductDetailsPage(context: { params: Promise<{ slug: string }> }) {
   const { slug } = await context.params;
   const product = await getPublicProductBySlug(slug);
-  const specificationEntries = Object.entries(product.specifications ?? {});
+  const specificationSections = normalizeSpecificationSections(product.specifications);
 
   return (
     <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.1fr_1fr]">
@@ -36,15 +79,22 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
           <p className="text-zinc-600">No description provided.</p>
         )}
 
-        {specificationEntries.length > 0 && (
+        {specificationSections.length > 0 && (
           <div className="space-y-2 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
             <h2 className="text-base font-semibold text-zinc-900">Specifications</h2>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {specificationEntries.map(([key, value]) => (
-                <div key={key} className="rounded-md border border-zinc-200 bg-white px-3 py-2">
-                  <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{key}</p>
-                  <p className="text-sm font-medium text-zinc-800">{typeof value === "string" ? value : JSON.stringify(value)}</p>
-                </div>
+            <div className="space-y-3">
+              {specificationSections.map((section) => (
+                <section key={section.title} className="space-y-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.15em] text-zinc-700">{section.title}</h3>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {section.rows.map((row) => (
+                      <div key={`${section.title}-${row.key}`} className="rounded-md border border-zinc-200 bg-white px-3 py-2">
+                        <p className="text-xs uppercase tracking-[0.15em] text-zinc-500">{row.key}</p>
+                        <p className="text-sm font-medium text-zinc-800">{row.value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
               ))}
             </div>
           </div>

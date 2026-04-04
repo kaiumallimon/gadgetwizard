@@ -376,29 +376,50 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
       <Card>
         <CardHeader>
           <CardTitle>Specifications</CardTitle>
-          <CardDescription>Add technical details as key/value entries, for example Processor {"->"} Apple M3.</CardDescription>
+          <CardDescription>
+            Organize technical details into titled sections like Display and Processor.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {specRows.map((row, index) => (
-            <div key={`${index}-${row.key}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
-              <Input
-                value={row.key}
-                onChange={(event) => updateSpecRow(index, { key: event.target.value })}
-                placeholder="Key"
-              />
-              <Input
-                value={row.value}
-                onChange={(event) => updateSpecRow(index, { value: event.target.value })}
-                placeholder="Value"
-              />
-              <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecRow(index)}>
-                <Trash2 className="h-4 w-4" />
+          {specGroups.map((group, groupIndex) => (
+            <div key={`${groupIndex}-${group.title}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={group.title}
+                  onChange={(event) => updateSpecGroup(groupIndex, { title: event.target.value })}
+                  placeholder="Section title (e.g., Display)"
+                />
+                <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecGroup(groupIndex)}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              {group.rows.map((row, rowIndex) => (
+                <div key={`${groupIndex}-${rowIndex}-${row.key}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                  <Input
+                    value={row.key}
+                    onChange={(event) => updateSpecRow(groupIndex, rowIndex, { key: event.target.value })}
+                    placeholder="Key"
+                  />
+                  <Input
+                    value={row.value}
+                    onChange={(event) => updateSpecRow(groupIndex, rowIndex, { value: event.target.value })}
+                    placeholder="Value"
+                  />
+                  <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecRow(groupIndex, rowIndex)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              <Button type="button" variant="outline" onClick={() => addSpecRow(groupIndex)}>
+                <Plus className="h-4 w-4" /> Add Entry
               </Button>
             </div>
           ))}
 
-          <Button type="button" variant="outline" onClick={addSpecRow}>
-            <Plus className="h-4 w-4" /> Add Specification Entry
+          <Button type="button" variant="outline" onClick={addSpecGroup}>
+            <Plus className="h-4 w-4" /> Add Specification Section
           </Button>
         </CardContent>
       </Card>

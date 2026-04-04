@@ -27,6 +27,27 @@ function stripHtml(input: string | null): string {
     .trim();
 }
 
+function countSpecificationEntries(specifications: Record<string, unknown> | null): number {
+  if (!specifications) {
+    return 0;
+  }
+
+  const entries = Object.entries(specifications);
+  if (entries.length === 0) {
+    return 0;
+  }
+
+  const grouped = entries.every(([, value]) => typeof value === "object" && value !== null && !Array.isArray(value));
+  if (!grouped) {
+    return entries.length;
+  }
+
+  return entries.reduce((total, [, value]) => {
+    const rowCount = Object.keys(value as Record<string, unknown>).length;
+    return total + rowCount;
+  }, 0);
+}
+
 export function ProductListManager({ initialProducts }: ProductListManagerProps) {
   const { token } = useAuthStore();
   const [items, setItems] = useState(initialProducts);
@@ -93,7 +114,7 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
               <p className="text-sm text-zinc-600">Price: ৳ {product.price.toLocaleString()}</p>
               <p className="line-clamp-3 text-sm text-zinc-600">{stripHtml(product.description)}</p>
               <p className="text-xs text-zinc-500">
-                Specs: {product.specifications ? Object.keys(product.specifications).length : 0}
+                Specs: {countSpecificationEntries(product.specifications)}
               </p>
 
               <div className="flex flex-wrap gap-2">
