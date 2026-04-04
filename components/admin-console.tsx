@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2 } from "lucide-react";
+import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2, Upload } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Banner, Category, Product } from "@/lib/client/types";
@@ -48,6 +48,7 @@ export function AdminConsole({
   const [products, setProducts] = useState(initialProducts);
   const [banners, setBanners] = useState(initialBanners);
   const [notice, setNotice] = useState<string>("");
+  const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
 
   const [categoryForm, setCategoryForm] = useState({
     name: "",
@@ -86,6 +87,16 @@ export function AdminConsole({
     setBanners(response.items);
   }
 
+  async function uploadCdnImage(file: File, target: string): Promise<string> {
+    try {
+      setUploadingTarget(target);
+      const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
+      return response.item.url;
+    } finally {
+      setUploadingTarget(null);
+    }
+  }
+
   async function handleCreateCategory() {
     if (!categoryForm.name.trim()) {
       setNotice("Category name is required.");
@@ -119,8 +130,6 @@ export function AdminConsole({
     const slug = window.prompt("Category slug", category.slug);
     if (!slug) return;
 
-    const imageUrl = window.prompt("Category image URL", category.imageUrl ?? "") ?? "";
-
     try {
       await apiClient.adminUpdateCategory(
         category.id,
@@ -128,7 +137,7 @@ export function AdminConsole({
           name,
           slug,
           icon: category.icon,
-          imageUrl: imageUrl || null,
+          imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
           parentId: category.parentId,
           sortOrder: category.sortOrder,
@@ -140,6 +149,48 @@ export function AdminConsole({
       setNotice("Category updated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category update failed"));
+    }
+  }
+
+  async function handleCategoryImageUpload(file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const url = await uploadCdnImage(file, "category-create");
+      setCategoryForm((prev) => ({ ...prev, imageUrl: url }));
+      setNotice("Category image uploaded.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Category image upload failed"));
+    }
+  }
+
+  async function handleReplaceCategoryImage(category: Category, file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const url = await uploadCdnImage(file, `category-${category.id}`);
+      await apiClient.adminUpdateCategory(
+        category.id,
+        {
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+          imageUrl: url,
+          isHeaderCategory: category.isHeaderCategory,
+          parentId: category.parentId,
+          sortOrder: category.sortOrder,
+          isActive: category.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshCategories();
+      setNotice("Category image updated.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Category image update failed"));
     }
   }
 
@@ -303,6 +354,52 @@ export function AdminConsole({
       setNotice("Banner created.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Banner create failed"));
+    }
+  }
+
+  async function handleBannerImageUpload(file: File | null, target: "desktopImageUrl" | "mobileImageUrl") {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const url = await uploadCdnImage(file, `banner-create-${target}`);
+      setBannerForm((prev) => ({ ...prev, [target]: url }));
+      setNotice(target === "desktopImageUrl" ? "Desktop banner image uploaded." : "Mobile banner image uploaded.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner image upload failed"));
+    }
+  }
+
+  async function handleReplaceBannerImage(
+    banner: Banner,
+    file: File | null,
+    target: "desktopImageUrl" | "mobileImageUrl",
+  ) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      const url = await uploadCdnImage(file, `banner-${banner.id}-${target}`);
+      await apiClient.adminUpdateBanner(
+        banner.id,
+        {
+          title: banner.title,
+          desktopImageUrl: target === "desktopImageUrl" ? url : banner.desktopImageUrl,
+          mobileImageUrl: target === "mobileImageUrl" ? url : banner.mobileImageUrl,
+          clickUrl: banner.clickUrl,
+          sortOrder: banner.sortOrder,
+          isActive: banner.isActive,
+          startsAt: banner.startsAt,
+          endsAt: banner.endsAt,
+        },
+        token ?? undefined,
+      );
+      await refreshBanners();
+      setNotice(target === "desktopImageUrl" ? "Desktop image updated." : "Mobile image updated.");
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner image update failed"));
     }
   }
 
@@ -473,7 +570,7 @@ export function AdminConsole({
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Boxes className="h-4 w-4" /> Create Category
               </CardTitle>
-              <CardDescription>Manage hierarchy, image URLs, and header navigation visibility.</CardDescription>
+              <CardDescription>Manage hierarchy, CDN-backed images, and header navigation visibility.</CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
               <Input
@@ -486,11 +583,21 @@ export function AdminConsole({
                 onChange={(event) => setCategoryForm((prev) => ({ ...prev, slug: event.target.value }))}
                 placeholder="Slug (optional)"
               />
-              <Input
-                value={categoryForm.imageUrl}
-                onChange={(event) => setCategoryForm((prev) => ({ ...prev, imageUrl: event.target.value }))}
-                placeholder="Category image URL"
-              />
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                <Upload className="h-4 w-4" />
+                {uploadingTarget === "category-create" ? "Uploading image..." : "Upload Category Image"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingTarget === "category-create"}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    await handleCategoryImageUpload(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
               <Input
                 value={categoryForm.parentId}
                 onChange={(event) => setCategoryForm((prev) => ({ ...prev, parentId: event.target.value }))}
@@ -505,6 +612,16 @@ export function AdminConsole({
                 Add to header
               </label>
               <Button onClick={handleCreateCategory}>Create Category</Button>
+
+              {categoryForm.imageUrl && (
+                <div className="col-span-full overflow-hidden rounded-md border border-zinc-200 sm:col-span-2 xl:col-span-3">
+                  <div className="h-28 bg-zinc-50 p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={categoryForm.imageUrl} alt="Category upload preview" className="h-full w-full object-contain" />
+                  </div>
+                  <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">CDN image ready</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -534,6 +651,15 @@ export function AdminConsole({
                     {category.parentId !== null && <Badge variant="outline">Parent: {category.parentId}</Badge>}
                   </div>
 
+                  {category.imageUrl && (
+                    <div className="overflow-hidden rounded-md border border-zinc-200">
+                      <div className="h-28 bg-zinc-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={category.imageUrl} alt={category.name} className="h-full w-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleHeaderCategory(category)}>
                       {category.isHeaderCategory ? "Unpin" : "Pin"}
@@ -547,6 +673,20 @@ export function AdminConsole({
                     <Button variant="destructive" size="sm" onClick={() => handleDeleteCategory(category.id)}>
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
+                      <Upload className="h-3.5 w-3.5" /> Replace Image
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingTarget === `category-${category.id}`}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          await handleReplaceCategoryImage(category, file);
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
                   </div>
                 </CardContent>
               </Card>
@@ -614,13 +754,64 @@ export function AdminConsole({
             </CardHeader>
             <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
               <Input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" />
-              <Input value={bannerForm.desktopImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, desktopImageUrl: event.target.value }))} placeholder="Desktop image URL" />
-              <Input value={bannerForm.mobileImageUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, mobileImageUrl: event.target.value }))} placeholder="Mobile image URL" />
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                <Upload className="h-4 w-4" />
+                {uploadingTarget === "banner-create-desktopImageUrl" ? "Uploading desktop..." : "Upload Desktop Image"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingTarget === "banner-create-desktopImageUrl"}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    await handleBannerImageUpload(file, "desktopImageUrl");
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+                <Upload className="h-4 w-4" />
+                {uploadingTarget === "banner-create-mobileImageUrl" ? "Uploading mobile..." : "Upload Mobile Image"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingTarget === "banner-create-mobileImageUrl"}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    await handleBannerImageUpload(file, "mobileImageUrl");
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
               <Input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" />
               <Input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" />
               <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-3">
                 <ImageIcon className="h-4 w-4" /> Create Banner
               </Button>
+
+              {(bannerForm.desktopImageUrl || bannerForm.mobileImageUrl) && (
+                <div className="col-span-full grid gap-3 sm:grid-cols-2">
+                  {bannerForm.desktopImageUrl && (
+                    <div className="overflow-hidden rounded-md border border-zinc-200">
+                      <div className="h-28 bg-zinc-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={bannerForm.desktopImageUrl} alt="Desktop banner preview" className="h-full w-full object-contain" />
+                      </div>
+                      <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Desktop preview</p>
+                    </div>
+                  )}
+                  {bannerForm.mobileImageUrl && (
+                    <div className="overflow-hidden rounded-md border border-zinc-200">
+                      <div className="h-28 bg-zinc-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={bannerForm.mobileImageUrl} alt="Mobile banner preview" className="h-full w-full object-contain" />
+                      </div>
+                      <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Mobile preview</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -641,6 +832,20 @@ export function AdminConsole({
                     <p className="truncate">Desktop: {banner.desktopImageUrl}</p>
                     <p className="truncate">Mobile: {banner.mobileImageUrl}</p>
                   </div>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <div className="overflow-hidden rounded-md border border-zinc-200">
+                      <div className="h-24 bg-zinc-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={banner.desktopImageUrl} alt={`${banner.title} desktop`} className="h-full w-full object-contain" />
+                      </div>
+                    </div>
+                    <div className="overflow-hidden rounded-md border border-zinc-200">
+                      <div className="h-24 bg-zinc-50 p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={banner.mobileImageUrl} alt={`${banner.title} mobile`} className="h-full w-full object-contain" />
+                      </div>
+                    </div>
+                  </div>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
                       {banner.isActive ? "Deactivate" : "Activate"}
@@ -651,6 +856,34 @@ export function AdminConsole({
                     <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
                       <Trash2 className="h-3.5 w-3.5" /> Delete
                     </Button>
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
+                      <Upload className="h-3.5 w-3.5" /> Desktop
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingTarget === `banner-${banner.id}-desktopImageUrl`}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          await handleReplaceBannerImage(banner, file, "desktopImageUrl");
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
+                      <Upload className="h-3.5 w-3.5" /> Mobile
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={uploadingTarget === `banner-${banner.id}-mobileImageUrl`}
+                        onChange={async (event) => {
+                          const file = event.target.files?.[0] ?? null;
+                          await handleReplaceBannerImage(banner, file, "mobileImageUrl");
+                          event.currentTarget.value = "";
+                        }}
+                      />
+                    </label>
                   </div>
                 </CardContent>
               </Card>

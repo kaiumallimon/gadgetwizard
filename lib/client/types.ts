@@ -96,3 +96,38 @@ export interface ApiErrorPayload {
     details?: unknown;
   };
 }
+
+export interface CdnFileAsset {
+  id: string;
+  category: string;
+  mimeType: string;
+  originalName: string;
+  extension: string;
+  sizeBytes: number;
+  accessCount: number;
+  lastAccessedAt: string | null;
+  checksumSha256: string;
+  createdAt: string;
+  updatedAt: string;
+  urlSuffix: string;
+  url: string;
+}
+
+export interface CdnStats {
+  totals: {
+    totalFiles: number;
+    totalSizeBytes: number;
+    totalAccessCount: number;
+  };
+  byCategory: Record<
+    string,
+    {
+      totalFiles: number;
+      totalSizeBytes: number;
+      totalAccessCount: number;
+    }
+  >;
+  topAccessedFiles: CdnFileAsset[];
+  recentUploads: CdnFileAsset[];
+  generatedAt: string;
+}

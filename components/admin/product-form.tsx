@@ -2,7 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Upload, X } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Category, Product } from "@/lib/client/types";
@@ -59,13 +59,6 @@ function toSpecificationObject(rows: SpecRow[]): Record<string, string> | null {
   return Object.keys(output).length > 0 ? output : null;
 }
 
-function normalizeImageList(input: string): string[] {
-  return input
-    .split(/\r?\n|,/) 
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 export function ProductForm({ mode, categories, initialProduct }: ProductFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
@@ -82,10 +75,11 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
   const [categoryId, setCategoryId] = useState(
     initialProduct?.categoryId ? String(initialProduct.categoryId) : String(categories[0]?.id ?? ""),
   );
-  const [imagesText, setImagesText] = useState((initialProduct?.images ?? []).join("\n"));
+  const [images, setImages] = useState<string[]>(initialProduct?.images ?? []);
   const [description, setDescription] = useState(initialProduct?.description ?? "<p></p>");
   const [specRows, setSpecRows] = useState<SpecRow[]>(toSpecRows(initialProduct?.specifications));
   const [isActive, setIsActive] = useState(initialProduct?.isActive ?? true);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -109,6 +103,33 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
     });
   }
 
+  async function handleImageUpload(file: File | null) {
+    if (!file) {
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      setNotice(null);
+
+      const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
+      setImages((previous) => {
+        if (previous.includes(response.item.url)) {
+          return previous;
+        }
+        return [...previous, response.item.url];
+      });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Image upload failed");
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+
+  function removeImage(index: number) {
+    setImages((previous) => previous.filter((_, itemIndex) => itemIndex !== index));
+  }
+
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNotice(null);
@@ -117,10 +138,9 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
     const parsedStock = Number(stock);
     const parsedDiscountedPrice = discountedPrice.trim() ? Number(discountedPrice) : null;
     const parsedCategoryId = Number(categoryId);
-    const images = normalizeImageList(imagesText);
 
     if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
-      setNotice("Name, price, stock, category, and at least one image URL are required.");
+      setNotice("Name, price, stock, category, and at least one uploaded image are required.");
       return;
     }
 
@@ -196,12 +216,48 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
             <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
             Active product
           </label>
-          <textarea
-            value={imagesText}
-            onChange={(event) => setImagesText(event.target.value)}
-            placeholder="Image URLs (one per line or comma-separated)"
-            className="col-span-full min-h-24 rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
-          />
+
+          <div className="col-span-full space-y-3 rounded-md border border-zinc-200 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-medium text-zinc-900">Product Images (CDN Upload)</p>
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
+                <Upload className="h-3.5 w-3.5" />
+                {uploadingImage ? "Uploading..." : "Upload Image"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  disabled={uploadingImage}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0] ?? null;
+                    await handleImageUpload(file);
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+            </div>
+
+            {images.length === 0 && <p className="text-xs text-zinc-500">No product images uploaded yet.</p>}
+
+            {images.length > 0 && (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {images.map((imageUrl, index) => (
+                  <article key={`${imageUrl}-${index}`} className="overflow-hidden rounded-md border border-zinc-200">
+                    <div className="relative h-32 w-full bg-zinc-50">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={imageUrl} alt={`Product image ${index + 1}`} className="h-full w-full object-contain" />
+                    </div>
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-200 p-2">
+                      <p className="line-clamp-1 text-xs text-zinc-500">Image {index + 1}</p>
+                      <Button type="button" variant="destructive" size="icon" onClick={() => removeImage(index)}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -218,7 +274,7 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
       <Card>
         <CardHeader>
           <CardTitle>Specifications</CardTitle>
-          <CardDescription>Add technical details as key/value entries, for example Processor -> Apple M3.</CardDescription>
+          <CardDescription>Add technical details as key/value entries, for example Processor {"->"} Apple M3.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {specRows.map((row, index) => (

@@ -1,4 +1,14 @@
-import type { ApiErrorPayload, AppUser, AuthSession, Banner, Cart, Category, Product } from "@/lib/client/types";
+import type {
+  ApiErrorPayload,
+  AppUser,
+  AuthSession,
+  Banner,
+  Cart,
+  Category,
+  CdnFileAsset,
+  CdnStats,
+  Product,
+} from "@/lib/client/types";
 
 class ApiError extends Error {
   status: number;
@@ -22,7 +32,7 @@ async function apiFetch<T>(path: string, init: FetchInit = {}): Promise<T> {
   const headers = new Headers(init.headers ?? {});
   headers.set("Accept", "application/json");
 
-  if (init.body && !headers.get("Content-Type")) {
+  if (init.body && !(init.body instanceof FormData) && !headers.get("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -288,6 +298,21 @@ export const apiClient = {
       method: "DELETE",
       token,
     });
+  },
+
+  async adminUploadCdnImage(file: File, token?: string) {
+    const formData = new FormData();
+    formData.set("file", file);
+
+    return apiFetch<{ item: CdnFileAsset }>("/api/admin/cdn/upload", {
+      method: "POST",
+      token,
+      body: formData,
+    });
+  },
+
+  async adminGetCdnStats(token?: string) {
+    return apiFetch<{ stats: CdnStats }>("/api/admin/cdn/stats", { token });
   },
 };
 

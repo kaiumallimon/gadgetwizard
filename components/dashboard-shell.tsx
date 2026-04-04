@@ -7,13 +7,12 @@ import {
   BarChart3,
   Boxes,
   ChevronDown,
+  HardDrive,
   Home,
   LayoutGrid,
   LogOut,
   Megaphone,
-  Menu,
   Package,
-  Search,
   Shield,
   ShoppingBag,
   ShoppingCart,
@@ -25,7 +24,6 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -35,7 +33,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -75,6 +72,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
               { href: "/admin/products", label: "Products", icon: Package, exact: true },
               { href: "/admin/products/new", label: "Add Product", icon: Package },
               { href: "/admin/banners", label: "Banners", icon: Megaphone },
+              { href: "/admin/cdn", label: "CDN", icon: HardDrive },
               { href: "/admin/users", label: "Users", icon: UserRound },
               { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
             ],
@@ -215,24 +213,6 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         </SheetContent>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
-                <Menu className="h-4 w-4" />
-                <span className="sr-only">Open menu</span>
-              </Button>
-
-              <div className="relative max-w-md flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-                <Input placeholder="Search products, categories, or banners" className="pl-9" />
-              </div>
-
-              <Badge variant="secondary" className="hidden md:inline-flex">
-                {variant === "admin" ? "Admin Mode" : "Member Mode"}
-              </Badge>
-            </div>
-          </header> */}
-
           <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
           <Separator />
         </div>

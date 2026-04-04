@@ -16,6 +16,8 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   CDN_BASE_URL: z.string().url(),
+  CDN_API_BASE_URL: z.string().url().optional(),
+  CDN_API_KEY: z.string().min(1).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

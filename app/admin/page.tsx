@@ -28,6 +28,7 @@ export default async function AdminPage() {
       description: "Use rich-text descriptions and key/value specifications when creating products.",
     },
     { href: "/admin/banners", label: "Banners", description: "Manage homepage campaigns for desktop and mobile." },
+    { href: "/admin/cdn", label: "CDN", description: "Upload media assets and view detailed CDN statistics." },
     { href: "/admin/users", label: "Users", description: "View registered users, roles, and reward point levels." },
     {
       href: "/admin/activity",
