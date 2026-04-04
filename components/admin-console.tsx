@@ -651,14 +651,22 @@ export function AdminConsole({
                     {category.parentId !== null && <Badge variant="outline">Parent: {category.parentId}</Badge>}
                   </div>
 
-                  {category.imageUrl && (
-                    <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-28 bg-zinc-50 p-2">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={category.imageUrl} alt={category.name} className="h-full w-full object-contain" />
-                      </div>
+                  <div className="overflow-hidden rounded-md border border-zinc-200">
+                    <div className="h-28 bg-zinc-50 p-2">
+                      {category.imageUrl?.trim() ? (
+                        <>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={category.imageUrl} alt={category.name} className="h-full w-full object-contain" />
+                        </>
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-zinc-400">
+                          <span className="inline-flex items-center gap-2 text-xs sm:text-sm">
+                            <ImageIcon className="h-4 w-4" /> No image uploaded
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
 
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleHeaderCategory(category)}>

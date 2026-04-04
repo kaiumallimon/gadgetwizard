@@ -18,6 +18,7 @@ import {
     ShoppingBag,
     ShoppingCart,
     UserRound,
+    Plus,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
@@ -70,7 +71,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Product",
                         items: [
                             { href: "/admin/products", label: "Products", icon: Package, exact: true },
-                            { href: "/admin/products/new", label: "Add Product", icon: Package },
+                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
                         ]
                     },
                     {
@@ -96,7 +97,6 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Operations",
                         items: [
                             { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
-                            { href: "/cart", label: "Cart Monitor", icon: ShoppingCart },
                         ],
                     },
                     {
