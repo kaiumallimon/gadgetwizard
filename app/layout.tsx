@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { Sora, Space_Mono } from "next/font/google";
+import { Bricolage_Grotesque, Inter } from "next/font/google";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+const inter = Inter({
+  variable: "--font-body",
   subsets: ["latin"],
 });
 
-const spaceMono = Space_Mono({
-  variable: "--font-space-mono",
-  weight: ["400", "700"],
+const bricolageGrotesque = Bricolage_Grotesque({
+  variable: "--font-headline",
   subsets: ["latin"],
 });
 
@@ -28,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${sora.variable} ${spaceMono.variable} h-full antialiased`}>
+    <html lang="en" className={`${inter.variable} ${bricolageGrotesque.variable} h-full antialiased`}>
       <body className="min-h-full">
         <div className="flex min-h-screen flex-col">
           <SiteHeader />

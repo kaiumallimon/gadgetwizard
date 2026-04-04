@@ -49,7 +49,7 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
       </Link>
       <div className="space-y-3 p-4">
-        <Link href={`/product/${product.slug}`} className="line-clamp-2 text-base font-semibold text-zinc-900 hover:text-orange-600">
+        <Link href={`/product/${product.slug}`} className="line-clamp-2 text-base font-semibold text-zinc-900 hover:text-(--accent)">
           {product.name}
         </Link>
         <p className="text-sm text-zinc-500">{product.categoryName}</p>
@@ -65,7 +65,7 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={onAddToCart}
           disabled={pending || product.stock === 0}
-          className="w-full rounded-xl bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl bg-(--accent) px-4 py-2 font-medium text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {product.stock === 0 ? "Out Of Stock" : pending ? "Adding..." : "Add To Cart"}
         </button>

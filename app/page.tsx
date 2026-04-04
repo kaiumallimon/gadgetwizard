@@ -10,15 +10,22 @@ import { getPublicProducts } from "@/lib/server/services/product-service";
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [banners, categories, featuredProducts] = await Promise.all([
+  const [banners, categories, productPool] = await Promise.all([
     getPublicBanners(),
     getPublicCategoryTree(),
-    getPublicProducts({ page: 1, pageSize: 16 }),
+    getPublicProducts({ page: 1, pageSize: 48 }),
   ]);
 
   const categoryHighlights = categories.slice(0, 12);
-  const newTrends = featuredProducts.items.slice(0, 6);
-  const featuredGrid = featuredProducts.items.slice(0, 8);
+  const newTrends = productPool.items.slice(0, 6);
+  const featuredGrid = productPool.items.slice(0, 8);
+
+  const categoryImageById = new Map<number, string>();
+  for (const product of productPool.items) {
+    if (!categoryImageById.has(product.categoryId) && product.images.length > 0) {
+      categoryImageById.set(product.categoryId, product.images[0]);
+    }
+  }
 
   const serviceHighlights = [
     "36 Months EMI",
@@ -37,7 +44,7 @@ export default async function HomePage() {
           <div className="grid gap-3 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
             {serviceHighlights.map((item) => (
               <div key={item} className="flex items-center gap-2 rounded-xl px-2 py-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-orange-400" />
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-(--accent)" />
                 <span className="font-medium">{item}</span>
               </div>
             ))}
@@ -46,28 +53,36 @@ export default async function HomePage() {
 
         <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
           <h2 className="text-4xl font-semibold text-zinc-900">
-            Featured <span className="bg-linear-to-r from-orange-500 via-amber-500 to-violet-500 bg-clip-text text-transparent">Categories</span>
+            Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Categories</span>
           </h2>
 
-          <div className="mt-6 grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {categoryHighlights.map((category) => (
               <Link
                 href={`/category/${category.slug}`}
                 key={category.id}
-                className="group flex flex-col items-center gap-2 rounded-2xl px-2 py-3 transition hover:bg-zinc-100"
+                className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-white shadow-sm">
-                  {category.icon ? (
-                    <img src={category.icon} alt={category.name} className="h-8 w-8 object-contain" />
+                <div className="h-28 w-full overflow-hidden bg-zinc-100">
+                  {category.icon || categoryImageById.get(category.id) ? (
+                    <img
+                      src={category.icon ?? categoryImageById.get(category.id)}
+                      alt={category.name}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
                   ) : (
-                    <span className="text-lg font-semibold text-zinc-700">
+                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
                       {category.name.slice(0, 1).toUpperCase()}
-                    </span>
+                    </div>
                   )}
-                </span>
-                <span className="line-clamp-2 text-center text-sm font-medium text-zinc-700 group-hover:text-zinc-950">
-                  {category.name}
-                </span>
+                </div>
+
+                <div className="space-y-0.5 p-3">
+                  <p className="line-clamp-1 text-sm font-semibold text-zinc-900 group-hover:text-(--accent)">
+                    {category.name}
+                  </p>
+                  <p className="text-xs text-zinc-500">{category.children.length} subcategories</p>
+                </div>
               </Link>
             ))}
           </div>
@@ -75,7 +90,7 @@ export default async function HomePage() {
 
         <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
           <h2 className="text-4xl font-semibold text-zinc-900">
-            New <span className="bg-linear-to-r from-orange-500 via-amber-500 to-violet-500 bg-clip-text text-transparent">Trends</span>
+            New <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Trends</span>
           </h2>
 
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
@@ -95,7 +110,7 @@ export default async function HomePage() {
                 </Link>
 
                 <div className="mt-3 space-y-1">
-                  <Link href={`/product/${product.slug}`} className="line-clamp-2 font-semibold text-zinc-900 hover:text-orange-600">
+                  <Link href={`/product/${product.slug}`} className="line-clamp-2 font-semibold text-zinc-900 hover:text-(--accent)">
                     {product.name}
                   </Link>
                   <p className="text-xl font-semibold text-zinc-950">৳ {product.price.toLocaleString()}</p>
@@ -108,9 +123,9 @@ export default async function HomePage() {
         <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
           <div className="flex items-center justify-between">
             <h2 className="text-4xl font-semibold text-zinc-900">
-              Featured <span className="bg-linear-to-r from-orange-500 via-amber-500 to-violet-500 bg-clip-text text-transparent">Products</span>
+              Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Products</span>
             </h2>
-            <Link href="/cart" className="rounded-full bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600">
+            <Link href="/cart" className="rounded-full bg-(--accent) px-4 py-2 text-sm font-semibold text-white hover:brightness-95">
               Open Cart
             </Link>
           </div>
@@ -128,7 +143,7 @@ export default async function HomePage() {
               <h3 className="mt-2 text-2xl font-semibold">Get reward-ready pricing and faster support.</h3>
             </div>
             <div className="flex gap-3">
-              <Link href="/dashboard" className="rounded-full bg-orange-500 px-5 py-2 font-semibold text-white hover:bg-orange-600">
+              <Link href="/dashboard" className="rounded-full bg-(--accent) px-5 py-2 font-semibold text-white hover:brightness-95">
                 User Dashboard
               </Link>
               <Link href="/login" className="rounded-full border border-zinc-700 px-5 py-2 font-semibold text-zinc-200 hover:border-zinc-500">
