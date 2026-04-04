@@ -1,0 +1,25 @@
+import type { NextRequest } from "next/server";
+
+import { requireAuth } from "@/lib/server/auth/guards";
+import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
+import { parseJsonBody } from "@/lib/server/core/validation";
+import { cartRemoveSchema } from "@/lib/server/schemas";
+import { removeFromCartForUser } from "@/lib/server/services/cart-service";
+
+export const dynamic = "force-dynamic";
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await requireAuth(request);
+    const body = await parseJsonBody(request, cartRemoveSchema);
+
+    const cart = await removeFromCartForUser({
+      userId: session.userId,
+      productId: body.productId,
+    });
+
+    return jsonResponse({ cart }, 200, noStoreHeaders());
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}

@@ -1,0 +1,41 @@
+import { z } from "zod";
+
+const envSchema = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  DB_HOST: z.string().min(1),
+  DB_PORT: z.coerce.number().int().positive().default(3306),
+  DB_USER: z.string().min(1),
+  DB_PASSWORD: z.string().default(""),
+  DB_NAME: z.string().min(1),
+  DB_POOL_LIMIT: z.coerce.number().int().positive().default(10),
+  JWT_SECRET: z.string().min(32),
+  JWT_ISSUER: z.string().default("gadgetwizard-api"),
+  JWT_AUDIENCE: z.string().default("gadgetwizard-client"),
+  JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(60 * 60 * 24),
+  AUTH_COOKIE_NAME: z.string().default("gw_session"),
+  FIREBASE_PROJECT_ID: z.string().optional(),
+  FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  CDN_BASE_URL: z.string().url(),
+});
+
+export type AppEnv = z.infer<typeof envSchema>;
+
+let parsedEnv: AppEnv | null = null;
+
+export function getEnv(): AppEnv {
+  if (parsedEnv) {
+    return parsedEnv;
+  }
+
+  const result = envSchema.safeParse(process.env);
+  if (!result.success) {
+    const details = result.error.issues
+      .map((issue) => `${issue.path.join(".")}: ${issue.message}`)
+      .join("; ");
+
+    throw new Error(`Invalid environment configuration: ${details}`);
+  }
+
+  parsedEnv = result.data;
+  return parsedEnv;
+}
