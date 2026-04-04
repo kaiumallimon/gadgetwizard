@@ -49,21 +49,19 @@ export async function getAdminBanners() {
 export async function createBannerAdmin(input: {
   title: string;
   desktopImageUrl: string;
-  mobileImageUrl: string;
   clickUrl?: string | null;
   sortOrder?: number;
   isActive?: boolean;
   startsAt?: string | null;
   endsAt?: string | null;
 }) {
-  assertValidCdnUrls([input.desktopImageUrl, input.mobileImageUrl]);
+  assertValidCdnUrls([input.desktopImageUrl]);
   const clickUrl = validateClickUrl(input.clickUrl);
   validateWindow(input.startsAt, input.endsAt);
 
   return createBanner({
     title: input.title.trim(),
     desktopImageUrl: input.desktopImageUrl,
-    mobileImageUrl: input.mobileImageUrl,
     clickUrl,
     sortOrder: input.sortOrder ?? 0,
     isActive: input.isActive ?? true,
@@ -77,7 +75,6 @@ export async function updateBannerAdmin(
   input: {
     title: string;
     desktopImageUrl: string;
-    mobileImageUrl: string;
     clickUrl?: string | null;
     sortOrder?: number;
     isActive?: boolean;
@@ -90,14 +87,13 @@ export async function updateBannerAdmin(
     throw notFound("Banner not found");
   }
 
-  assertValidCdnUrls([input.desktopImageUrl, input.mobileImageUrl]);
+  assertValidCdnUrls([input.desktopImageUrl]);
   const clickUrl = validateClickUrl(input.clickUrl);
   validateWindow(input.startsAt, input.endsAt);
 
   const updated = await updateBanner(id, {
     title: input.title.trim(),
     desktopImageUrl: input.desktopImageUrl,
-    mobileImageUrl: input.mobileImageUrl,
     clickUrl,
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,

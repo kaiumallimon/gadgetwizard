@@ -4,7 +4,6 @@ export interface BannerRecord {
   id: number;
   title: string;
   desktopImageUrl: string;
-  mobileImageUrl: string;
   clickUrl: string | null;
   sortOrder: number;
   isActive: boolean;
@@ -18,7 +17,6 @@ interface BannerRow {
   id: number;
   title: string;
   desktop_image_url: string;
-  mobile_image_url: string;
   click_url: string | null;
   sort_order: number;
   is_active: number;
@@ -45,7 +43,6 @@ function mapBanner(row: BannerRow): BannerRecord {
     id: row.id,
     title: row.title,
     desktopImageUrl: row.desktop_image_url,
-    mobileImageUrl: row.mobile_image_url,
     clickUrl: row.click_url,
     sortOrder: row.sort_order,
     isActive: row.is_active === 1,
@@ -63,7 +60,6 @@ export async function listPublicBanners(): Promise<BannerRecord[]> {
         id,
         title,
         desktop_image_url,
-        mobile_image_url,
         click_url,
         sort_order,
         is_active,
@@ -89,7 +85,6 @@ export async function listAdminBanners(): Promise<BannerRecord[]> {
         id,
         title,
         desktop_image_url,
-        mobile_image_url,
         click_url,
         sort_order,
         is_active,
@@ -112,7 +107,6 @@ export async function findBannerById(id: number): Promise<BannerRecord | null> {
         id,
         title,
         desktop_image_url,
-        mobile_image_url,
         click_url,
         sort_order,
         is_active,
@@ -133,7 +127,6 @@ export async function findBannerById(id: number): Promise<BannerRecord | null> {
 export async function createBanner(input: {
   title: string;
   desktopImageUrl: string;
-  mobileImageUrl: string;
   clickUrl: string | null;
   sortOrder: number;
   isActive: boolean;
@@ -143,13 +136,12 @@ export async function createBanner(input: {
   const result = await execute(
     `
       INSERT INTO banners
-      (title, desktop_image_url, mobile_image_url, click_url, sort_order, is_active, starts_at, ends_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (title, desktop_image_url, click_url, sort_order, is_active, starts_at, ends_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     [
       input.title,
       input.desktopImageUrl,
-      input.mobileImageUrl,
       input.clickUrl,
       input.sortOrder,
       input.isActive ? 1 : 0,
@@ -171,7 +163,6 @@ export async function updateBanner(
   input: {
     title: string;
     desktopImageUrl: string;
-    mobileImageUrl: string;
     clickUrl: string | null;
     sortOrder: number;
     isActive: boolean;
@@ -185,7 +176,6 @@ export async function updateBanner(
       SET
         title = ?,
         desktop_image_url = ?,
-        mobile_image_url = ?,
         click_url = ?,
         sort_order = ?,
         is_active = ?,
@@ -196,7 +186,6 @@ export async function updateBanner(
     [
       input.title,
       input.desktopImageUrl,
-      input.mobileImageUrl,
       input.clickUrl,
       input.sortOrder,
       input.isActive ? 1 : 0,

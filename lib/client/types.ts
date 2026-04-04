@@ -57,7 +57,6 @@ export interface Banner {
   id: number;
   title: string;
   desktopImageUrl: string;
-  mobileImageUrl: string;
   clickUrl: string | null;
   sortOrder: number;
   isActive: boolean;
