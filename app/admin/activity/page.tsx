@@ -3,6 +3,14 @@ import { redirect } from "next/navigation";
 import { Activity, Clock3, UserRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Pagination,
@@ -86,6 +94,21 @@ export default async function AdminActivityPage({
         <p className="mt-2 text-sm text-zinc-600">
           Audit who is doing what across cart events, with time-stamped actor and action tracking.
         </p>
+        <div className="mt-3 border-t border-zinc-200 pt-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/admin">Admin</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>System Monitoring</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -228,7 +251,7 @@ export default async function AdminActivityPage({
           </p>
 
           <div className="text-xs text-zinc-500">
-            <Link href="/admin" className="text-[var(--accent)] hover:underline">
+            <Link href="/admin" className="text-(--accent) hover:underline">
               Return to Dashboard
             </Link>
           </div>

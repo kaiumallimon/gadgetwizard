@@ -2,6 +2,14 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { CategoryCreateForm } from "@/components/admin/category-create-form";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminCategories } from "@/lib/server/services/category-service";
@@ -22,7 +30,7 @@ export default async function AdminAddCategoryPage() {
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Admin Routes</p>
+            
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Category</h1>
             <p className="mt-2 text-sm text-zinc-600">
               Create categories from this dedicated page, then manage status and pinning from category management.
@@ -31,6 +39,27 @@ export default async function AdminAddCategoryPage() {
           <Button asChild variant="outline">
             <Link href="/admin/categories">Back To Categories</Link>
           </Button>
+        </div>
+        <div className="mt-3 border-t border-zinc-200 pt-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/admin">Admin</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/admin/categories">Categories</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Add Category</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
       </header>
 

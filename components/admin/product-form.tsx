@@ -336,9 +336,10 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
                   className="hidden"
                   disabled={uploadingImage}
                   onChange={async (event) => {
-                    const file = event.target.files?.[0] ?? null;
+                    const input = event.currentTarget;
+                    const file = input.files?.[0] ?? null;
+                    input.value = "";
                     await handleImageUpload(file);
-                    event.currentTarget.value = "";
                   }}
                 />
               </label>

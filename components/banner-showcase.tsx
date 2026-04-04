@@ -35,6 +35,9 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
   }
 
   const active = activeBanners[currentIndex];
+  const useUnoptimized =
+    active.desktopImageUrl.startsWith("http://localhost:") ||
+    active.desktopImageUrl.startsWith("http://127.0.0.1:");
 
   function previousSlide() {
     setCurrentIndex((prev) => (prev === 0 ? activeBanners.length - 1 : prev - 1));
@@ -46,19 +49,20 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
 
   const slideBody = (
     <article className="group relative overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-      <div className="relative h-52 w-full md:h-90">
+      <div className="relative aspect-[2.2/1] w-full sm:aspect-[2.8/1] lg:aspect-3/1">
         <Image
           src={active.desktopImageUrl}
           alt={active.title}
           fill
           priority
-          sizes="(min-width: 1200px) 100vw, 50vw"
-          className="object-cover transition duration-700 group-hover:scale-105"
+          unoptimized={useUnoptimized}
+          sizes="(min-width: 1280px) 1120px, 100vw"
+          className="object-cover object-center transition duration-700 group-hover:scale-105"
         />
-        <div className="absolute inset-0 bg-linear-to-r from-black/65 via-black/20 to-transparent" />
-        <div className="absolute bottom-0 left-0 p-5 text-white md:p-8">
+        <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/18 to-transparent" />
+        <div className="absolute bottom-0 left-0 p-4 text-white md:p-6">
           <p className="text-xs uppercase tracking-[0.18em] text-white/75">Featured Campaign</p>
-          <h2 className="mt-2 max-w-xl text-2xl font-semibold md:text-4xl">{active.title}</h2>
+          <h2 className="mt-2 max-w-xl text-xl font-semibold md:text-3xl">{active.title}</h2>
         </div>
 
         {activeBanners.length > 1 && (

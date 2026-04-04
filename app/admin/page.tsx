@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 import { Activity, BarChart3, Boxes, Megaphone, Users } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireServerRole } from "@/lib/server/auth/server-session";
@@ -46,6 +53,20 @@ export default async function AdminPage() {
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Catalog, Banner, and Analytics Control</h1>
           </div>
           <Badge>Live Admin Mode</Badge>
+        </div>
+        <div className="mt-3 border-t border-zinc-200 pt-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/admin">Admin</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbItem>
+                <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
       </header>
 

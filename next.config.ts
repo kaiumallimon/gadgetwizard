@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
       },
       {
+        protocol: "http",
+        hostname: "localhost",
+        port: "9000",
+      },
+      {
         protocol: "https",
         hostname: "adminapi.applegadgetsbd.com",
       },

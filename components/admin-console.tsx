@@ -610,9 +610,10 @@ export function AdminConsole({
                         className="hidden"
                         disabled={uploadingTarget === `category-${category.id}`}
                         onChange={async (event) => {
-                          const file = event.target.files?.[0] ?? null;
+                          const input = event.currentTarget;
+                          const file = input.files?.[0] ?? null;
+                          input.value = "";
                           await handleReplaceCategoryImage(category, file);
-                          event.currentTarget.value = "";
                         }}
                       />
                     </label>
@@ -692,9 +693,10 @@ export function AdminConsole({
                   className="hidden"
                   disabled={uploadingTarget === "banner-create"}
                   onChange={async (event) => {
-                    const file = event.target.files?.[0] ?? null;
+                    const input = event.currentTarget;
+                    const file = input.files?.[0] ?? null;
+                    input.value = "";
                     await handleBannerImageUpload(file);
-                    event.currentTarget.value = "";
                   }}
                 />
               </label>
@@ -760,9 +762,10 @@ export function AdminConsole({
                         className="hidden"
                         disabled={uploadingTarget === `banner-${banner.id}`}
                         onChange={async (event) => {
-                          const file = event.target.files?.[0] ?? null;
+                          const input = event.currentTarget;
+                          const file = input.files?.[0] ?? null;
+                          input.value = "";
                           await handleReplaceBannerImage(banner, file);
-                          event.currentTarget.value = "";
                         }}
                       />
                     </label>
