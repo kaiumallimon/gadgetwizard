@@ -14,6 +14,7 @@ These SQL files are ordered and should be executed sequentially.
 8. 008_add_category_image_url.sql
 9. 009_add_header_category_flag.sql
 10. 010_drop_banner_mobile_image.sql
+11. 011_seed_dummy_products.sql (optional seed data)
 
 ## Run Migrations Manually
 
@@ -30,6 +31,8 @@ mysql -u <username> -p <database_name> < migrations/007_create_banners.sql
 mysql -u <username> -p <database_name> < migrations/008_add_category_image_url.sql
 mysql -u <username> -p <database_name> < migrations/009_add_header_category_flag.sql
 mysql -u <username> -p <database_name> < migrations/010_drop_banner_mobile_image.sql
+# Optional demo seed
+mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
 ```
 
 ## Notes
@@ -43,3 +46,4 @@ mysql -u <username> -p <database_name> < migrations/010_drop_banner_mobile_image
 - Banners use one responsive image source, active windows, and click-through URLs.
 - Categories now support optional image_url for richer storefront category cards.
 - Categories support is_header_category flag for curated header navigation links.
+- 011 is optional and inserts or updates dummy products for development/testing.
