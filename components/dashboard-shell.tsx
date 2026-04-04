@@ -11,6 +11,7 @@ import {
     Home,
     LayoutGrid,
     LogOut,
+    Menu,
     Megaphone,
     Package,
     Shield,
@@ -128,6 +129,18 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         };
     }, [variant]);
 
+    const currentNavLabel = useMemo(() => {
+        for (const group of nav.groups) {
+            for (const item of group.items) {
+                if (isActive(item)) {
+                    return item.label;
+                }
+            }
+        }
+
+        return "Dashboard";
+    }, [nav, pathname]);
+
     async function onLogout() {
         try {
             await apiClient.logout();
@@ -219,13 +232,13 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     return (
-        <div className="flex min-h-screen bg-zinc-50">
-            <aside className="hidden w-72 border-r border-zinc-200 bg-white md:block">
+        <div className="flex h-screen overflow-hidden bg-zinc-50">
+            <aside className="hidden h-screen w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex">
                 <SidebarContent />
             </aside>
 
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-                <SheetContent side="left" className="w-72 p-0">
+                <SheetContent side="left" className="w-64 p-0">
                     <SheetHeader className="sr-only">
                         <SheetTitle>Navigation</SheetTitle>
                         <SheetDescription>Dashboard navigation links</SheetDescription>
@@ -233,8 +246,28 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     <SidebarContent onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
 
-                <div className="flex min-w-0 flex-1 flex-col">
-                    <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur">
+                        <div className="flex items-center gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="md:hidden"
+                                onClick={() => setMobileOpen(true)}
+                            >
+                                <Menu className="h-4 w-4" />
+                                <span className="sr-only">Open dashboard menu</span>
+                            </Button>
+
+                            <div className="min-w-0">
+                                <p className="truncate text-sm font-semibold text-zinc-900">{currentNavLabel}</p>
+                                <p className="truncate text-xs text-zinc-500">{nav.subtitle}</p>
+                            </div>
+                        </div>
+                    </header>
+
+                    <main className="flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">{children}</main>
                     <Separator />
                 </div>
             </Sheet>
