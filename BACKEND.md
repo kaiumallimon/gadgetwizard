@@ -26,6 +26,7 @@ Public:
 - GET /api/categories
 - GET /api/products
 - GET /api/products/{slug}
+- GET /api/banners
 
 User:
 - POST /api/auth/session
@@ -41,7 +42,12 @@ Admin:
 - POST /api/admin/categories
 - PUT /api/admin/categories/{id}
 - DELETE /api/admin/categories/{id}
+- GET /api/admin/banners
+- POST /api/admin/banners
+- PUT /api/admin/banners/{id}
+- DELETE /api/admin/banners/{id}
 - POST /api/admin/products
+- GET /api/admin/products
 - PUT /api/admin/products/{id}
 - DELETE /api/admin/products/{id}
 - GET /api/admin/analytics

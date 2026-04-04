@@ -10,6 +10,7 @@ These SQL files are ordered and should be executed sequentially.
 4. 004_create_carts.sql
 5. 005_create_cart_activity.sql
 6. 006_create_reward_ledger.sql
+7. 007_create_banners.sql
 
 ## Run Migrations Manually
 
@@ -22,6 +23,7 @@ mysql -u <username> -p <database_name> < migrations/003_create_products.sql
 mysql -u <username> -p <database_name> < migrations/004_create_carts.sql
 mysql -u <username> -p <database_name> < migrations/005_create_cart_activity.sql
 mysql -u <username> -p <database_name> < migrations/006_create_reward_ledger.sql
+mysql -u <username> -p <database_name> < migrations/007_create_banners.sql
 ```
 
 ## Notes
@@ -32,3 +34,4 @@ mysql -u <username> -p <database_name> < migrations/006_create_reward_ledger.sql
 - Cart design uses one active cart per user for now (no checkout/order yet).
 - Cart activity logs support basic admin analytics.
 - Reward points ledger is future-ready for purchase integration.
+- Banners support desktop/mobile images, active windows, and click-through URLs.

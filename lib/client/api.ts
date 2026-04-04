@@ -1,0 +1,290 @@
+import type { ApiErrorPayload, AppUser, AuthSession, Banner, Cart, Category, Product } from "@/lib/client/types";
+
+class ApiError extends Error {
+  status: number;
+  code: string;
+  details?: unknown;
+
+  constructor(status: number, code: string, message: string, details?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
+type FetchInit = RequestInit & {
+  token?: string;
+};
+
+async function apiFetch<T>(path: string, init: FetchInit = {}): Promise<T> {
+  const headers = new Headers(init.headers ?? {});
+  headers.set("Accept", "application/json");
+
+  if (init.body && !headers.get("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (init.token) {
+    headers.set("Authorization", `Bearer ${init.token}`);
+  }
+
+  const response = await fetch(path, {
+    ...init,
+    credentials: "include",
+    headers,
+  });
+
+  if (!response.ok) {
+    let payload: ApiErrorPayload | null = null;
+    try {
+      payload = (await response.json()) as ApiErrorPayload;
+    } catch {
+      payload = null;
+    }
+
+    throw new ApiError(
+      response.status,
+      payload?.error?.code ?? "REQUEST_FAILED",
+      payload?.error?.message ?? "API request failed",
+      payload?.error?.details,
+    );
+  }
+
+  return (await response.json()) as T;
+}
+
+export const apiClient = {
+  async exchangeFirebaseToken(idToken: string) {
+    return apiFetch<{ token: string; expiresIn: number; session: AuthSession; user: AppUser }>("/api/auth/session", {
+      method: "POST",
+      body: JSON.stringify({ idToken }),
+    });
+  },
+
+  async logout() {
+    return apiFetch<{ success: boolean }>("/api/auth/logout", { method: "POST" });
+  },
+
+  async getMe(token?: string) {
+    return apiFetch<{ session: AuthSession; user: AppUser }>("/api/me", { token });
+  },
+
+  async getBanners() {
+    return apiFetch<{ items: Banner[] }>("/api/banners");
+  },
+
+  async getCategories() {
+    return apiFetch<{ items: Category[] }>("/api/categories");
+  },
+
+  async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; search?: string }) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.search) query.set("search", params.search);
+
+    return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
+      `/api/products?${query.toString()}`,
+    );
+  },
+
+  async getProductBySlug(slug: string) {
+    return apiFetch<{ item: Product }>(`/api/products/${slug}`);
+  },
+
+  async getCart(token?: string) {
+    return apiFetch<{ cart: Cart }>("/api/cart", { token });
+  },
+
+  async addToCart(payload: { productId: number; quantity: number }, token?: string) {
+    return apiFetch<{ cart: Cart }>("/api/cart/add", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateCart(payload: { productId: number; quantity: number }, token?: string) {
+    return apiFetch<{ cart: Cart }>("/api/cart/update", {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async removeFromCart(productId: number, token?: string) {
+    return apiFetch<{ cart: Cart }>("/api/cart/remove", {
+      method: "DELETE",
+      token,
+      body: JSON.stringify({ productId }),
+    });
+  },
+
+  async adminGetAnalytics(token?: string) {
+    return apiFetch<{ analytics: unknown }>("/api/admin/analytics", { token });
+  },
+
+  async adminGetCategories(token?: string) {
+    return apiFetch<{ items: Category[] }>("/api/admin/categories", { token });
+  },
+
+  async adminCreateCategory(payload: {
+    name: string;
+    slug?: string;
+    icon?: string | null;
+    parentId?: number | null;
+    sortOrder?: number;
+    isActive?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Category }>("/api/admin/categories", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateCategory(
+    id: number,
+    payload: {
+      name: string;
+      slug?: string;
+      icon?: string | null;
+      parentId?: number | null;
+      sortOrder?: number;
+      isActive?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Category }>(`/api/admin/categories/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteCategory(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async adminGetProducts(
+    params: { page?: number; pageSize?: number; categorySlug?: string; search?: string },
+    token?: string,
+  ) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.search) query.set("search", params.search);
+
+    return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
+      `/api/admin/products?${query.toString()}`,
+      { token },
+    );
+  },
+
+  async adminCreateProduct(payload: {
+    name: string;
+    slug?: string;
+    description?: string | null;
+    price: number;
+    discountedPrice?: number | null;
+    stock: number;
+    categoryId: number;
+    images: string[];
+    specifications?: Record<string, unknown> | null;
+    isActive?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Product }>("/api/admin/products", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateProduct(
+    id: number,
+    payload: {
+      name: string;
+      slug?: string;
+      description?: string | null;
+      price: number;
+      discountedPrice?: number | null;
+      stock: number;
+      categoryId: number;
+      images: string[];
+      specifications?: Record<string, unknown> | null;
+      isActive?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Product }>(`/api/admin/products/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteProduct(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/products/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async adminGetBanners(token?: string) {
+    return apiFetch<{ items: Banner[] }>("/api/admin/banners", { token });
+  },
+
+  async adminCreateBanner(payload: {
+    title: string;
+    desktopImageUrl: string;
+    mobileImageUrl: string;
+    clickUrl?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    startsAt?: string | null;
+    endsAt?: string | null;
+  }, token?: string) {
+    return apiFetch<{ item: Banner }>("/api/admin/banners", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateBanner(
+    id: number,
+    payload: {
+      title: string;
+      desktopImageUrl: string;
+      mobileImageUrl: string;
+      clickUrl?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+      startsAt?: string | null;
+      endsAt?: string | null;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Banner }>(`/api/admin/banners/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteBanner(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/banners/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+};
+
+export { ApiError };

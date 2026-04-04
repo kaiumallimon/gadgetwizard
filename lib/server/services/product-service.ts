@@ -26,6 +26,21 @@ export async function getPublicProducts(input: {
   });
 }
 
+export async function getAdminProducts(input: {
+  page: number;
+  pageSize: number;
+  categorySlug?: string;
+  search?: string;
+}) {
+  return listProducts({
+    page: input.page,
+    pageSize: input.pageSize,
+    categorySlug: input.categorySlug,
+    search: input.search,
+    activeOnly: false,
+  });
+}
+
 export async function getPublicProductBySlug(slug: string) {
   const product = await findProductBySlug(slug, true);
   if (!product) {

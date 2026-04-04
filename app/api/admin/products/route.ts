@@ -2,11 +2,41 @@ import type { NextRequest } from "next/server";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
-import { parseJsonBody } from "@/lib/server/core/validation";
-import { adminProductSchema } from "@/lib/server/schemas";
-import { createProductAdmin } from "@/lib/server/services/product-service";
+import { parseJsonBody, parseSearchParams } from "@/lib/server/core/validation";
+import { adminProductSchema, paginationQuerySchema } from "@/lib/server/schemas";
+import { createProductAdmin, getAdminProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
+
+export async function GET(request: NextRequest) {
+  try {
+    await requireRole(request, ["admin"]);
+    const query = parseSearchParams(new URL(request.url), paginationQuerySchema);
+
+    const result = await getAdminProducts({
+      page: query.page,
+      pageSize: query.pageSize,
+      categorySlug: query.categorySlug,
+      search: query.search,
+    });
+
+    return jsonResponse(
+      {
+        items: result.items,
+        pagination: {
+          page: query.page,
+          pageSize: query.pageSize,
+          total: result.total,
+          totalPages: Math.ceil(result.total / query.pageSize),
+        },
+      },
+      200,
+      noStoreHeaders(),
+    );
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

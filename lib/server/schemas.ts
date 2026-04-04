@@ -33,6 +33,17 @@ export const adminProductSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
+export const adminBannerSchema = z.object({
+  title: z.string().trim().min(2).max(150),
+  desktopImageUrl: z.string().trim().url().max(500),
+  mobileImageUrl: z.string().trim().url().max(500),
+  clickUrl: z.string().trim().url().max(500).nullable().optional(),
+  sortOrder: z.number().int().min(0).max(100000).optional(),
+  isActive: z.boolean().optional(),
+  startsAt: z.string().datetime().nullable().optional(),
+  endsAt: z.string().datetime().nullable().optional(),
+});
+
 export const cartAddSchema = z.object({
   productId: z.number().int().positive(),
   quantity: z.number().int().positive().max(100),
