@@ -42,28 +42,30 @@ export function ProductCard({ product }: ProductCardProps) {
   const image = product.images[0] ?? "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
 
   return (
-    <article className="group overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+    <article className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative h-44 w-full overflow-hidden">
           <img src={image} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
         </div>
       </Link>
       <div className="space-y-3 p-4">
-        <Link href={`/product/${product.slug}`} className="line-clamp-2 text-base font-semibold text-white hover:text-(--accent)">
+        <Link href={`/product/${product.slug}`} className="line-clamp-2 text-base font-semibold text-zinc-900 hover:text-orange-600">
           {product.name}
         </Link>
-        <p className="text-sm text-(--muted)">{product.categoryName}</p>
+        <p className="text-sm text-zinc-500">{product.categoryName}</p>
         <div className="flex items-center gap-2">
-          <span className="text-lg font-semibold text-white">৳ {product.price.toLocaleString()}</span>
+          <span className="text-lg font-semibold text-zinc-900">৳ {product.price.toLocaleString()}</span>
           {product.discountedPrice !== null && (
-            <span className="text-sm text-emerald-300">Loyal: ৳ {product.discountedPrice.toLocaleString()}</span>
+            <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
+              Loyal: ৳ {product.discountedPrice.toLocaleString()}
+            </span>
           )}
         </div>
         <button
           type="button"
           onClick={onAddToCart}
           disabled={pending || product.stock === 0}
-          className="w-full rounded-xl bg-(--accent) px-4 py-2 font-medium text-black transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+          className="w-full rounded-xl bg-orange-500 px-4 py-2 font-medium text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {product.stock === 0 ? "Out Of Stock" : pending ? "Adding..." : "Add To Cart"}
         </button>
