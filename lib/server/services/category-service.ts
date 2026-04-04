@@ -130,7 +130,7 @@ export async function updateCategoryAdmin(
     name: input.name.trim(),
     slug: normalizedSlug,
     icon: input.icon ?? null,
-    imageUrl: input.imageUrl ?? existing.imageUrl,
+    imageUrl: input.imageUrl !== undefined ? input.imageUrl : existing.imageUrl,
     parentId: nextParent,
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,
