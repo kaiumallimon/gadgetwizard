@@ -38,6 +38,6 @@ export async function queryOne<T>(sql: string, params: unknown[] = []): Promise<
 
 export async function execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
   const conn = getPool();
-  const [result] = await conn.execute<ResultSetHeader>(sql, params);
+  const [result] = await conn.query<ResultSetHeader>(sql, params);
   return result;
 }
