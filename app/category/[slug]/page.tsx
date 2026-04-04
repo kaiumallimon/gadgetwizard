@@ -14,7 +14,7 @@ export default async function CategoryPage(context: { params: Promise<{ slug: st
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white">Category: {slug}</h1>

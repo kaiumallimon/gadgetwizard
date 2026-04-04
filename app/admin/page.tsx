@@ -24,7 +24,7 @@ export default async function AdminPage() {
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6">
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
       <header className="rounded-3xl border border-white/10 bg-white/5 p-6">
         <p className="text-sm uppercase tracking-[0.2em] text-(--muted)">Admin Dashboard</p>
         <h1 className="mt-2 text-3xl font-semibold text-white">Catalog, Banner, and Analytics Control</h1>

@@ -37,7 +37,7 @@ export default async function HomePage() {
 
   return (
     <div className="bg-white py-6">
-      <div className="mx-auto w-full max-w-6xl space-y-7 px-4 sm:px-6">
+      <div className="mx-auto w-full max-w-7xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
         <section className="rounded-2xl border border-zinc-200 bg-white px-4 py-3">

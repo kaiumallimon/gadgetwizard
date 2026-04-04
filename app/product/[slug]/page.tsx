@@ -11,7 +11,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const product = await getPublicProductBySlug(slug);
 
   return (
-    <div className="mx-auto grid w-full max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.1fr_1fr]">
+    <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[1.1fr_1fr]">
       <div className="space-y-3">
         <div className="relative h-72 overflow-hidden rounded-3xl border border-white/10 bg-white/5 sm:h-105">
           <img
