@@ -214,7 +214,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         </SheetContent>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
+          {/* <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur md:px-6">
             <div className="flex items-center gap-3">
               <Button variant="outline" size="icon" className="md:hidden" onClick={() => setMobileOpen(true)}>
                 <Menu className="h-4 w-4" />
@@ -230,7 +230,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                 {variant === "admin" ? "Admin Mode" : "Member Mode"}
               </Badge>
             </div>
-          </header>
+          </header> */}
 
           <main className="flex-1 px-4 py-5 md:px-6 md:py-6">{children}</main>
           <Separator />
