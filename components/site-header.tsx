@@ -7,7 +7,6 @@ import {
   FiGrid,
   FiLogOut,
   FiSearch,
-  FiShield,
   FiShoppingCart,
   FiUser,
 } from "react-icons/fi";
@@ -35,6 +34,7 @@ export function SiteHeader() {
   const [loading, setLoading] = useState(true);
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
+  const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
 
   useEffect(() => {
     let active = true;
@@ -130,18 +130,9 @@ export function SiteHeader() {
 
           {session && (
             <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href="/dashboard">
+              <Link href={dashboardHref}>
                 <FiUser className="h-4 w-4" />
                 <span className="hidden sm:inline">Dashboard</span>
-              </Link>
-            </Button>
-          )}
-
-          {session?.role === "admin" && (
-            <Button asChild variant="outline" size="sm" className="rounded-full">
-              <Link href="/admin">
-                <FiShield className="h-4 w-4" />
-                <span className="hidden sm:inline">Admin</span>
               </Link>
             </Button>
           )}

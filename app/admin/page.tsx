@@ -24,7 +24,11 @@ export default async function AdminPage() {
     { href: "/admin/products", label: "Products", description: "Add products and control price, stock, and active status." },
     { href: "/admin/banners", label: "Banners", description: "Manage homepage campaigns for desktop and mobile." },
     { href: "/admin/users", label: "Users", description: "View registered users, roles, and reward point levels." },
-    { href: "/admin/activity", label: "Activity", description: "Monitor cart activity and platform behavior trends." },
+    {
+      href: "/admin/activity",
+      label: "System Monitoring",
+      description: "Track who is doing what with event timelines and activity pages.",
+    },
   ];
 
   return (

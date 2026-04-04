@@ -1,4 +1,8 @@
-import { getAnalyticsSummary, getRecentCartActivity } from "@/lib/server/repositories/analytics-repository";
+import {
+  getAnalyticsSummary,
+  getRecentCartActivity,
+  getRecentCartActivityPage,
+} from "@/lib/server/repositories/analytics-repository";
 import { listUsers } from "@/lib/server/repositories/user-repository";
 import { getAdminBanners } from "@/lib/server/services/banner-service";
 import { getAdminCategories } from "@/lib/server/services/category-service";
@@ -36,4 +40,8 @@ export async function getAdminUsers(input: {
 
 export async function getAdminActivityFeed(limit = 30) {
   return getRecentCartActivity(limit);
+}
+
+export async function getAdminActivityFeedPage(input: { page: number; pageSize: number }) {
+  return getRecentCartActivityPage(input);
 }

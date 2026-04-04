@@ -18,7 +18,6 @@ import {
   ShoppingBag,
   ShoppingCart,
   UserRound,
-  User,
 } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
@@ -76,7 +75,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
               { href: "/admin/products", label: "Products", icon: Package },
               { href: "/admin/banners", label: "Banners", icon: Megaphone },
               { href: "/admin/users", label: "Users", icon: UserRound },
-              { href: "/admin/activity", label: "Activity", icon: BarChart3 },
+              { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
             ],
           },
           {
@@ -84,7 +83,6 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             items: [
               { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
               { href: "/cart", label: "Cart Monitor", icon: ShoppingCart },
-              { href: "/dashboard", label: "User Area", icon: User },
             ],
           },
         ],
@@ -231,14 +229,6 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
               <Badge variant="secondary" className="hidden md:inline-flex">
                 {variant === "admin" ? "Admin Mode" : "Member Mode"}
               </Badge>
-              {(variant === "admin" || user?.role === "admin") && (
-                <Button asChild variant="outline" size="sm" className="hidden md:inline-flex">
-                  <Link href={variant === "admin" ? "/dashboard" : "/admin"}>
-                    <BarChart3 className="h-4 w-4" />
-                    {variant === "admin" ? "User Panel" : "Admin Panel"}
-                  </Link>
-                </Button>
-              )}
             </div>
           </header>
 

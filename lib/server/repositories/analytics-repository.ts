@@ -103,3 +103,58 @@ export async function getRecentCartActivity(limit = 30) {
     productName: row.product_name,
   }));
 }
+
+export async function getRecentCartActivityPage(input: { page: number; pageSize: number }) {
+  const page = Number.isFinite(input.page) ? Math.max(1, Math.floor(input.page)) : 1;
+  const pageSize = Number.isFinite(input.pageSize)
+    ? Math.min(100, Math.max(5, Math.floor(input.pageSize)))
+    : 20;
+  const offset = (page - 1) * pageSize;
+
+  const count = await queryOne<CountRow>("SELECT COUNT(*) AS total FROM cart_activity_logs");
+  const total = count?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const rows = await queryRows<RecentActivityRow>(
+    `
+      SELECT
+        logs.id,
+        logs.action,
+        logs.quantity_before,
+        logs.quantity_after,
+        logs.created_at,
+        users.id AS user_id,
+        users.name AS user_name,
+        users.email AS user_email,
+        products.id AS product_id,
+        products.name AS product_name
+      FROM cart_activity_logs AS logs
+      LEFT JOIN users ON users.id = logs.user_id
+      LEFT JOIN products ON products.id = logs.product_id
+      ORDER BY logs.created_at DESC, logs.id DESC
+      LIMIT ? OFFSET ?
+    `,
+    [pageSize, offset],
+  );
+
+  const items = rows.map((row) => ({
+    id: row.id,
+    action: row.action,
+    quantityBefore: row.quantity_before,
+    quantityAfter: row.quantity_after,
+    createdAt: toIso(row.created_at),
+    userId: row.user_id,
+    userName: row.user_name,
+    userEmail: row.user_email,
+    productId: row.product_id,
+    productName: row.product_name,
+  }));
+
+  return {
+    items,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
