@@ -21,7 +21,7 @@ function validateClickUrl(clickUrl: string | null | undefined): string | null {
     throw badRequest("Banner click URL is invalid");
   }
 
-  if (!parsed.protocol.startsWith("http")) {
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
     throw badRequest("Banner click URL protocol must be http or https");
   }
 

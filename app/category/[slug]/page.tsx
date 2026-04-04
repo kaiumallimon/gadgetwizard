@@ -18,7 +18,7 @@ export default async function CategoryPage(context: { params: Promise<{ slug: st
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-semibold text-white">Category: {slug}</h1>
-          <p className="text-sm text-[color:var(--muted)]">{result.total} products found</p>
+          <p className="text-sm text-(--muted)">{result.total} products found</p>
         </div>
         <Link href="/" className="rounded-full border border-white/20 px-4 py-2 text-sm text-white">
           Back Home
@@ -26,7 +26,7 @@ export default async function CategoryPage(context: { params: Promise<{ slug: st
       </div>
 
       {result.items.length === 0 ? (
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-[color:var(--muted)]">
+        <section className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-(--muted)">
           No products available in this category yet.
         </section>
       ) : (
