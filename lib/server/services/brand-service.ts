@@ -18,6 +18,15 @@ export async function getAdminBrands(): Promise<BrandRecord[]> {
   return listBrands(false);
 }
 
+export async function getAdminBrandById(id: number): Promise<BrandRecord> {
+  const brand = await findBrandById(id);
+  if (!brand) {
+    throw notFound("Brand not found");
+  }
+
+  return brand;
+}
+
 export async function createBrandAdmin(input: {
   name: string;
   slug?: string;
