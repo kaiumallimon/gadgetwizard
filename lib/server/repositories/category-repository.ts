@@ -150,6 +150,15 @@ export async function deleteCategory(id: number): Promise<void> {
   await execute("DELETE FROM categories WHERE id = ?", [id]);
 }
 
+export async function countProductsByCategoryId(categoryId: number): Promise<number> {
+  const row = await queryOne<{ total: number }>(
+    "SELECT COUNT(*) AS total FROM products WHERE category_id = ?",
+    [categoryId],
+  );
+
+  return row?.total ?? 0;
+}
+
 export async function countHeaderCategories(excludeCategoryId?: number): Promise<number> {
   if (excludeCategoryId) {
     const row = await queryOne<{ total: number }>(

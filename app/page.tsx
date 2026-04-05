@@ -53,19 +53,19 @@ export default async function HomePage() {
                 const Icon = item.icon;
 
                 return (
-                <div
-                  key={item.title}
-                  className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm"
-                >
-                  <span className="absolute inset-y-0 left-0 w-1 bg-linear-to-b from-orange-300 via-(--accent) to-orange-500" />
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-(--accent) ring-1 ring-orange-200">
-                    <Icon className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block truncate font-semibold text-zinc-800">{item.title}</span>
-                    <span className="block truncate text-xs text-zinc-500">{item.note}</span>
-                  </span>
-                </div>
+                  <div
+                    key={item.title}
+                    className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm"
+                  >
+                    <span className="absolute inset-y-0 left-0 w-1 bg-linear-to-b from-orange-300 via-(--accent) to-orange-500" />
+                    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-(--accent) ring-1 ring-orange-200">
+                      <Icon className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-zinc-800">{item.title}</span>
+                      <span className="block truncate text-xs text-zinc-500">{item.note}</span>
+                    </span>
+                  </div>
                 );
               })}
             </div>
@@ -85,9 +85,9 @@ export default async function HomePage() {
                 <Link
                   href={`/category/${category.slug}`}
                   key={category.id}
-                  className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
                 >
-                  <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
+                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 sm:h-12">
                     {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
                       <img
                         src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
@@ -125,9 +125,9 @@ export default async function HomePage() {
                 <Link
                   href={`/brand/${brand.slug}`}
                   key={brand.id}
-                  className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
                 >
-                  <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
+                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 sm:h-12">
                     {brand.imageUrl ? (
                       <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
                     ) : (

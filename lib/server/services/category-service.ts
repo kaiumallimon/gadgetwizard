@@ -1,4 +1,5 @@
 import {
+  countProductsByCategoryId,
   countHeaderCategories,
   createCategory,
   deleteCategory,
@@ -7,11 +8,21 @@ import {
   updateCategory,
   type CategoryRecord,
 } from "@/lib/server/repositories/category-repository";
-import { badRequest, notFound } from "@/lib/server/core/errors";
+import { badRequest, conflict, notFound } from "@/lib/server/core/errors";
 import { slugify } from "@/lib/server/utils/slug";
 import { assertValidCdnUrls } from "@/lib/server/utils/cdn";
 
 const MAX_HEADER_CATEGORIES = 8;
+
+type MySqlError = {
+  code?: string;
+  errno?: number;
+};
+
+function isForeignKeyConstraintError(error: unknown): boolean {
+  const dbError = error as MySqlError;
+  return dbError?.code === "ER_ROW_IS_REFERENCED_2" || dbError?.errno === 1451;
+}
 
 export interface CategoryTreeNode extends CategoryRecord {
   children: CategoryTreeNode[];
@@ -131,5 +142,23 @@ export async function deleteCategoryAdmin(id: number): Promise<void> {
     throw notFound("Category not found");
   }
 
-  await deleteCategory(id);
+  const linkedProductCount = await countProductsByCategoryId(id);
+  if (linkedProductCount > 0) {
+    throw conflict(
+      "Cannot delete this category because products are assigned to it. Reassign those products first.",
+    );
+  }
+
+  try {
+    await deleteCategory(id);
+  } catch (error) {
+    // Defensive fallback for race conditions where product links are created after the pre-check.
+    if (isForeignKeyConstraintError(error)) {
+      throw conflict(
+        "Cannot delete this category because products are assigned to it. Reassign those products first.",
+      );
+    }
+
+    throw error;
+  }
 }
