@@ -13,8 +13,18 @@ const envSchema = z.object({
   JWT_AUDIENCE: z.string().default("gadgetwizard-client"),
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(60 * 60 * 24),
   AUTH_COOKIE_NAME: z.string().default("gw_session"),
+  APP_BASE_URL: z.string().url().optional(),
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  SMTP_HOST: z.string().min(1).optional(),
+  SMTP_PORT: z.coerce.number().int().positive().default(465),
+  SMTP_USER: z.string().min(1).optional(),
+  SMTP_PASS: z.string().min(1).optional(),
+  SMTP_USERNAME: z.string().min(1).optional(),
+  SMTP_PASSWORD: z.string().min(1).optional(),
+  SMTP_FROM_EMAIL: z.string().email().optional(),
+  SMTP_FROM_NAME: z.string().min(1).default("GadgetWizard"),
+  PASSWORD_RESET_TOKEN_EXPIRES_MINUTES: z.coerce.number().int().positive().default(30),
   CDN_BASE_URL: z.string().url(),
   CDN_API_BASE_URL: z.string().url().optional(),
   CDN_API_KEY: z.string().min(1).optional(),
@@ -38,6 +48,10 @@ export function getEnv(): AppEnv {
     throw new Error(`Invalid environment configuration: ${details}`);
   }
 
-  parsedEnv = result.data;
+  parsedEnv = {
+    ...result.data,
+    SMTP_USER: result.data.SMTP_USER ?? result.data.SMTP_USERNAME,
+    SMTP_PASS: result.data.SMTP_PASS ?? result.data.SMTP_PASSWORD,
+  };
   return parsedEnv;
 }

@@ -154,7 +154,7 @@ export function AdminUserManager({ initialUsers, currentUserId }: AdminUserManag
           </form>
 
           <p className="mt-3 text-xs text-zinc-500">
-            Created admins become active immediately. They can sign in once their Firebase login uses the same email.
+            Created admins receive a secure email with temporary login credentials on creation.
           </p>
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -96,6 +97,14 @@ export default function LoginPage() {
             required
             minLength={6}
           />
+
+          {mode === "login" && (
+            <div className="text-right">
+              <Link href="/forgot-password" className="text-sm font-medium text-(--accent) hover:text-zinc-900">
+                Forgot password?
+              </Link>
+            </div>
+          )}
 
           <Button type="submit" disabled={pending} className="w-full">
             {pending ? "Please wait..." : mode === "login" ? "Login" : "Create Account"}

@@ -1,0 +1,19 @@
+import type { NextRequest } from "next/server";
+
+import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
+import { parseJsonBody } from "@/lib/server/core/validation";
+import { passwordResetVerifySchema } from "@/lib/server/schemas";
+import { verifyPasswordResetToken } from "@/lib/server/services/password-reset-service";
+
+export const dynamic = "force-dynamic";
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await parseJsonBody(request, passwordResetVerifySchema);
+    const result = await verifyPasswordResetToken(body.token);
+
+    return jsonResponse(result, 200, noStoreHeaders());
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}

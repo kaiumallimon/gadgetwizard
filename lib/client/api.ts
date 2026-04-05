@@ -73,6 +73,27 @@ export const apiClient = {
     });
   },
 
+  async requestPasswordReset(email: string) {
+    return apiFetch<{ success: boolean; message: string }>("/api/auth/password-reset/request", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async verifyPasswordResetToken(token: string) {
+    return apiFetch<{ valid: boolean; email: string; expiresAt: string }>("/api/auth/password-reset/verify", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  async confirmPasswordReset(token: string, newPassword: string) {
+    return apiFetch<{ success: boolean }>("/api/auth/password-reset/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
+  },
+
   async logout() {
     return apiFetch<{ success: boolean }>("/api/auth/logout", { method: "POST" });
   },

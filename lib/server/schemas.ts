@@ -11,6 +11,26 @@ export const authExchangeSchema = z.object({
   idToken: z.string().min(1),
 });
 
+export const passwordResetRequestSchema = z.object({
+  email: z.string().trim().email().max(255),
+});
+
+export const passwordResetVerifySchema = z.object({
+  token: z.string().trim().min(1),
+});
+
+export const passwordResetConfirmSchema = z.object({
+  token: z.string().trim().min(1),
+  newPassword: z
+    .string()
+    .min(8)
+    .max(128)
+    .regex(/[A-Z]/, "Password must include at least one uppercase letter")
+    .regex(/[a-z]/, "Password must include at least one lowercase letter")
+    .regex(/[0-9]/, "Password must include at least one number")
+    .regex(/[^A-Za-z0-9]/, "Password must include at least one special character"),
+});
+
 export const adminCategorySchema = z.object({
   name: z.string().trim().min(2).max(120),
   slug: z.string().trim().min(2).max(150).optional(),

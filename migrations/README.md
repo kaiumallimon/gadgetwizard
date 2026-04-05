@@ -15,6 +15,7 @@ These SQL files are ordered and should be executed sequentially.
 9. 009_add_header_category_flag.sql
 10. 010_drop_banner_mobile_image.sql
 11. 011_seed_dummy_products.sql (optional seed data)
+12. 012_create_password_reset_tokens.sql
 
 ## Run Migrations Manually
 
@@ -33,6 +34,7 @@ mysql -u <username> -p <database_name> < migrations/009_add_header_category_flag
 mysql -u <username> -p <database_name> < migrations/010_drop_banner_mobile_image.sql
 # Optional demo seed
 mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
+mysql -u <username> -p <database_name> < migrations/012_create_password_reset_tokens.sql
 ```
 
 ## Notes
@@ -47,3 +49,4 @@ mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
 - Categories now support optional image_url for richer storefront category cards.
 - Categories support is_header_category flag for curated header navigation links.
 - 011 is optional and inserts or updates dummy products for development/testing.
+- 012 stores one-time password reset token fingerprints for universal user/admin reset flow.

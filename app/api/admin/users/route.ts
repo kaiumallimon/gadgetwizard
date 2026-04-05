@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
     await requireRole(request, ["admin"]);
     const body = await parseJsonBody(request, adminCreateUserSchema);
 
-    const user = await createAdminAccount(body);
+    const user = await createAdminAccount({
+      ...body,
+      origin: request.nextUrl.origin,
+    });
     return jsonResponse({ item: user }, 201, noStoreHeaders());
   } catch (error) {
     return handleRouteError(error);

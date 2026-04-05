@@ -1,6 +1,10 @@
-import { randomUUID } from "node:crypto";
+import { randomInt } from "node:crypto";
 
-import { badRequest, conflict, notFound } from "@/lib/server/core/errors";
+import { createFirebaseUser, deleteFirebaseUser } from "@/lib/server/auth/firebase-admin";
+import { badRequest, conflict, HttpError, notFound } from "@/lib/server/core/errors";
+import { getEnv } from "@/lib/server/core/env";
+import { renderAdminWelcomeEmail } from "@/lib/server/mail/templates";
+import { assertSmtpConfigured, sendSmtpMail } from "@/lib/server/mail/smtp";
 import {
   getAnalyticsSummary,
   getRecentCartActivity,
@@ -19,6 +23,49 @@ import { getAdminBanners } from "@/lib/server/services/banner-service";
 import { getAdminCategories } from "@/lib/server/services/category-service";
 import { getAdminProducts } from "@/lib/server/services/product-service";
 import type { AppUser, UserRole } from "@/lib/server/types";
+
+const PASSWORD_UPPERCASE = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+const PASSWORD_LOWERCASE = "abcdefghijkmnpqrstuvwxyz";
+const PASSWORD_NUMBERS = "23456789";
+const PASSWORD_SYMBOLS = "!@#$%^&*";
+const PASSWORD_POOL = `${PASSWORD_UPPERCASE}${PASSWORD_LOWERCASE}${PASSWORD_NUMBERS}${PASSWORD_SYMBOLS}`;
+
+function pickRandom(chars: string): string {
+  return chars[randomInt(0, chars.length)];
+}
+
+function shuffleChars(input: string[]): string[] {
+  const output = [...input];
+  for (let index = output.length - 1; index > 0; index -= 1) {
+    const swapIndex = randomInt(0, index + 1);
+    const current = output[index];
+    output[index] = output[swapIndex];
+    output[swapIndex] = current;
+  }
+
+  return output;
+}
+
+function generateTemporaryPassword(length = 14): string {
+  const chars: string[] = [
+    pickRandom(PASSWORD_UPPERCASE),
+    pickRandom(PASSWORD_LOWERCASE),
+    pickRandom(PASSWORD_NUMBERS),
+    pickRandom(PASSWORD_SYMBOLS),
+  ];
+
+  while (chars.length < length) {
+    chars.push(pickRandom(PASSWORD_POOL));
+  }
+
+  return shuffleChars(chars).join("");
+}
+
+function resolveBaseUrl(origin: string): string {
+  const env = getEnv();
+  const raw = env.APP_BASE_URL ?? origin;
+  return raw.endsWith("/") ? raw.slice(0, -1) : raw;
+}
 
 export async function getAdminAnalytics() {
   return getAnalyticsSummary();
@@ -57,20 +104,72 @@ export async function getAdminActivityFeedPage(input: { page: number; pageSize: 
   return getRecentCartActivityPage(input);
 }
 
-export async function createAdminAccount(input: { email: string; name: string }): Promise<AppUser> {
+export async function createAdminAccount(input: {
+  email: string;
+  name: string;
+  origin: string;
+}): Promise<AppUser> {
   const normalizedEmail = input.email.trim().toLowerCase();
   const normalizedName = input.name.trim();
+
+  assertSmtpConfigured();
 
   const existing = await findUserByEmail(normalizedEmail);
   if (existing) {
     throw conflict("An account with this email already exists");
   }
 
-  return createAdminUser({
-    firebaseUid: `admin:${randomUUID()}`,
+  const temporaryPassword = generateTemporaryPassword();
+  const firebaseUser = await createFirebaseUser({
     email: normalizedEmail,
+    password: temporaryPassword,
     name: normalizedName,
   });
+
+  let createdUser: AppUser | null = null;
+
+  try {
+    createdUser = await createAdminUser({
+      firebaseUid: firebaseUser.uid,
+      email: normalizedEmail,
+      name: normalizedName,
+    });
+
+    const loginUrl = `${resolveBaseUrl(input.origin)}/login`;
+    await sendSmtpMail({
+      to: normalizedEmail,
+      subject: "Your GadgetWizard Admin Account",
+      html: renderAdminWelcomeEmail({
+        name: normalizedName,
+        email: normalizedEmail,
+        password: temporaryPassword,
+        loginUrl,
+      }),
+      text: `Hello ${normalizedName},\n\nYour GadgetWizard admin account has been created.\n\nEmail: ${normalizedEmail}\nTemporary password: ${temporaryPassword}\nLogin: ${loginUrl}\n\nPlease reset your password after first login.`,
+    });
+
+    return createdUser;
+  } catch (error) {
+    if (createdUser) {
+      try {
+        await removeUserById(createdUser.id);
+      } catch {
+        // Best-effort rollback if DB cleanup fails.
+      }
+    }
+
+    try {
+      await deleteFirebaseUser(firebaseUser.uid);
+    } catch {
+      // Best-effort rollback if Firebase cleanup fails.
+    }
+
+    if (error instanceof HttpError) {
+      throw error;
+    }
+
+    throw new Error("Unable to send admin credentials email. Account creation was rolled back.");
+  }
 }
 
 export async function updateAdminAccountStatus(input: {
