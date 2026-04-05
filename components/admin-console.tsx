@@ -12,6 +12,15 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -50,6 +59,7 @@ export function AdminConsole({
   const [banners, setBanners] = useState(initialBanners);
   const [notice, setNotice] = useState<string>("");
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
+  const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
 
   const [bannerForm, setBannerForm] = useState({
     title: "",
@@ -319,6 +329,7 @@ export function AdminConsole({
         token ?? undefined,
       );
       setBannerForm({ title: "", desktopImageUrl: "", clickUrl: "", sortOrder: "0" });
+      setIsBannerDialogOpen(false);
       await refreshBanners();
       setNotice("Banner created.");
     } catch (error) {
@@ -685,100 +696,141 @@ export function AdminConsole({
         </TabsContent>
 
         <TabsContent value="banners" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Megaphone className="h-4 w-4" /> Create Banner
-              </CardTitle>
-              <CardDescription>Upload one banner image. The storefront uses responsive optimization for all screens.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" />
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-                <Upload className="h-4 w-4" />
-                {uploadingTarget === "banner-create" ? "Uploading image..." : "Upload Banner Image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploadingTarget === "banner-create"}
-                  onChange={async (event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0] ?? null;
-                    input.value = "";
-                    await handleBannerImageUpload(file);
-                  }}
-                />
-              </label>
-              <Input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" />
-              <Input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" />
-              <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-2">
-                <ImageIcon className="h-4 w-4" /> Create Banner
-              </Button>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900">All Banners</h2>
+              <p className="text-sm text-zinc-600">One row per banner for quick scanning and actions.</p>
+            </div>
+            <Dialog open={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <ImageIcon className="h-4 w-4" /> Create Banner
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" /> Create Banner
+                  </DialogTitle>
+                  <DialogDescription>
+                    Upload one banner image. The storefront uses responsive optimization for all screens.
+                  </DialogDescription>
+                </DialogHeader>
 
-              {bannerForm.desktopImageUrl && (
-                <div className="col-span-full">
-                  <div className="overflow-hidden rounded-md border border-zinc-200">
-                    <div className="h-28 bg-zinc-50 p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={bannerForm.desktopImageUrl} alt="Banner preview" className="h-full w-full object-contain" />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Input
+                    value={bannerForm.title}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))}
+                    placeholder="Banner title"
+                  />
+                  <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50">
+                    <Upload className="h-4 w-4" />
+                    {uploadingTarget === "banner-create" ? "Uploading image..." : "Upload Banner Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingTarget === "banner-create"}
+                      onChange={async (event) => {
+                        const input = event.currentTarget;
+                        const file = input.files?.[0] ?? null;
+                        input.value = "";
+                        await handleBannerImageUpload(file);
+                      }}
+                    />
+                  </label>
+                  <Input
+                    value={bannerForm.clickUrl}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))}
+                    placeholder="Click URL"
+                  />
+                  <Input
+                    value={bannerForm.sortOrder}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
+                    placeholder="Sort order"
+                  />
+
+                  {bannerForm.desktopImageUrl && (
+                    <div className="md:col-span-2">
+                      <div className="overflow-hidden rounded-md border border-zinc-200">
+                        <div className="h-36 bg-zinc-50 p-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={bannerForm.desktopImageUrl} alt="Banner preview" className="h-full w-full object-contain" />
+                        </div>
+                        <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Responsive preview source</p>
+                      </div>
                     </div>
-                    <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Responsive preview source</p>
-                  </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <DialogFooter>
+                  <Button onClick={handleCreateBanner}>
+                    <ImageIcon className="h-4 w-4" /> Create Banner
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="space-y-3">
+            {banners.length === 0 && (
+              <Card>
+                <CardContent className="py-8 text-center text-sm text-zinc-500">
+                  No banners found. Create one from the dialog.
+                </CardContent>
+              </Card>
+            )}
+
             {banners.map((banner) => (
               <Card key={banner.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base">{banner.title}</CardTitle>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">{banner.title}</CardTitle>
+                      <CardDescription>#{banner.id} | Sort: {banner.sortOrder}</CardDescription>
+                    </div>
                     <Badge variant={banner.isActive ? "default" : "outline"}>
                       {banner.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
-                  <CardDescription>#{banner.id} | Sort: {banner.sortOrder}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-sm text-zinc-600">
-                    <p className="truncate">Image: {banner.desktopImageUrl}</p>
-                  </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-3 md:grid-cols-[260px_1fr]">
                     <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-24 bg-zinc-50 p-2">
+                      <div className="h-28 bg-zinc-50 p-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={banner.desktopImageUrl} alt={`${banner.title} banner`} className="h-full w-full object-contain" />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
-                      {banner.isActive ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleQuickEditBanner(banner)}>
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </Button>
-                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
-                      <Upload className="h-3.5 w-3.5" /> Replace Image
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploadingTarget === `banner-${banner.id}`}
-                        onChange={async (event) => {
-                          const input = event.currentTarget;
-                          const file = input.files?.[0] ?? null;
-                          input.value = "";
-                          await handleReplaceBannerImage(banner, file);
-                        }}
-                      />
-                    </label>
+                    <div className="space-y-3">
+                      <p className="truncate text-sm text-zinc-600">Image URL: {banner.desktopImageUrl}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
+                          {banner.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => handleQuickEditBanner(banner)}>
+                          Edit
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </Button>
+                        <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
+                          <Upload className="h-3.5 w-3.5" /> Replace Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingTarget === `banner-${banner.id}`}
+                            onChange={async (event) => {
+                              const input = event.currentTarget;
+                              const file = input.files?.[0] ?? null;
+                              input.value = "";
+                              await handleReplaceBannerImage(banner, file);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
