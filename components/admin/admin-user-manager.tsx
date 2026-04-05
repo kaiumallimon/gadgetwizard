@@ -15,9 +15,10 @@ import { Input } from "@/components/ui/input";
 
 interface AdminUserManagerProps {
   initialUsers: AppUser[];
+  currentUserId: number;
 }
 
-export function AdminUserManager({ initialUsers }: AdminUserManagerProps) {
+export function AdminUserManager({ initialUsers, currentUserId }: AdminUserManagerProps) {
   const { token, user } = useAuthStore();
   const [items, setItems] = useState(initialUsers);
   const [name, setName] = useState("");
@@ -65,8 +66,9 @@ export function AdminUserManager({ initialUsers }: AdminUserManagerProps) {
 
   async function handleToggleStatus(adminUser: AppUser) {
     const nextStatus = !adminUser.isActive;
+    const effectiveCurrentUserId = user?.id ?? currentUserId;
 
-    if (!nextStatus && adminUser.id === user?.id) {
+    if (!nextStatus && adminUser.id === effectiveCurrentUserId) {
       toast.error("You cannot deactivate your own admin account");
       return;
     }
@@ -92,7 +94,9 @@ export function AdminUserManager({ initialUsers }: AdminUserManagerProps) {
   }
 
   async function handleDelete(adminUser: AppUser) {
-    if (adminUser.id === user?.id) {
+    const effectiveCurrentUserId = user?.id ?? currentUserId;
+
+    if (adminUser.id === effectiveCurrentUserId) {
       toast.error("You cannot delete your own admin account");
       return;
     }
@@ -168,7 +172,8 @@ export function AdminUserManager({ initialUsers }: AdminUserManagerProps) {
 
           {items.map((adminUser) => {
             const isBusy = busyUserId === adminUser.id;
-            const isSelf = adminUser.id === user?.id;
+            const effectiveCurrentUserId = user?.id ?? currentUserId;
+            const isSelf = adminUser.id === effectiveCurrentUserId;
             const disablingLastActiveAdmin = adminUser.isActive && activeAdminCount <= 1;
 
             return (
