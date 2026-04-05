@@ -1,8 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { ArrowLeft, CircleCheck, ShieldCheck, Truck } from "lucide-react";
 
 import { AddToCartInline } from "@/components/add-to-cart-inline";
+import { ProductGallery } from "@/components/product-gallery";
 import { Badge } from "@/components/ui/badge";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
 
@@ -67,75 +67,52 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
 
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-zinc-200 bg-white px-4 py-3">
-        <div className="flex items-center gap-2 text-sm text-zinc-600">
-          <Link href="/" className="hover:text-zinc-900">Home</Link>
+      <div className="flex items-center justify-between gap-3 bg-zinc-50/50 backdrop-blur-md px-4 py-3 -mx-4 sm:mx-0 sm:rounded-2xl sm:border sm:border-zinc-200">
+        <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+          <Link href="/" className="transition-colors hover:text-zinc-900">Home</Link>
           <span>/</span>
-          <Link href={`/category/${product.categorySlug}`} className="hover:text-zinc-900">{product.categoryName}</Link>
+          <Link href={`/category/${product.categorySlug}`} className="transition-colors hover:text-zinc-900">{product.categoryName}</Link>
           <span>/</span>
-          <span className="line-clamp-1 text-zinc-900">{product.name}</span>
+          <span className="line-clamp-1 font-medium text-zinc-900">{product.name}</span>
         </div>
-        <Link href={`/category/${product.categorySlug}`} className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-700 hover:text-zinc-900">
+        <Link href={`/category/${product.categorySlug}`} className="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] pt-4">
         <section className="space-y-4">
-          <div className="overflow-hidden rounded-3xl border border-zinc-200 bg-linear-to-br from-zinc-100 via-white to-zinc-100 p-4 shadow-sm">
-            <div className="relative aspect-4/3 overflow-hidden rounded-2xl bg-white">
-              <img
-                src={galleryImages[0]}
-                alt={product.name}
-                className="h-full w-full object-contain p-2"
-              />
-            </div>
-          </div>
-
-          {galleryImages.length > 1 && (
-            <div className="grid grid-cols-4 gap-3">
-              {galleryImages.slice(0, 4).map((image, index) => (
-                <article
-                  key={`${image}-${index}`}
-                  className={`overflow-hidden rounded-xl border bg-white p-2 ${index === 0 ? "border-(--accent) ring-2 ring-(--accent)/20" : "border-zinc-200"}`}
-                >
-                  <div className="relative aspect-square overflow-hidden rounded-lg bg-zinc-50">
-                    <img src={image} alt={`${product.name} view ${index + 1}`} className="h-full w-full object-contain" />
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+          <ProductGallery images={galleryImages} productName={product.name} />
 
           {product.description ? (
-            <article className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Description</p>
+            <article className="pt-8">
+              <h2 className="text-xl font-medium tracking-tight text-zinc-900 mb-6 border-b border-zinc-100 pb-2">Overview</h2>
               <div
-                className="prose prose-zinc mt-3 max-w-none text-zinc-700"
+                className="prose prose-zinc mt-4 max-w-none text-[15px] leading-relaxed text-zinc-600 prose-headings:font-medium prose-a:text-blue-600 hover:prose-a:text-blue-500"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             </article>
           ) : (
-            <article className="rounded-2xl border border-zinc-200 bg-white p-5 text-zinc-600 shadow-sm">
-              No description provided.
+            <article className="pt-8 text-zinc-500 italic">
+              No detailed overview provided.
             </article>
           )}
 
           {specificationSections.length > 0 && (
-            <section className="space-y-3 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-              <h2 className="text-base font-semibold text-zinc-900">Specifications</h2>
-              <div className="space-y-4">
+            <section className="pt-10">
+              <h2 className="text-xl font-medium tracking-tight text-zinc-900 mb-6 border-b border-zinc-100 pb-2">Tech Specs</h2>
+              <div className="space-y-8">
                 {specificationSections.map((section) => (
-                  <section key={section.title} className="space-y-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-zinc-600">{section.title}</h3>
-                    <div className="grid gap-2 sm:grid-cols-2">
+                  <section key={section.title} className="space-y-4">
+                    <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500">{section.title}</h3>
+                    <div className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                       {section.rows.map((row) => (
                         <div
                           key={`${section.title}-${row.key}`}
-                          className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2"
+                          className="flex flex-col border-b border-zinc-100 pb-3"
                         >
-                          <p className="text-[11px] uppercase tracking-[0.14em] text-zinc-500">{row.key}</p>
-                          <p className="text-sm font-medium text-zinc-800">{row.value}</p>
+                          <span className="text-sm text-zinc-500">{row.key}</span>
+                          <span className="text-sm font-medium text-zinc-900 mt-1">{row.value}</span>
                         </div>
                       ))}
                     </div>
@@ -146,76 +123,69 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
           )}
         </section>
 
-        <aside className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:h-fit">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline" className="uppercase tracking-[0.16em]">{product.categoryName}</Badge>
-            {product.brandName && <Badge variant="outline">{product.brandName}</Badge>}
-            <Badge variant={product.stock > 0 ? "secondary" : "outline"} className={product.stock > 0 ? "bg-emerald-100 text-emerald-700" : ""}>
-              {product.stock > 0 ? "In Stock" : "Out Of Stock"}
-            </Badge>
-            {product.isNewArrival && <Badge variant="secondary">New Arrival</Badge>}
-            {product.isBestSeller && <Badge variant="secondary">Best Seller</Badge>}
-            {product.isFeatured && <Badge variant="secondary">Featured</Badge>}
+        <aside className="space-y-8 lg:sticky lg:top-24 lg:h-fit">
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              <Badge variant="outline" className="rounded-full bg-zinc-50 text-xs font-medium text-zinc-600 border-zinc-200 px-3 py-1">{product.categoryName}</Badge>
+              {product.brandName && <Badge variant="outline" className="rounded-full bg-zinc-50 text-xs font-medium text-zinc-600 border-zinc-200 px-3 py-1">{product.brandName}</Badge>}
+              <Badge variant="secondary" className={`rounded-full px-3 py-1 text-xs font-medium ${product.stock > 0 ? "bg-green-100 text-green-700 hover:bg-green-200/80" : "bg-red-100 text-red-700 hover:bg-red-200/80"}`}>
+                {product.stock > 0 ? "In Stock" : "Out Of Stock"}
+              </Badge>
+              {product.isNewArrival && <Badge variant="secondary" className="rounded-full bg-blue-100 text-blue-700 px-3 py-1 text-xs font-medium">New Arrival</Badge>}
+              {product.isBestSeller && <Badge variant="secondary" className="rounded-full bg-amber-100 text-amber-700 px-3 py-1 text-xs font-medium">Best Seller</Badge>}
+            </div>
+
+            <h1 className="text-4xl font-semibold tracking-tight text-zinc-900">{product.name}</h1>
+            {product.shortDescription && <p className="text-lg text-zinc-500 leading-relaxed">{product.shortDescription}</p>}
           </div>
 
-          <h1 className="text-3xl font-semibold leading-tight text-zinc-900">{product.name}</h1>
-          {product.shortDescription && <p className="text-sm text-zinc-600">{product.shortDescription}</p>}
+          <div className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-medium tracking-tight text-zinc-900">৳ {discountedPrice.toLocaleString()}</span>
+                {hasDiscount && (
+                  <span className="text-lg text-zinc-400 line-through">৳ {product.originalPrice.toLocaleString()}</span>
+                )}
+              </div>
 
-          <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
-            <div className="flex flex-wrap items-end gap-3">
-              <p className="text-3xl font-semibold text-zinc-900">৳ {discountedPrice.toLocaleString()}</p>
               {hasDiscount && (
-                <p className="text-sm font-medium text-zinc-500 line-through">৳ {product.originalPrice.toLocaleString()}</p>
+                <span className="text-sm font-medium text-green-600">
+                  Save ৳ {savingsAmount.toLocaleString()} ({savingsPercent}%)
+                </span>
+              )}
+
+              {hasLoyalPrice && (
+                <span className="text-sm font-medium text-blue-600 mt-1">
+                  Loyalty Price: ৳ {product.loyalCustomerPrice.toLocaleString()}
+                </span>
               )}
             </div>
 
-            {hasDiscount && (
-              <p className="mt-1 text-sm font-medium text-emerald-700">
-                Discount saves ৳ {savingsAmount.toLocaleString()} ({savingsPercent}%)
+            <div className="pt-2">
+              <AddToCartInline productId={product.id} stock={product.stock} />
+            </div>
+
+            <div className="grid gap-3 p-5 mt-6 border-t border-zinc-100">
+              {product.isFreeDelivery && (
+                <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                  <Truck className="h-4 w-4 text-zinc-900" /> Free nationwide delivery
+                </p>
+              )}
+              {(product.isOfficialWarranty || (product.warrantyMonths ?? 0) > 0) && (
+                <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                  <ShieldCheck className="h-4 w-4 text-zinc-900" />
+                  {product.warrantyMonths ? `${product.warrantyMonths}-month official warranty` : "Official warranty support"}
+                </p>
+              )}
+              <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                <CircleCheck className="h-4 w-4 text-zinc-900" /> Secure checkout-ready cart flow
               </p>
-            )}
-
-            {hasLoyalPrice && (
-              <p className="mt-1 text-sm font-medium text-blue-700">
-                Loyal customer price: ৳ {product.loyalCustomerPrice.toLocaleString()}
-              </p>
-            )}
-
-            <p className="mt-2 text-sm text-zinc-600">Stock available: {product.stock}</p>
-          </div>
-
-          <div className="space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
-            <p className="text-sm font-semibold text-zinc-900">Purchase Options</p>
-            <AddToCartInline productId={product.id} stock={product.stock} />
-          </div>
-
-          <div className="space-y-2 rounded-2xl border border-zinc-200 bg-linear-to-br from-zinc-50 to-white p-4">
-            {product.isFreeDelivery && (
-              <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                <Truck className="h-4 w-4 text-(--accent)" /> Free nationwide delivery
-              </p>
-            )}
-            {(product.isOfficialWarranty || (product.warrantyMonths ?? 0) > 0) && (
-              <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                <ShieldCheck className="h-4 w-4 text-(--accent)" />
-                {product.warrantyMonths ? `${product.warrantyMonths}-month official warranty` : "Official warranty support"}
-              </p>
-            )}
-            <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
-              <CircleCheck className="h-4 w-4 text-(--accent)" /> Secure checkout-ready cart flow
-            </p>
-            {product.isCashOnDelivery && <p className="text-sm text-zinc-700">Cash on Delivery available</p>}
-            {product.isEmiAvailable && <p className="text-sm text-zinc-700">EMI options available</p>}
-          </div>
-
-          <div className="pt-1">
-            <Link href="/" className="text-sm font-medium text-zinc-600 underline underline-offset-4 hover:text-zinc-900">
-              Continue shopping
-            </Link>
+              {product.isCashOnDelivery && <p className="text-sm text-zinc-600">Cash on Delivery available</p>}
+              {product.isEmiAvailable && <p className="text-sm text-zinc-600">EMI options available</p>}
+            </div>
           </div>
         </aside>
       </div>
-
     </div>
   );
 }
