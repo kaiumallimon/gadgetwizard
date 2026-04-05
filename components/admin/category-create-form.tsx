@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Image as ImageIcon, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
@@ -25,7 +26,6 @@ function safeErrorMessage(error: unknown, fallback: string) {
 
 export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
   const { token } = useAuthStore();
-  const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
@@ -48,9 +48,9 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
       setIsUploadingImage(true);
       const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
       setForm((prev) => ({ ...prev, imageUrl: response.item.url }));
-      setNotice("Category image uploaded.");
+      toast.success("Category image uploaded.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Category image upload failed"));
+      toast.error(safeErrorMessage(error, "Category image upload failed"));
     } finally {
       setIsUploadingImage(false);
     }
@@ -58,12 +58,12 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
 
   async function handleCreateCategory() {
     if (!form.name.trim()) {
-      setNotice("Category name is required.");
+      toast.error("Category name is required.");
       return;
     }
 
     if (form.isHeaderCategory && headerPinnedCount >= 8) {
-      setNotice("Header category limit reached (8). Unpin one before adding another.");
+      toast.error("Header category limit reached (8). Unpin one before adding another.");
       return;
     }
 
@@ -81,9 +81,9 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
       );
 
       setForm({ name: "", imageUrl: "", isHeaderCategory: false, isFeatured: false });
-      setNotice("Category created successfully.");
+      toast.success("Category created successfully.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Category creation failed"));
+      toast.error(safeErrorMessage(error, "Category creation failed"));
     } finally {
       setIsSaving(false);
     }
@@ -96,12 +96,6 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
         <CardDescription>Use this page to create categories, upload images, and control header/storefront visibility.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {notice && (
-          <div className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-            {notice}
-          </div>
-        )}
-
         <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <label className={fieldWrapClass}>
             <span className={fieldLabelClass}>Category Name</span>

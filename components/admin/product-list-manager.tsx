@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ExternalLink, Pencil, Power, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Product } from "@/lib/client/types";
@@ -51,7 +52,6 @@ function countSpecificationEntries(specifications: Record<string, unknown> | nul
 export function ProductListManager({ initialProducts }: ProductListManagerProps) {
   const { token } = useAuthStore();
   const [items, setItems] = useState(initialProducts);
-  const [notice, setNotice] = useState<string | null>(null);
 
   async function toggleActive(product: Product) {
     try {
@@ -103,9 +103,9 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
       setItems((previous) =>
         previous.map((entry) => (entry.id === product.id ? response.item : entry)),
       );
-      setNotice(!product.isActive ? "Product activated." : "Product deactivated.");
+      toast.success(!product.isActive ? "Product activated." : "Product deactivated.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to update product status");
+      toast.error(error instanceof Error ? error.message : "Unable to update product status");
     }
   }
 
@@ -118,16 +118,14 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
     try {
       await apiClient.adminDeleteProduct(product.id, token ?? undefined);
       setItems((previous) => previous.filter((entry) => entry.id !== product.id));
-      setNotice("Product deleted.");
+      toast.success("Product deleted.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to delete product");
+      toast.error(error instanceof Error ? error.message : "Unable to delete product");
     }
   }
 
   return (
     <div className="space-y-4">
-      {notice && <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">{notice}</p>}
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((product) => (
           <Card key={product.id}>

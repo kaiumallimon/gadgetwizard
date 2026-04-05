@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Image as ImageIcon, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand } from "@/lib/client/types";
@@ -23,7 +24,6 @@ function safeErrorMessage(error: unknown, fallback: string) {
 
 export function BrandCreateForm({ brands }: BrandCreateFormProps) {
   const { token } = useAuthStore();
-  const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
@@ -45,9 +45,9 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
       setIsUploadingImage(true);
       const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
       setForm((prev) => ({ ...prev, imageUrl: response.item.url }));
-      setNotice("Brand image uploaded.");
+      toast.success("Brand image uploaded.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Brand image upload failed"));
+      toast.error(safeErrorMessage(error, "Brand image upload failed"));
     } finally {
       setIsUploadingImage(false);
     }
@@ -55,13 +55,13 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
 
   async function handleCreateBrand() {
     if (!form.name.trim()) {
-      setNotice("Brand name is required.");
+      toast.error("Brand name is required.");
       return;
     }
 
     const parsedSortOrder = Number(form.sortOrder);
     if (!Number.isFinite(parsedSortOrder) || !Number.isInteger(parsedSortOrder) || parsedSortOrder < 0) {
-      setNotice("Sort order must be a positive integer.");
+      toast.error("Sort order must be a positive integer.");
       return;
     }
 
@@ -88,9 +88,9 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
         isActive: true,
         isFeatured: false,
       });
-      setNotice("Brand created successfully.");
+      toast.success("Brand created successfully.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Brand creation failed"));
+      toast.error(safeErrorMessage(error, "Brand creation failed"));
     } finally {
       setIsSaving(false);
     }
@@ -103,12 +103,6 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
         <CardDescription>Add brand identity with logo/image and visibility flags.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {notice && (
-          <div className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-            {notice}
-          </div>
-        )}
-
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Brand Name</span>

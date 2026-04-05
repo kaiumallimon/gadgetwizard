@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Edit3, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand } from "@/lib/client/types";
@@ -23,7 +24,6 @@ function safeErrorMessage(error: unknown, fallback: string) {
 export function BrandListManager({ initialBrands }: BrandListManagerProps) {
   const { token } = useAuthStore();
   const [items, setItems] = useState(initialBrands);
-  const [notice, setNotice] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const sortedItems = useMemo(
@@ -41,9 +41,9 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
       setDeletingId(brand.id);
       await apiClient.adminDeleteBrand(brand.id, token ?? undefined);
       setItems((previous) => previous.filter((entry) => entry.id !== brand.id));
-      setNotice("Brand deleted.");
+      toast.success("Brand deleted.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Unable to delete brand"));
+      toast.error(safeErrorMessage(error, "Unable to delete brand"));
     } finally {
       setDeletingId(null);
     }
@@ -51,8 +51,6 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
 
   return (
     <div className="space-y-4">
-      {notice && <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">{notice}</p>}
-
       <div className="grid gap-4 md:grid-cols-2">
         {sortedItems.map((brand) => {
           return (

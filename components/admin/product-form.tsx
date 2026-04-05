@@ -3,6 +3,7 @@
 import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand, Category, Product } from "@/lib/client/types";
@@ -236,7 +237,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const [isActive, setIsActive] = useState(initialProduct?.isActive ?? true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<string | null>(null);
 
   const categoryOptions = useMemo(() => categories, [categories]);
 
@@ -316,7 +316,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
 
     try {
       setUploadingImage(true);
-      setNotice(null);
 
       const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
       setImages((previous) => {
@@ -325,8 +324,9 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         }
         return [...previous, response.item.url];
       });
+      toast.success("Product image uploaded.");
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Image upload failed");
+      toast.error(error instanceof Error ? error.message : "Image upload failed");
     } finally {
       setUploadingImage(false);
     }
@@ -343,7 +343,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setNotice(null);
 
     const parsedPrice = Number(price);
     const parsedStock = Number(stock);
@@ -358,7 +357,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     const parsedRatingCount = Number(ratingCount);
 
     if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
-      setNotice("Name, price, stock, category, and at least one uploaded image are required.");
+      toast.error("Name, price, stock, category, and at least one uploaded image are required.");
       return;
     }
 
@@ -371,42 +370,42 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       metaDescription.trim().length > 500 ||
       generatedSku.trim().length > 120
     ) {
-      setNotice("One or more text fields exceed allowed length (name, descriptions, model, color, SEO, or SKU).");
+      toast.error("One or more text fields exceed allowed length (name, descriptions, model, color, SEO, or SKU).");
       return;
     }
 
     if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
-      setNotice("Original price must be a valid non-negative number.");
+      toast.error("Original price must be a valid non-negative number.");
       return;
     }
 
     if (!Number.isInteger(parsedStock) || parsedStock < 0) {
-      setNotice("Stock must be a non-negative whole number.");
+      toast.error("Stock must be a non-negative whole number.");
       return;
     }
 
     if (!Number.isInteger(parsedCategoryId) || parsedCategoryId <= 0) {
-      setNotice("Category is invalid.");
+      toast.error("Category is invalid.");
       return;
     }
 
     if (parsedDiscountedPrice !== null && (!Number.isFinite(parsedDiscountedPrice) || parsedDiscountedPrice > parsedPrice)) {
-      setNotice("Discounted price must be a valid number and cannot be higher than original price.");
+      toast.error("Discounted price must be a valid number and cannot be higher than original price.");
       return;
     }
 
     if (parsedLoyalCustomerPrice !== null && (!Number.isFinite(parsedLoyalCustomerPrice) || parsedLoyalCustomerPrice > parsedPrice)) {
-      setNotice("Loyal customer price must be a valid number and cannot be higher than original price.");
+      toast.error("Loyal customer price must be a valid number and cannot be higher than original price.");
       return;
     }
 
     if (parsedDiscountedPrice !== null && parsedDiscountedPrice < 0) {
-      setNotice("Discounted price cannot be negative.");
+      toast.error("Discounted price cannot be negative.");
       return;
     }
 
     if (parsedLoyalCustomerPrice !== null && parsedLoyalCustomerPrice < 0) {
-      setNotice("Loyal customer price cannot be negative.");
+      toast.error("Loyal customer price cannot be negative.");
       return;
     }
 
@@ -416,7 +415,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       (parsedWeightGrams !== null && !Number.isInteger(parsedWeightGrams)) ||
       !Number.isFinite(parsedRatingAvg) ||
       !Number.isInteger(parsedRatingCount)) {
-      setNotice("Please check numeric fields like brand, warranty, return window, weight, and ratings.");
+      toast.error("Please check numeric fields like brand, warranty, return window, weight, and ratings.");
       return;
     }
 
@@ -425,12 +424,12 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       (parsedReturnWindowDays !== null && (parsedReturnWindowDays < 0 || parsedReturnWindowDays > 365)) ||
       (parsedWeightGrams !== null && (parsedWeightGrams < 0 || parsedWeightGrams > 100000))
     ) {
-      setNotice("Warranty, return window, or weight is outside allowed range.");
+      toast.error("Warranty, return window, or weight is outside allowed range.");
       return;
     }
 
     if (parsedRatingAvg < 0 || parsedRatingAvg > 5 || parsedRatingCount < 0) {
-      setNotice("Rating average must be between 0 and 5, and rating count must be non-negative.");
+      toast.error("Rating average must be between 0 and 5, and rating count must be non-negative.");
       return;
     }
 
@@ -444,12 +443,12 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       .filter((entry) => entry.length > 0);
 
     if (tags.length > 32 || tags.some((entry) => entry.length > 40)) {
-      setNotice("Tags support up to 32 items, each up to 40 characters.");
+      toast.error("Tags support up to 32 items, each up to 40 characters.");
       return;
     }
 
     if (highlightPoints.length > 12 || highlightPoints.some((entry) => entry.length > 120)) {
-      setNotice("Highlight points support up to 12 lines, each up to 120 characters.");
+      toast.error("Highlight points support up to 12 lines, each up to 120 characters.");
       return;
     }
 
@@ -503,14 +502,15 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         await apiClient.adminUpdateProduct(initialProduct.id, payload, token ?? undefined);
       }
 
+      toast.success(mode === "create" ? "Product created successfully." : "Product updated successfully.");
       router.push("/admin/products");
       router.refresh();
     } catch (error) {
       if (error instanceof Error) {
         const detailsMessage = getValidationDetailsMessage((error as { details?: unknown }).details);
-        setNotice(detailsMessage ? `${error.message} (${detailsMessage})` : error.message);
+        toast.error(detailsMessage ? `${error.message} (${detailsMessage})` : error.message);
       } else {
-        setNotice("Unable to save product");
+        toast.error("Unable to save product");
       }
     } finally {
       setBusy(false);
@@ -519,12 +519,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      {notice && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4 text-sm text-red-700">{notice}</CardContent>
-        </Card>
-      )}
-
       <Card>
         <CardHeader>
           <CardTitle>{mode === "create" ? "Create Product" : "Update Product"}</CardTitle>

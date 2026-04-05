@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Save, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand } from "@/lib/client/types";
@@ -25,7 +26,6 @@ function safeErrorMessage(error: unknown, fallback: string) {
 export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
-  const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
@@ -47,9 +47,9 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
       setIsUploadingImage(true);
       const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
       setForm((prev) => ({ ...prev, imageUrl: response.item.url }));
-      setNotice("Brand image uploaded.");
+      toast.success("Brand image uploaded.");
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Brand image upload failed"));
+      toast.error(safeErrorMessage(error, "Brand image upload failed"));
     } finally {
       setIsUploadingImage(false);
     }
@@ -57,13 +57,13 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
 
   async function handleSaveBrand() {
     if (!form.name.trim()) {
-      setNotice("Brand name is required.");
+      toast.error("Brand name is required.");
       return;
     }
 
     const parsedSortOrder = Number(form.sortOrder);
     if (!Number.isFinite(parsedSortOrder) || !Number.isInteger(parsedSortOrder) || parsedSortOrder < 0) {
-      setNotice("Sort order must be a positive integer.");
+      toast.error("Sort order must be a positive integer.");
       return;
     }
 
@@ -83,11 +83,11 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
         token ?? undefined,
       );
 
-      setNotice("Brand updated successfully.");
+      toast.success("Brand updated successfully.");
       router.push("/admin/brands");
       router.refresh();
     } catch (error) {
-      setNotice(safeErrorMessage(error, "Unable to update brand"));
+      toast.error(safeErrorMessage(error, "Unable to update brand"));
     } finally {
       setIsSaving(false);
     }
@@ -100,12 +100,6 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
         <CardDescription>Update brand details, logo, ordering and visibility.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {notice && (
-          <div className="rounded-md border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-orange-700">
-            {notice}
-          </div>
-        )}
-
         <div className="grid gap-3 md:grid-cols-2">
           <label className="space-y-1">
             <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Brand Name</span>
