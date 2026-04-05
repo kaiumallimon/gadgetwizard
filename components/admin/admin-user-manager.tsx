@@ -135,7 +135,7 @@ export function AdminUserManager({ initialUsers, currentUserId }: AdminUserManag
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[360px_1fr]">
+    <div className="grid items-start gap-6 xl:grid-cols-[360px_1fr]">
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Create Admin Account</CardTitle>
