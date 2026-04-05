@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { badRequest } from "@/lib/server/core/errors";
 import { requireServerRole } from "@/lib/server/auth/server-session";
+import { getAdminBrands } from "@/lib/server/services/brand-service";
 import { getAdminCategories } from "@/lib/server/services/category-service";
 import { getAdminProductById } from "@/lib/server/services/product-service";
 
@@ -32,7 +33,11 @@ export default async function AdminEditProductPage({ params }: { params: Promise
     throw badRequest("Invalid product id");
   }
 
-  const [categories, product] = await Promise.all([getAdminCategories(), getAdminProductById(productId)]);
+  const [categories, brands, product] = await Promise.all([
+    getAdminCategories(),
+    getAdminBrands(),
+    getAdminProductById(productId),
+  ]);
 
   return (
     <div className="w-full space-y-6">
@@ -70,7 +75,7 @@ export default async function AdminEditProductPage({ params }: { params: Promise
         </div>
       </header>
 
-      <ProductForm mode="edit" categories={categories} initialProduct={product} />
+      <ProductForm mode="edit" categories={categories} brands={brands} initialProduct={product} />
     </div>
   );
 }

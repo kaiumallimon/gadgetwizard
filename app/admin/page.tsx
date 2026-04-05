@@ -28,6 +28,8 @@ export default async function AdminPage() {
 
   const quickLinks = [
     { href: "/admin/categories", label: "Categories", description: "Create, update, delete, and pin header categories." },
+    { href: "/admin/brands", label: "Brands", description: "Manage brand logos, visibility, and sort order." },
+    { href: "/admin/brands/new", label: "Add Brand", description: "Create new brands that can be assigned in product forms." },
     { href: "/admin/products", label: "Products", description: "View, update, and delete catalog products." },
     {
       href: "/admin/products/new",

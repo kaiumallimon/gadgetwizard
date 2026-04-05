@@ -16,6 +16,7 @@ These SQL files are ordered and should be executed sequentially.
 10. 010_drop_banner_mobile_image.sql
 11. 011_seed_dummy_products.sql (optional seed data)
 12. 012_create_password_reset_tokens.sql
+13. 013_add_brands_and_product_metadata.sql
 
 ## Run Migrations Manually
 
@@ -35,6 +36,7 @@ mysql -u <username> -p <database_name> < migrations/010_drop_banner_mobile_image
 # Optional demo seed
 mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
 mysql -u <username> -p <database_name> < migrations/012_create_password_reset_tokens.sql
+mysql -u <username> -p <database_name> < migrations/013_add_brands_and_product_metadata.sql
 ```
 
 ## Notes
@@ -50,3 +52,4 @@ mysql -u <username> -p <database_name> < migrations/012_create_password_reset_to
 - Categories support is_header_category flag for curated header navigation links.
 - 011 is optional and inserts or updates dummy products for development/testing.
 - 012 stores one-time password reset token fingerprints for universal user/admin reset flow.
+- 013 adds brand management plus production-grade product metadata and pricing fields.

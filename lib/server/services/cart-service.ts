@@ -14,13 +14,22 @@ const REWARD_POINTS_DISCOUNT_THRESHOLD = 100;
 
 function getAppliedDiscountPrice(input: {
   userRewardPoints: number;
+  originalPrice: number;
   discountedPrice: number | null;
+  loyalCustomerPrice: number;
 }): number | null {
+  const discountedPrice = input.discountedPrice;
+  const loyalPrice = input.loyalCustomerPrice < input.originalPrice ? input.loyalCustomerPrice : null;
+
   if (input.userRewardPoints < REWARD_POINTS_DISCOUNT_THRESHOLD) {
-    return null;
+    return discountedPrice;
   }
 
-  return input.discountedPrice;
+  if (discountedPrice !== null && loyalPrice !== null) {
+    return Math.min(discountedPrice, loyalPrice);
+  }
+
+  return loyalPrice ?? discountedPrice;
 }
 
 export async function getCartForUser(userId: number) {
@@ -58,14 +67,16 @@ export async function addToCartForUser(input: {
 
   const appliedDiscountedPrice = getAppliedDiscountPrice({
     userRewardPoints: user.rewardPoints,
+    originalPrice: product.originalPrice,
     discountedPrice: product.discountedPrice,
+    loyalCustomerPrice: product.loyalCustomerPrice,
   });
 
   await addToCartItem({
     cartId: cart.id,
     productId: input.productId,
     quantity: input.quantity,
-    unitPrice: product.price,
+    unitPrice: product.originalPrice,
     appliedDiscountedPrice,
   });
 

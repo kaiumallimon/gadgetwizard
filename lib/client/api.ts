@@ -3,6 +3,7 @@ import type {
   AppUser,
   AuthSession,
   Banner,
+  Brand,
   Cart,
   Category,
   CdnFileAsset,
@@ -110,11 +111,16 @@ export const apiClient = {
     return apiFetch<{ items: Category[] }>("/api/categories");
   },
 
-  async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; search?: string }) {
+  async getBrands() {
+    return apiFetch<{ items: Brand[] }>("/api/brands");
+  },
+
+  async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string }) {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.pageSize) query.set("pageSize", String(params.pageSize));
     if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.brandSlug) query.set("brandSlug", params.brandSlug);
     if (params.search) query.set("search", params.search);
 
     return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
@@ -189,6 +195,53 @@ export const apiClient = {
     return apiFetch<{ items: Category[] }>("/api/admin/categories", { token });
   },
 
+  async adminGetBrands(token?: string) {
+    return apiFetch<{ items: Brand[] }>("/api/admin/brands", { token });
+  },
+
+  async adminCreateBrand(payload: {
+    name: string;
+    slug?: string;
+    imageUrl?: string | null;
+    description?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    isFeatured?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Brand }>("/api/admin/brands", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateBrand(
+    id: number,
+    payload: {
+      name: string;
+      slug?: string;
+      imageUrl?: string | null;
+      description?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+      isFeatured?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Brand }>(`/api/admin/brands/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteBrand(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/brands/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
   async adminCreateCategory(payload: {
     name: string;
     slug?: string;
@@ -235,13 +288,14 @@ export const apiClient = {
   },
 
   async adminGetProducts(
-    params: { page?: number; pageSize?: number; categorySlug?: string; search?: string },
+    params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string },
     token?: string,
   ) {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.pageSize) query.set("pageSize", String(params.pageSize));
     if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.brandSlug) query.set("brandSlug", params.brandSlug);
     if (params.search) query.set("search", params.search);
 
     return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
@@ -253,11 +307,39 @@ export const apiClient = {
   async adminCreateProduct(payload: {
     name: string;
     slug?: string;
+    shortDescription?: string | null;
     description?: string | null;
-    price: number;
+    price?: number;
+    originalPrice?: number;
     discountedPrice?: number | null;
+    loyalCustomerPrice?: number | null;
     stock: number;
     categoryId: number;
+    brandId?: number | null;
+    sku?: string | null;
+    modelNumber?: string | null;
+    color?: string | null;
+    warrantyMonths?: number | null;
+    returnWindowDays?: number | null;
+    weightGrams?: number | null;
+    tags?: string[] | null;
+    highlightPoints?: string[] | null;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ratingAvg?: number;
+    ratingCount?: number;
+    isFeatured?: boolean;
+    isNewArrival?: boolean;
+    isBestSeller?: boolean;
+    isTopRated?: boolean;
+    isTrending?: boolean;
+    isLimitedStock?: boolean;
+    isFreeDelivery?: boolean;
+    isCashOnDelivery?: boolean;
+    isEmiAvailable?: boolean;
+    isOfficialWarranty?: boolean;
+    isExchangeAvailable?: boolean;
+    isPreorder?: boolean;
     images: string[];
     specifications?: Record<string, unknown> | null;
     isActive?: boolean;
@@ -274,11 +356,39 @@ export const apiClient = {
     payload: {
       name: string;
       slug?: string;
+      shortDescription?: string | null;
       description?: string | null;
-      price: number;
+      price?: number;
+      originalPrice?: number;
       discountedPrice?: number | null;
+      loyalCustomerPrice?: number | null;
       stock: number;
       categoryId: number;
+      brandId?: number | null;
+      sku?: string | null;
+      modelNumber?: string | null;
+      color?: string | null;
+      warrantyMonths?: number | null;
+      returnWindowDays?: number | null;
+      weightGrams?: number | null;
+      tags?: string[] | null;
+      highlightPoints?: string[] | null;
+      metaTitle?: string | null;
+      metaDescription?: string | null;
+      ratingAvg?: number;
+      ratingCount?: number;
+      isFeatured?: boolean;
+      isNewArrival?: boolean;
+      isBestSeller?: boolean;
+      isTopRated?: boolean;
+      isTrending?: boolean;
+      isLimitedStock?: boolean;
+      isFreeDelivery?: boolean;
+      isCashOnDelivery?: boolean;
+      isEmiAvailable?: boolean;
+      isOfficialWarranty?: boolean;
+      isExchangeAvailable?: boolean;
+      isPreorder?: boolean;
       images: string[];
       specifications?: Record<string, unknown> | null;
       isActive?: boolean;

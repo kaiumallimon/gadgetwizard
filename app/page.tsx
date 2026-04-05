@@ -17,8 +17,10 @@ export default async function HomePage() {
   ]);
 
   const categoryHighlights = categories.slice(0, 12);
-  const newTrends = productPool.items.slice(0, 6);
-  const featuredGrid = productPool.items.slice(0, 8);
+  const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
+  const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
+  const fallbackTrends = newTrends.length > 0 ? newTrends : productPool.items.slice(0, 6);
+  const fallbackFeatured = featuredGrid.length > 0 ? featuredGrid : productPool.items.slice(0, 8);
 
   const categoryImageById = new Map<number, string>();
   for (const product of productPool.items) {
@@ -94,10 +96,10 @@ export default async function HomePage() {
           </h2>
 
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-            {newTrends.map((product) => (
+            {fallbackTrends.map((product) => (
               <article
                 key={product.id}
-                className="min-w-[220px] rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm"
+                className="min-w-55 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm"
               >
                 <Link href={`/product/${product.slug}`}>
                   <div className="h-36 overflow-hidden rounded-xl bg-zinc-100">
@@ -113,7 +115,11 @@ export default async function HomePage() {
                   <Link href={`/product/${product.slug}`} className="line-clamp-2 font-semibold text-zinc-900 hover:text-(--accent)">
                     {product.name}
                   </Link>
-                  <p className="text-xl font-semibold text-zinc-950">৳ {product.price.toLocaleString()}</p>
+                  <p className="text-xl font-semibold text-zinc-950">
+                    ৳ {(product.discountedPrice !== null && product.discountedPrice < product.originalPrice
+                      ? product.discountedPrice
+                      : product.originalPrice).toLocaleString()}
+                  </p>
                 </div>
               </article>
             ))}
@@ -130,7 +136,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredGrid.map((product) => (
+            {fallbackFeatured.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

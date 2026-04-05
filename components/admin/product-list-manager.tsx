@@ -60,11 +60,39 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
         {
           name: product.name,
           slug: product.slug,
+          shortDescription: product.shortDescription,
           description: product.description,
-          price: product.price,
+          price: product.originalPrice,
+          originalPrice: product.originalPrice,
           discountedPrice: product.discountedPrice,
+          loyalCustomerPrice: product.loyalCustomerPrice,
           stock: product.stock,
           categoryId: product.categoryId,
+          brandId: product.brandId,
+          sku: product.sku,
+          modelNumber: product.modelNumber,
+          color: product.color,
+          warrantyMonths: product.warrantyMonths,
+          returnWindowDays: product.returnWindowDays,
+          weightGrams: product.weightGrams,
+          tags: product.tags,
+          highlightPoints: product.highlightPoints,
+          metaTitle: product.metaTitle,
+          metaDescription: product.metaDescription,
+          ratingAvg: product.ratingAvg,
+          ratingCount: product.ratingCount,
+          isFeatured: product.isFeatured,
+          isNewArrival: product.isNewArrival,
+          isBestSeller: product.isBestSeller,
+          isTopRated: product.isTopRated,
+          isTrending: product.isTrending,
+          isLimitedStock: product.isLimitedStock,
+          isFreeDelivery: product.isFreeDelivery,
+          isCashOnDelivery: product.isCashOnDelivery,
+          isEmiAvailable: product.isEmiAvailable,
+          isOfficialWarranty: product.isOfficialWarranty,
+          isExchangeAvailable: product.isExchangeAvailable,
+          isPreorder: product.isPreorder,
           images: product.images,
           specifications: product.specifications,
           isActive: !product.isActive,
@@ -108,14 +136,29 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
                 <CardTitle className="line-clamp-2 text-base">{product.name}</CardTitle>
                 <Badge variant={product.isActive ? "default" : "outline"}>{product.isActive ? "Active" : "Inactive"}</Badge>
               </div>
-              <p className="text-xs text-zinc-500">{product.categoryName} | Stock: {product.stock}</p>
+              <p className="text-xs text-zinc-500">
+                {product.categoryName}
+                {product.brandName ? ` | ${product.brandName}` : ""}
+                {` | Stock: ${product.stock}`}
+              </p>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-zinc-600">Price: ৳ {product.price.toLocaleString()}</p>
+              <div className="space-y-1 text-sm text-zinc-600">
+                <p>Original: ৳ {product.originalPrice.toLocaleString()}</p>
+                <p>Discounted: {product.discountedPrice ? `৳ ${product.discountedPrice.toLocaleString()}` : "N/A"}</p>
+                <p>Loyal: ৳ {product.loyalCustomerPrice.toLocaleString()}</p>
+              </div>
               <p className="line-clamp-3 text-sm text-zinc-600">{stripHtml(product.description)}</p>
               <p className="text-xs text-zinc-500">
                 Specs: {countSpecificationEntries(product.specifications)}
               </p>
+              {(product.isFeatured || product.isNewArrival || product.isBestSeller) && (
+                <div className="flex flex-wrap gap-1">
+                  {product.isFeatured && <Badge variant="secondary">Featured</Badge>}
+                  {product.isNewArrival && <Badge variant="secondary">New</Badge>}
+                  {product.isBestSeller && <Badge variant="secondary">Best Seller</Badge>}
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2">
                 <Button asChild size="sm" variant="outline">

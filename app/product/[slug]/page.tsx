@@ -57,10 +57,12 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const specificationSections = normalizeSpecificationSections(product.specifications);
   const fallbackImage = "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
   const galleryImages = product.images.length > 0 ? product.images : [fallbackImage];
-  const hasLoyalPrice = product.discountedPrice !== null;
-  const savingsAmount = hasLoyalPrice ? product.price - (product.discountedPrice ?? 0) : 0;
-  const savingsPercent = hasLoyalPrice && product.price > 0
-    ? Math.max(0, Math.round((savingsAmount / product.price) * 100))
+  const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
+  const hasLoyalPrice = product.loyalCustomerPrice < product.originalPrice;
+  const discountedPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
+  const savingsAmount = hasDiscount ? product.originalPrice - discountedPrice : 0;
+  const savingsPercent = hasDiscount && product.originalPrice > 0
+    ? Math.max(0, Math.round((savingsAmount / product.originalPrice) * 100))
     : 0;
 
   return (
@@ -147,24 +149,35 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
         <aside className="space-y-4 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm lg:sticky lg:top-24 lg:h-fit">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline" className="uppercase tracking-[0.16em]">{product.categoryName}</Badge>
+            {product.brandName && <Badge variant="outline">{product.brandName}</Badge>}
             <Badge variant={product.stock > 0 ? "secondary" : "outline"} className={product.stock > 0 ? "bg-emerald-100 text-emerald-700" : ""}>
               {product.stock > 0 ? "In Stock" : "Out Of Stock"}
             </Badge>
+            {product.isNewArrival && <Badge variant="secondary">New Arrival</Badge>}
+            {product.isBestSeller && <Badge variant="secondary">Best Seller</Badge>}
+            {product.isFeatured && <Badge variant="secondary">Featured</Badge>}
           </div>
 
           <h1 className="text-3xl font-semibold leading-tight text-zinc-900">{product.name}</h1>
+          {product.shortDescription && <p className="text-sm text-zinc-600">{product.shortDescription}</p>}
 
           <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4">
             <div className="flex flex-wrap items-end gap-3">
-              <p className="text-3xl font-semibold text-zinc-900">৳ {product.price.toLocaleString()}</p>
-              {hasLoyalPrice && (
-                <p className="text-sm font-medium text-zinc-500 line-through">৳ {product.discountedPrice?.toLocaleString()}</p>
+              <p className="text-3xl font-semibold text-zinc-900">৳ {discountedPrice.toLocaleString()}</p>
+              {hasDiscount && (
+                <p className="text-sm font-medium text-zinc-500 line-through">৳ {product.originalPrice.toLocaleString()}</p>
               )}
             </div>
 
-            {hasLoyalPrice && (
+            {hasDiscount && (
               <p className="mt-1 text-sm font-medium text-emerald-700">
-                Loyalty price saves ৳ {savingsAmount.toLocaleString()} ({savingsPercent}%)
+                Discount saves ৳ {savingsAmount.toLocaleString()} ({savingsPercent}%)
+              </p>
+            )}
+
+            {hasLoyalPrice && (
+              <p className="mt-1 text-sm font-medium text-blue-700">
+                Loyal customer price: ৳ {product.loyalCustomerPrice.toLocaleString()}
               </p>
             )}
 
@@ -177,15 +190,22 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
           </div>
 
           <div className="space-y-2 rounded-2xl border border-zinc-200 bg-linear-to-br from-zinc-50 to-white p-4">
-            <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
-              <Truck className="h-4 w-4 text-(--accent)" /> Fast nationwide delivery
-            </p>
-            <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
-              <ShieldCheck className="h-4 w-4 text-(--accent)" /> Official warranty support
-            </p>
+            {product.isFreeDelivery && (
+              <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
+                <Truck className="h-4 w-4 text-(--accent)" /> Free nationwide delivery
+              </p>
+            )}
+            {(product.isOfficialWarranty || (product.warrantyMonths ?? 0) > 0) && (
+              <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
+                <ShieldCheck className="h-4 w-4 text-(--accent)" />
+                {product.warrantyMonths ? `${product.warrantyMonths}-month official warranty` : "Official warranty support"}
+              </p>
+            )}
             <p className="inline-flex items-center gap-2 text-sm text-zinc-700">
               <CircleCheck className="h-4 w-4 text-(--accent)" /> Secure checkout-ready cart flow
             </p>
+            {product.isCashOnDelivery && <p className="text-sm text-zinc-700">Cash on Delivery available</p>}
+            {product.isEmiAvailable && <p className="text-sm text-zinc-700">EMI options available</p>}
           </div>
 
           <div className="pt-1">

@@ -35,17 +35,61 @@ export interface Category {
   children?: Category[];
 }
 
+export interface Brand {
+  id: number;
+  name: string;
+  slug: string;
+  imageUrl: string | null;
+  description: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Product {
   id: number;
   name: string;
   slug: string;
+  shortDescription: string | null;
   description: string | null;
   price: number;
+  originalPrice: number;
   discountedPrice: number | null;
+  loyalCustomerPrice: number;
   stock: number;
   categoryId: number;
   categoryName: string;
   categorySlug: string;
+  brandId: number | null;
+  brandName: string | null;
+  brandSlug: string | null;
+  brandImageUrl: string | null;
+  sku: string | null;
+  modelNumber: string | null;
+  color: string | null;
+  warrantyMonths: number | null;
+  returnWindowDays: number | null;
+  weightGrams: number | null;
+  tags: string[];
+  highlightPoints: string[];
+  metaTitle: string | null;
+  metaDescription: string | null;
+  ratingAvg: number;
+  ratingCount: number;
+  isFeatured: boolean;
+  isNewArrival: boolean;
+  isBestSeller: boolean;
+  isTopRated: boolean;
+  isTrending: boolean;
+  isLimitedStock: boolean;
+  isFreeDelivery: boolean;
+  isCashOnDelivery: boolean;
+  isEmiAvailable: boolean;
+  isOfficialWarranty: boolean;
+  isExchangeAvailable: boolean;
+  isPreorder: boolean;
   images: string[];
   specifications: Record<string, unknown> | null;
   isActive: boolean;

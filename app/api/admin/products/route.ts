@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
       page: query.page,
       pageSize: query.pageSize,
       categorySlug: query.categorySlug,
+      brandSlug: query.brandSlug,
       search: query.search,
     });
 

@@ -17,6 +17,7 @@ import {
     Shield,
     ShoppingBag,
     ShoppingCart,
+    Tag,
     UserRound,
     Plus,
 } from "lucide-react";
@@ -72,6 +73,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         items: [
                             { href: "/admin/products", label: "Products", icon: Package, exact: true },
                             { href: "/admin/products/new", label: "Add Product", icon: Plus },
+                            { href: "/admin/brands", label: "Brands", icon: Tag, exact: true },
+                            { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
                         ]
                     },
                     {
@@ -163,7 +166,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             <div className="flex h-full flex-col overflow-hidden">
                 <div className="border-b border-zinc-200 p-4">
                     <div className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-sm">
+                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-orange-500 to-red-500 text-white shadow-sm">
                             <Shield className="h-4 w-4" />
                         </div>
                         <div>
@@ -188,7 +191,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                             className={cn(
                                                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
                                                 isActive(item)
-                                                    ? "bg-[var(--accent)] text-white"
+                                                    ? "bg-(--accent) text-white"
                                                     : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
                                             )}
                                         >

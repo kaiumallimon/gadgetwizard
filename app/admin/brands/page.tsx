@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ProductForm } from "@/components/admin/product-form";
+import { BrandListManager } from "@/components/admin/brand-list-manager";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,32 +13,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminBrands } from "@/lib/server/services/brand-service";
-import { getAdminCategories } from "@/lib/server/services/category-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminAddProductPage() {
+export default async function AdminBrandsPage() {
   try {
     await requireServerRole(["admin"]);
   } catch {
     redirect("/dashboard");
   }
 
-  const [categories, brands] = await Promise.all([getAdminCategories(), getAdminBrands()]);
+  const brands = await getAdminBrands();
 
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            
-            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Product</h1>
-            <p className="mt-2 text-sm text-zinc-600">
-              Create product entries with rich blog-style descriptions and specification key/value pairs.
-            </p>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Brand Management</h1>
+            <p className="mt-2 text-sm text-zinc-600">Update brand names, logos, sort order, and active status.</p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/admin/products">Back To Products</Link>
+          <Button asChild>
+            <Link href="/admin/brands/new">Add Brand</Link>
           </Button>
         </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">
@@ -51,20 +47,14 @@ export default async function AdminAddProductPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbLink asChild>
-                  <Link href="/admin/products">Products</Link>
-                </BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Add Product</BreadcrumbPage>
+                <BreadcrumbPage>Brands</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
 
-      <ProductForm mode="create" categories={categories} brands={brands} />
+      <BrandListManager initialBrands={brands} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { ProductForm } from "@/components/admin/product-form";
+import { BrandCreateForm } from "@/components/admin/brand-create-form";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,32 +13,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminBrands } from "@/lib/server/services/brand-service";
-import { getAdminCategories } from "@/lib/server/services/category-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminAddProductPage() {
+export default async function AdminAddBrandPage() {
   try {
     await requireServerRole(["admin"]);
   } catch {
     redirect("/dashboard");
   }
 
-  const [categories, brands] = await Promise.all([getAdminCategories(), getAdminBrands()]);
+  const brands = await getAdminBrands();
 
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            
-            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Product</h1>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Brand</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              Create product entries with rich blog-style descriptions and specification key/value pairs.
+              Create brand records with logo/image and visibility settings.
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/admin/products">Back To Products</Link>
+            <Link href="/admin/brands">Back To Brands</Link>
           </Button>
         </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">
@@ -52,19 +50,19 @@ export default async function AdminAddProductPage() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link href="/admin/products">Products</Link>
+                  <Link href="/admin/brands">Brands</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Add Product</BreadcrumbPage>
+                <BreadcrumbPage>Add Brand</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
 
-      <ProductForm mode="create" categories={categories} brands={brands} />
+      <BrandCreateForm brands={brands} />
     </div>
   );
 }

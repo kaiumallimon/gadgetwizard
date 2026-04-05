@@ -5,17 +5,19 @@ import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
-import type { Category, Product } from "@/lib/client/types";
+import type { Brand, Category, Product } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProductFormProps {
   mode: "create" | "edit";
   categories: Category[];
+  brands: Brand[];
   initialProduct?: Product;
 }
 
@@ -107,22 +109,65 @@ function toSpecificationObject(groups: SpecGroup[]): Record<string, Record<strin
   return Object.keys(output).length > 0 ? output : null;
 }
 
-export function ProductForm({ mode, categories, initialProduct }: ProductFormProps) {
+export function ProductForm({ mode, categories, brands, initialProduct }: ProductFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
 
   const [name, setName] = useState(initialProduct?.name ?? "");
   const [slug, setSlug] = useState(initialProduct?.slug ?? "");
-  const [price, setPrice] = useState(initialProduct ? String(initialProduct.price) : "");
+  const [shortDescription, setShortDescription] = useState(initialProduct?.shortDescription ?? "");
+  const [price, setPrice] = useState(initialProduct ? String(initialProduct.originalPrice) : "");
   const [discountedPrice, setDiscountedPrice] = useState(
     initialProduct?.discountedPrice !== null && initialProduct?.discountedPrice !== undefined
       ? String(initialProduct.discountedPrice)
+      : "",
+  );
+  const [loyalCustomerPrice, setLoyalCustomerPrice] = useState(
+    initialProduct?.loyalCustomerPrice !== null && initialProduct?.loyalCustomerPrice !== undefined
+      ? String(initialProduct.loyalCustomerPrice)
       : "",
   );
   const [stock, setStock] = useState(initialProduct ? String(initialProduct.stock) : "");
   const [categoryId, setCategoryId] = useState(
     initialProduct?.categoryId ? String(initialProduct.categoryId) : String(categories[0]?.id ?? ""),
   );
+  const [brandId, setBrandId] = useState(initialProduct?.brandId ? String(initialProduct.brandId) : "");
+  const [sku, setSku] = useState(initialProduct?.sku ?? "");
+  const [modelNumber, setModelNumber] = useState(initialProduct?.modelNumber ?? "");
+  const [color, setColor] = useState(initialProduct?.color ?? "");
+  const [warrantyMonths, setWarrantyMonths] = useState(
+    initialProduct?.warrantyMonths !== null && initialProduct?.warrantyMonths !== undefined
+      ? String(initialProduct.warrantyMonths)
+      : "",
+  );
+  const [returnWindowDays, setReturnWindowDays] = useState(
+    initialProduct?.returnWindowDays !== null && initialProduct?.returnWindowDays !== undefined
+      ? String(initialProduct.returnWindowDays)
+      : "",
+  );
+  const [weightGrams, setWeightGrams] = useState(
+    initialProduct?.weightGrams !== null && initialProduct?.weightGrams !== undefined
+      ? String(initialProduct.weightGrams)
+      : "",
+  );
+  const [tagsInput, setTagsInput] = useState(initialProduct?.tags?.join(", ") ?? "");
+  const [highlightPointsInput, setHighlightPointsInput] = useState(initialProduct?.highlightPoints?.join("\n") ?? "");
+  const [metaTitle, setMetaTitle] = useState(initialProduct?.metaTitle ?? "");
+  const [metaDescription, setMetaDescription] = useState(initialProduct?.metaDescription ?? "");
+  const [ratingAvg, setRatingAvg] = useState(initialProduct ? String(initialProduct.ratingAvg) : "0");
+  const [ratingCount, setRatingCount] = useState(initialProduct ? String(initialProduct.ratingCount) : "0");
+  const [isFeatured, setIsFeatured] = useState(initialProduct?.isFeatured ?? false);
+  const [isNewArrival, setIsNewArrival] = useState(initialProduct?.isNewArrival ?? false);
+  const [isBestSeller, setIsBestSeller] = useState(initialProduct?.isBestSeller ?? false);
+  const [isTopRated, setIsTopRated] = useState(initialProduct?.isTopRated ?? false);
+  const [isTrending, setIsTrending] = useState(initialProduct?.isTrending ?? false);
+  const [isLimitedStock, setIsLimitedStock] = useState(initialProduct?.isLimitedStock ?? false);
+  const [isFreeDelivery, setIsFreeDelivery] = useState(initialProduct?.isFreeDelivery ?? false);
+  const [isCashOnDelivery, setIsCashOnDelivery] = useState(initialProduct?.isCashOnDelivery ?? false);
+  const [isEmiAvailable, setIsEmiAvailable] = useState(initialProduct?.isEmiAvailable ?? false);
+  const [isOfficialWarranty, setIsOfficialWarranty] = useState(initialProduct?.isOfficialWarranty ?? false);
+  const [isExchangeAvailable, setIsExchangeAvailable] = useState(initialProduct?.isExchangeAvailable ?? false);
+  const [isPreorder, setIsPreorder] = useState(initialProduct?.isPreorder ?? false);
   const [images, setImages] = useState<string[]>(initialProduct?.images ?? []);
   const [description, setDescription] = useState(initialProduct?.description ?? "<p></p>");
   const [specGroups, setSpecGroups] = useState<SpecGroup[]>(toSpecGroups(initialProduct?.specifications));
@@ -244,12 +289,48 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
     const parsedPrice = Number(price);
     const parsedStock = Number(stock);
     const parsedDiscountedPrice = discountedPrice.trim() ? Number(discountedPrice) : null;
+    const parsedLoyalCustomerPrice = loyalCustomerPrice.trim() ? Number(loyalCustomerPrice) : null;
     const parsedCategoryId = Number(categoryId);
+    const parsedBrandId = brandId.trim() ? Number(brandId) : null;
+    const parsedWarrantyMonths = warrantyMonths.trim() ? Number(warrantyMonths) : null;
+    const parsedReturnWindowDays = returnWindowDays.trim() ? Number(returnWindowDays) : null;
+    const parsedWeightGrams = weightGrams.trim() ? Number(weightGrams) : null;
+    const parsedRatingAvg = Number(ratingAvg);
+    const parsedRatingCount = Number(ratingCount);
 
     if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
       setNotice("Name, price, stock, category, and at least one uploaded image are required.");
       return;
     }
+
+    if (parsedDiscountedPrice !== null && (!Number.isFinite(parsedDiscountedPrice) || parsedDiscountedPrice > parsedPrice)) {
+      setNotice("Discounted price must be a valid number and cannot be higher than original price.");
+      return;
+    }
+
+    if (parsedLoyalCustomerPrice !== null && (!Number.isFinite(parsedLoyalCustomerPrice) || parsedLoyalCustomerPrice > parsedPrice)) {
+      setNotice("Loyal customer price must be a valid number and cannot be higher than original price.");
+      return;
+    }
+
+    if ((parsedBrandId !== null && !Number.isInteger(parsedBrandId)) ||
+      (parsedWarrantyMonths !== null && !Number.isInteger(parsedWarrantyMonths)) ||
+      (parsedReturnWindowDays !== null && !Number.isInteger(parsedReturnWindowDays)) ||
+      (parsedWeightGrams !== null && !Number.isInteger(parsedWeightGrams)) ||
+      !Number.isFinite(parsedRatingAvg) ||
+      !Number.isFinite(parsedRatingCount)) {
+      setNotice("Please check numeric fields like brand, warranty, return window, weight, and ratings.");
+      return;
+    }
+
+    const tags = tagsInput
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
+    const highlightPoints = highlightPointsInput
+      .split("\n")
+      .map((entry) => entry.trim())
+      .filter((entry) => entry.length > 0);
 
     try {
       setBusy(true);
@@ -257,11 +338,39 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
       const payload = {
         name: name.trim(),
         slug: slug.trim() || undefined,
+        shortDescription: shortDescription.trim() || null,
         description,
         price: parsedPrice,
+        originalPrice: parsedPrice,
         discountedPrice: parsedDiscountedPrice,
+        loyalCustomerPrice: parsedLoyalCustomerPrice,
         stock: parsedStock,
         categoryId: parsedCategoryId,
+        brandId: parsedBrandId,
+        sku: sku.trim() || null,
+        modelNumber: modelNumber.trim() || null,
+        color: color.trim() || null,
+        warrantyMonths: parsedWarrantyMonths,
+        returnWindowDays: parsedReturnWindowDays,
+        weightGrams: parsedWeightGrams,
+        tags,
+        highlightPoints,
+        metaTitle: metaTitle.trim() || null,
+        metaDescription: metaDescription.trim() || null,
+        ratingAvg: parsedRatingAvg,
+        ratingCount: parsedRatingCount,
+        isFeatured,
+        isNewArrival,
+        isBestSeller,
+        isTopRated,
+        isTrending,
+        isLimitedStock,
+        isFreeDelivery,
+        isCashOnDelivery,
+        isEmiAvailable,
+        isOfficialWarranty,
+        isExchangeAvailable,
+        isPreorder,
         images,
         specifications: toSpecificationObject(specGroups),
         isActive,
@@ -298,7 +407,12 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
         <CardContent className="grid gap-3 md:grid-cols-2">
           <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
           <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="Slug (optional)" />
-          <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Price" />
+          <Input
+            value={shortDescription}
+            onChange={(event) => setShortDescription(event.target.value)}
+            placeholder="Short description (optional)"
+          />
+          <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Original price" />
           <Input
             type="number"
             min={0}
@@ -306,6 +420,14 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
             value={discountedPrice}
             onChange={(event) => setDiscountedPrice(event.target.value)}
             placeholder="Discounted price (optional)"
+          />
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            value={loyalCustomerPrice}
+            onChange={(event) => setLoyalCustomerPrice(event.target.value)}
+            placeholder="Loyal customer price (optional)"
           />
           <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
           <select
@@ -319,6 +441,88 @@ export function ProductForm({ mode, categories, initialProduct }: ProductFormPro
               </option>
             ))}
           </select>
+          <select
+            value={brandId}
+            onChange={(event) => setBrandId(event.target.value)}
+            className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+          >
+            <option value="">No brand</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
+              </option>
+            ))}
+          </select>
+          <Input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="SKU (optional)" />
+          <Input value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} placeholder="Model number (optional)" />
+          <Input value={color} onChange={(event) => setColor(event.target.value)} placeholder="Color (optional)" />
+          <Input
+            type="number"
+            min={0}
+            value={warrantyMonths}
+            onChange={(event) => setWarrantyMonths(event.target.value)}
+            placeholder="Warranty months"
+          />
+          <Input
+            type="number"
+            min={0}
+            value={returnWindowDays}
+            onChange={(event) => setReturnWindowDays(event.target.value)}
+            placeholder="Return window (days)"
+          />
+          <Input
+            type="number"
+            min={0}
+            value={weightGrams}
+            onChange={(event) => setWeightGrams(event.target.value)}
+            placeholder="Weight (grams)"
+          />
+          <Input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="Tags (comma separated)" />
+          <Input value={metaTitle} onChange={(event) => setMetaTitle(event.target.value)} placeholder="SEO title (optional)" />
+          <Input
+            type="number"
+            min={0}
+            max={5}
+            step="0.1"
+            value={ratingAvg}
+            onChange={(event) => setRatingAvg(event.target.value)}
+            placeholder="Rating average (0-5)"
+          />
+          <Input
+            type="number"
+            min={0}
+            value={ratingCount}
+            onChange={(event) => setRatingCount(event.target.value)}
+            placeholder="Rating count"
+          />
+          <Textarea
+            value={metaDescription}
+            onChange={(event) => setMetaDescription(event.target.value)}
+            className="col-span-full min-h-22.5"
+            placeholder="SEO description (optional)"
+          />
+          <Textarea
+            value={highlightPointsInput}
+            onChange={(event) => setHighlightPointsInput(event.target.value)}
+            className="col-span-full min-h-25"
+            placeholder="Highlight points (one per line)"
+          />
+
+          <div className="col-span-full grid gap-2 rounded-md border border-zinc-200 p-3 md:grid-cols-2 xl:grid-cols-3">
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} /> Featured</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isNewArrival} onChange={(event) => setIsNewArrival(event.target.checked)} /> New Arrival</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isBestSeller} onChange={(event) => setIsBestSeller(event.target.checked)} /> Best Seller</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isTopRated} onChange={(event) => setIsTopRated(event.target.checked)} /> Top Rated</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isTrending} onChange={(event) => setIsTrending(event.target.checked)} /> Trending</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isLimitedStock} onChange={(event) => setIsLimitedStock(event.target.checked)} /> Limited Stock</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isFreeDelivery} onChange={(event) => setIsFreeDelivery(event.target.checked)} /> Free Delivery</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isCashOnDelivery} onChange={(event) => setIsCashOnDelivery(event.target.checked)} /> Cash On Delivery</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isEmiAvailable} onChange={(event) => setIsEmiAvailable(event.target.checked)} /> EMI Available</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isOfficialWarranty} onChange={(event) => setIsOfficialWarranty(event.target.checked)} /> Official Warranty</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isExchangeAvailable} onChange={(event) => setIsExchangeAvailable(event.target.checked)} /> Exchange Available</label>
+            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isPreorder} onChange={(event) => setIsPreorder(event.target.checked)} /> Preorder</label>
+          </div>
+
           <label className="col-span-full flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
             <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
             Active product
