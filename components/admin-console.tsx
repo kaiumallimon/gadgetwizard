@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2, Upload } from "lucide-react";
+import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Star, StarOff, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
@@ -103,6 +103,10 @@ export function AdminConsole({
     () => categories.filter((category) => category.isHeaderCategory).length,
     [categories],
   );
+  const featuredCategoryCount = useMemo(
+    () => categories.filter((category) => category.isFeatured).length,
+    [categories],
+  );
   const activeTab = lockedTab ?? tab;
 
   useEffect(() => {
@@ -168,6 +172,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -195,6 +200,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: url,
           isHeaderCategory: category.isHeaderCategory,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -231,6 +237,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: !category.isHeaderCategory,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -244,6 +251,33 @@ export function AdminConsole({
       );
     } catch (error) {
       setNotice(safeErrorMessage(error, "Header category update failed"));
+    }
+  }
+
+  async function handleToggleFeaturedCategory(category: Category) {
+    try {
+      await apiClient.adminUpdateCategory(
+        category.id,
+        {
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+          imageUrl: category.imageUrl,
+          isHeaderCategory: category.isHeaderCategory,
+          isFeatured: !category.isFeatured,
+          sortOrder: category.sortOrder,
+          isActive: category.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshCategories();
+      setNotice(
+        !category.isFeatured
+          ? "Category marked as featured for storefront."
+          : "Category removed from featured storefront list.",
+      );
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Featured category update failed"));
     }
   }
 
@@ -591,7 +625,7 @@ export function AdminConsole({
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Total Categories</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-900">{categories.length}</p>
@@ -605,6 +639,10 @@ export function AdminConsole({
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Header Pinned</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-900">{headerCategoryCount}/8</p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Featured</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">{featuredCategoryCount}</p>
               </div>
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">With Image</p>
@@ -638,6 +676,15 @@ export function AdminConsole({
                         <PinOff className="h-3 w-3" /> Not Pinned
                       </Badge>
                     )}
+                    {category.isFeatured ? (
+                      <Badge variant="secondary" className="gap-1 border-amber-200 bg-amber-50 text-amber-700">
+                        <Star className="h-3 w-3" /> Featured
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1">
+                        <StarOff className="h-3 w-3" /> Not Featured
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="overflow-hidden rounded-md border border-zinc-200">
@@ -660,6 +707,9 @@ export function AdminConsole({
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleHeaderCategory(category)}>
                       {category.isHeaderCategory ? "Unpin" : "Pin"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleToggleFeaturedCategory(category)}>
+                      {category.isFeatured ? "Unfeature" : "Feature"}
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleToggleCategoryActive(category)}>
                       {category.isActive ? "Deactivate" : "Activate"}

@@ -9,6 +9,7 @@ export interface CategoryRecord {
   sortOrder: number;
   isActive: boolean;
   isHeaderCategory: boolean;
+  isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -22,6 +23,7 @@ interface CategoryRow {
   sort_order: number;
   is_active: number;
   is_header_category: number;
+  is_featured: number;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -40,6 +42,7 @@ function mapCategory(row: CategoryRow): CategoryRecord {
     sortOrder: row.sort_order,
     isActive: row.is_active === 1,
     isHeaderCategory: row.is_header_category === 1,
+    isFeatured: row.is_featured === 1,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };
@@ -49,7 +52,7 @@ export async function listCategories(activeOnly = true): Promise<CategoryRecord[
   const conditions = activeOnly ? "WHERE is_active = 1" : "";
   const rows = await queryRows<CategoryRow>(
     `
-      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, created_at, updated_at
+      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured, created_at, updated_at
       FROM categories
       ${conditions}
       ORDER BY sort_order ASC, name ASC
@@ -62,7 +65,7 @@ export async function listCategories(activeOnly = true): Promise<CategoryRecord[
 export async function findCategoryById(id: number): Promise<CategoryRecord | null> {
   const row = await queryOne<CategoryRow>(
     `
-      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, created_at, updated_at
+      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured, created_at, updated_at
       FROM categories
       WHERE id = ?
       LIMIT 1
@@ -81,11 +84,12 @@ export async function createCategory(input: {
   sortOrder: number;
   isActive: boolean;
   isHeaderCategory: boolean;
+  isFeatured: boolean;
 }): Promise<CategoryRecord> {
   const result = await execute(
     `
-      INSERT INTO categories (name, slug, icon, image_url, sort_order, is_active, is_header_category)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO categories (name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       input.name,
@@ -95,6 +99,7 @@ export async function createCategory(input: {
       input.sortOrder,
       input.isActive ? 1 : 0,
       input.isHeaderCategory ? 1 : 0,
+      input.isFeatured ? 1 : 0,
     ],
   );
 
@@ -116,12 +121,13 @@ export async function updateCategory(
     sortOrder: number;
     isActive: boolean;
     isHeaderCategory: boolean;
+    isFeatured: boolean;
   },
 ): Promise<CategoryRecord | null> {
   await execute(
     `
       UPDATE categories
-      SET name = ?, slug = ?, icon = ?, image_url = ?, sort_order = ?, is_active = ?, is_header_category = ?
+      SET name = ?, slug = ?, icon = ?, image_url = ?, sort_order = ?, is_active = ?, is_header_category = ?, is_featured = ?
       WHERE id = ?
     `,
     [
@@ -132,6 +138,7 @@ export async function updateCategory(
       input.sortOrder,
       input.isActive ? 1 : 0,
       input.isHeaderCategory ? 1 : 0,
+      input.isFeatured ? 1 : 0,
       id,
     ],
   );

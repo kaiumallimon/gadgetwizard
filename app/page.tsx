@@ -19,7 +19,7 @@ export default async function HomePage() {
     getPublicProducts({ page: 1, pageSize: 48 }),
   ]);
 
-  const categoryHighlights = categories.slice(0, 12);
+  const featuredCategoryHighlights = categories.filter((category) => category.isFeatured).slice(0, 12);
   const brandHighlights = brands.slice(0, 24);
   const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
   const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
@@ -77,35 +77,39 @@ export default async function HomePage() {
             Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Categories</span>
           </h2>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8 p-5 sm:p-7">
-            {categoryHighlights.map((category) => (
-              <Link
-                href={`/category/${category.slug}`}
-                key={category.id}
-                className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
-                  {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
-                    <img
-                      src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
-                      alt={category.name}
-                      className="h-full w-full object-contain"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
-                      {category.name.slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                </div>
+          {featuredCategoryHighlights.length === 0 ? (
+            <p className="mt-6 text-sm text-zinc-500">No featured categories available right now.</p>
+          ) : (
+            <div className="mt-6 grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 sm:p-7 lg:grid-cols-8">
+              {featuredCategoryHighlights.map((category) => (
+                <Link
+                  href={`/category/${category.slug}`}
+                  key={category.id}
+                  className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
+                    {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
+                      <img
+                        src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
+                        alt={category.name}
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
+                        {category.name.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
 
-                <div className="space-y-0.5 p-2 sm:p-3">
-                  <p className="line-clamp-1 text-xs text-center text-zinc-900 group-hover:text-(--accent) sm:text-sm">
-                    {category.name}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
+                  <div className="space-y-0.5 p-2 sm:p-3">
+                    <p className="line-clamp-1 text-xs text-center text-zinc-900 group-hover:text-(--accent) sm:text-sm">
+                      {category.name}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="rounded-2xl bg-white">

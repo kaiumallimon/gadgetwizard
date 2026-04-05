@@ -39,6 +39,7 @@ export async function createCategoryAdmin(input: {
   icon?: string | null;
   imageUrl?: string | null;
   isHeaderCategory?: boolean;
+  isFeatured?: boolean;
   sortOrder?: number;
   isActive?: boolean;
 }): Promise<CategoryRecord> {
@@ -67,6 +68,7 @@ export async function createCategoryAdmin(input: {
     sortOrder: input.sortOrder ?? 0,
     isActive: input.isActive ?? true,
     isHeaderCategory: shouldBeHeaderCategory,
+    isFeatured: input.isFeatured ?? false,
   });
 }
 
@@ -78,6 +80,7 @@ export async function updateCategoryAdmin(
     icon?: string | null;
     imageUrl?: string | null;
     isHeaderCategory?: boolean;
+    isFeatured?: boolean;
     sortOrder?: number;
     isActive?: boolean;
   },
@@ -112,6 +115,7 @@ export async function updateCategoryAdmin(
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,
     isHeaderCategory: shouldBeHeaderCategory,
+    isFeatured: input.isFeatured ?? existing.isFeatured,
   });
 
   if (!updated) {

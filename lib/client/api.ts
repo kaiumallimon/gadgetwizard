@@ -260,6 +260,7 @@ export const apiClient = {
     icon?: string | null;
     imageUrl?: string | null;
     isHeaderCategory?: boolean;
+    isFeatured?: boolean;
     sortOrder?: number;
     isActive?: boolean;
   }, token?: string) {
@@ -278,6 +279,7 @@ export const apiClient = {
       icon?: string | null;
       imageUrl?: string | null;
       isHeaderCategory?: boolean;
+      isFeatured?: boolean;
       sortOrder?: number;
       isActive?: boolean;
     },

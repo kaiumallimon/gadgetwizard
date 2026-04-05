@@ -32,9 +32,11 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
     slug: "",
     imageUrl: "",
     isHeaderCategory: false,
+    isFeatured: false,
   });
 
   const headerPinnedCount = categories.filter((category) => category.isHeaderCategory).length;
+  const featuredCount = categories.filter((category) => category.isFeatured).length;
 
   async function handleImageUpload(file: File | null) {
     if (!file) {
@@ -72,11 +74,12 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           slug: form.slug || undefined,
           imageUrl: form.imageUrl || null,
           isHeaderCategory: form.isHeaderCategory,
+          isFeatured: form.isFeatured,
         },
         token ?? undefined,
       );
 
-      setForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false });
+      setForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false, isFeatured: false });
       setNotice("Category created successfully.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category creation failed"));
@@ -89,7 +92,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">Create Category</CardTitle>
-        <CardDescription>Use this dedicated page to create categories and upload category images.</CardDescription>
+        <CardDescription>Use this page to create categories, upload images, and control header/storefront visibility.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {notice && (
@@ -98,7 +101,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           </div>
         )}
 
-        <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <label className={fieldWrapClass}>
             <span className={fieldLabelClass}>Category Name</span>
             <Input
@@ -147,6 +150,19 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
                 onChange={(event) => setForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
               />
               <span className="truncate">Add to header ({headerPinnedCount}/8 pinned)</span>
+            </span>
+          </label>
+          <label className={fieldWrapClass}>
+            <span className={fieldLabelClass}>Storefront Feature</span>
+            <span className="flex h-10 items-center gap-2 rounded-md border border-zinc-200 px-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 shrink-0"
+                checked={form.isFeatured}
+                disabled={isSaving}
+                onChange={(event) => setForm((prev) => ({ ...prev, isFeatured: event.target.checked }))}
+              />
+              <span className="truncate">Show in Featured Categories ({featuredCount} selected)</span>
             </span>
           </label>
         </div>

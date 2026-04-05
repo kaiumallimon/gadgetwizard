@@ -32,7 +32,7 @@ export default async function AdminCategoriesPage() {
           <div>
             
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Category Management</h1>
-            <p className="mt-2 text-sm text-zinc-600">Review stats, update categories, and pin items to header navigation.</p>
+            <p className="mt-2 text-sm text-zinc-600">Review stats, update categories, pin header items, and choose storefront featured categories.</p>
           </div>
           <Button asChild variant="outline">
             <Link href="/admin/categories/new">Open Add Category Page</Link>

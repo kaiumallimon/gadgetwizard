@@ -38,6 +38,7 @@ export const adminCategorySchema = z.object({
   icon: z.string().trim().url().max(255).nullable().optional(),
   imageUrl: z.string().trim().url().max(500).nullable().optional(),
   isHeaderCategory: z.boolean().optional(),
+  isFeatured: z.boolean().optional(),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   isActive: z.boolean().optional(),
 });

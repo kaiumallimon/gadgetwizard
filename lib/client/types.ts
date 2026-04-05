@@ -27,6 +27,7 @@ export interface Category {
   icon: string | null;
   imageUrl: string | null;
   isHeaderCategory: boolean;
+  isFeatured: boolean;
   sortOrder: number;
   isActive: boolean;
   createdAt: string;
