@@ -137,6 +137,33 @@ function generateSkuFromName(name: string, token?: string): string {
   return `${base}-${token}`;
 }
 
+function getValidationDetailsMessage(details: unknown): string | null {
+  if (!details || typeof details !== "object" || !("fieldErrors" in details)) {
+    return null;
+  }
+
+  const fieldErrors = (details as { fieldErrors?: Record<string, string[] | undefined> }).fieldErrors;
+  if (!fieldErrors || typeof fieldErrors !== "object") {
+    return null;
+  }
+
+  const firstFieldWithError = Object.entries(fieldErrors).find(([, messages]) =>
+    Array.isArray(messages) && messages.length > 0,
+  );
+
+  if (!firstFieldWithError) {
+    return null;
+  }
+
+  const [field, messages] = firstFieldWithError;
+  const message = messages?.[0];
+  if (!message) {
+    return null;
+  }
+
+  return `${field}: ${message}`;
+}
+
 export function ProductForm({ mode, categories, brands, initialProduct }: ProductFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
@@ -335,6 +362,34 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       return;
     }
 
+    if (
+      name.trim().length > 200 ||
+      shortDescription.trim().length > 500 ||
+      modelNumber.trim().length > 120 ||
+      color.trim().length > 80 ||
+      metaTitle.trim().length > 255 ||
+      metaDescription.trim().length > 500 ||
+      generatedSku.trim().length > 120
+    ) {
+      setNotice("One or more text fields exceed allowed length (name, descriptions, model, color, SEO, or SKU).");
+      return;
+    }
+
+    if (!Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setNotice("Original price must be a valid non-negative number.");
+      return;
+    }
+
+    if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+      setNotice("Stock must be a non-negative whole number.");
+      return;
+    }
+
+    if (!Number.isInteger(parsedCategoryId) || parsedCategoryId <= 0) {
+      setNotice("Category is invalid.");
+      return;
+    }
+
     if (parsedDiscountedPrice !== null && (!Number.isFinite(parsedDiscountedPrice) || parsedDiscountedPrice > parsedPrice)) {
       setNotice("Discounted price must be a valid number and cannot be higher than original price.");
       return;
@@ -345,13 +400,37 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       return;
     }
 
+    if (parsedDiscountedPrice !== null && parsedDiscountedPrice < 0) {
+      setNotice("Discounted price cannot be negative.");
+      return;
+    }
+
+    if (parsedLoyalCustomerPrice !== null && parsedLoyalCustomerPrice < 0) {
+      setNotice("Loyal customer price cannot be negative.");
+      return;
+    }
+
     if ((parsedBrandId !== null && !Number.isInteger(parsedBrandId)) ||
       (parsedWarrantyMonths !== null && !Number.isInteger(parsedWarrantyMonths)) ||
       (parsedReturnWindowDays !== null && !Number.isInteger(parsedReturnWindowDays)) ||
       (parsedWeightGrams !== null && !Number.isInteger(parsedWeightGrams)) ||
       !Number.isFinite(parsedRatingAvg) ||
-      !Number.isFinite(parsedRatingCount)) {
+      !Number.isInteger(parsedRatingCount)) {
       setNotice("Please check numeric fields like brand, warranty, return window, weight, and ratings.");
+      return;
+    }
+
+    if (
+      (parsedWarrantyMonths !== null && (parsedWarrantyMonths < 0 || parsedWarrantyMonths > 240)) ||
+      (parsedReturnWindowDays !== null && (parsedReturnWindowDays < 0 || parsedReturnWindowDays > 365)) ||
+      (parsedWeightGrams !== null && (parsedWeightGrams < 0 || parsedWeightGrams > 100000))
+    ) {
+      setNotice("Warranty, return window, or weight is outside allowed range.");
+      return;
+    }
+
+    if (parsedRatingAvg < 0 || parsedRatingAvg > 5 || parsedRatingCount < 0) {
+      setNotice("Rating average must be between 0 and 5, and rating count must be non-negative.");
       return;
     }
 
@@ -363,6 +442,16 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       .split("\n")
       .map((entry) => entry.trim())
       .filter((entry) => entry.length > 0);
+
+    if (tags.length > 32 || tags.some((entry) => entry.length > 40)) {
+      setNotice("Tags support up to 32 items, each up to 40 characters.");
+      return;
+    }
+
+    if (highlightPoints.length > 12 || highlightPoints.some((entry) => entry.length > 120)) {
+      setNotice("Highlight points support up to 12 lines, each up to 120 characters.");
+      return;
+    }
 
     try {
       setBusy(true);
@@ -417,7 +506,12 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       router.push("/admin/products");
       router.refresh();
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to save product");
+      if (error instanceof Error) {
+        const detailsMessage = getValidationDetailsMessage((error as { details?: unknown }).details);
+        setNotice(detailsMessage ? `${error.message} (${detailsMessage})` : error.message);
+      } else {
+        setNotice("Unable to save product");
+      }
     } finally {
       setBusy(false);
     }
@@ -670,7 +764,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         </CardHeader>
         <CardContent className="space-y-3">
           {specGroups.map((group, groupIndex) => (
-            <div key={`${groupIndex}-${group.title}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
+            <div key={`group-${groupIndex}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
               <div className="flex items-end gap-2">
                 <label className="flex-1 space-y-1">
                   <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Section Title</span>
@@ -686,8 +780,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               </div>
 
               {group.rows.map((row, rowIndex) => (
-                <div key={`${groupIndex}-${rowIndex}-${row.key}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
-                  <label className="space-y-1">
+                <div key={`row-${groupIndex}-${rowIndex}`} className="flex items-end gap-2 md:grid md:grid-cols-[1fr_1fr_auto]">
+                  <label className="flex-1 space-y-1">
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Key</span>
                     <Input
                       value={row.key}
@@ -695,7 +789,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
                       placeholder="Key"
                     />
                   </label>
-                  <label className="space-y-1">
+                  <label className="flex-1 space-y-1">
                     <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Value</span>
                     <Input
                       value={row.value}
