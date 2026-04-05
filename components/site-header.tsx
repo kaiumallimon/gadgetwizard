@@ -156,7 +156,7 @@ export function SiteHeader() {
               <FiHeadphones className="h-3.5 w-3.5 text-zinc-950/80" /> Support: +880 1712-345678
             </span>
 
-            {!loading && !user && (
+            {/* {!loading && !user && (
               <>
                 <button
                   type="button"
@@ -179,7 +179,7 @@ export function SiteHeader() {
                   Create Account
                 </button>
               </>
-            )}
+            )} */}
           </div>
         </div>
       </div>
