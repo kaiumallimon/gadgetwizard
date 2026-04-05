@@ -111,8 +111,8 @@ function toSpecificationObject(groups: SpecGroup[]): Record<string, Record<strin
 
 function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
   return (
-    <label className={`space-y-1 ${className ?? ""}`.trim()}>
-      <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">{label}</span>
+    <label className={`flex flex-col gap-1 ${className ?? ""}`.trim()}>
+      <span className="text-xs font-medium">{label}</span>
       {children}
     </label>
   );
