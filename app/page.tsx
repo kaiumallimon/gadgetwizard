@@ -92,7 +92,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="space-y-4 rounded-2xl bg-white">
+        <section className="rounded-2xl bg-white">
           <h2 className="text-4xl font-semibold text-zinc-900">
             Shop By <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Brands</span>
           </h2>
@@ -100,24 +100,25 @@ export default async function HomePage() {
           {brandHighlights.length === 0 ? (
             <p className="text-sm text-zinc-500">No brands available yet.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6  p-5 sm:p-7">
+            <div className="mt-6 grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 sm:p-7 lg:grid-cols-8">
               {brandHighlights.map((brand) => (
                 <Link
                   href={`/brand/${brand.slug}`}
                   key={brand.id}
-                  className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="flex h-20 items-center justify-center p-3 sm:h-24">
+                  <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
                     {brand.imageUrl ? (
                       <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center rounded-xl bg-linear-to-br from-zinc-100 to-zinc-200 text-lg font-semibold text-zinc-600">
+                      <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
                         {brand.name.slice(0, 1).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div className="p-2 text-center sm:p-3">
-                    <p className="line-clamp-1 text-xs font-semibold text-zinc-900 group-hover:text-(--accent) sm:text-sm">{brand.name}</p>
+
+                  <div className="space-y-0.5 p-2 sm:p-3">
+                    <p className="line-clamp-1 text-center text-xs text-zinc-900 group-hover:text-(--accent) sm:text-sm">{brand.name}</p>
                   </div>
                 </Link>
               ))}

@@ -76,11 +76,11 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
             return (
               <div key={banner.id} className="relative h-full w-full shrink-0 grow-0 basis-full">
                 {banner.clickUrl ? (
-                  <a href={banner.clickUrl} target="_blank" rel="noreferrer" className="block h-full">
+                  <a href={banner.clickUrl} target="_blank" rel="noreferrer" className="relative block h-full">
                     {slideLayer}
                   </a>
                 ) : (
-                  <div className="h-full">{slideLayer}</div>
+                  <div className="relative h-full">{slideLayer}</div>
                 )}
               </div>
             );
