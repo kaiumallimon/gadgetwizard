@@ -93,8 +93,7 @@ export async function upsertUserFromFirebase(input: {
       ON DUPLICATE KEY UPDATE
         firebase_uid = VALUES(firebase_uid),
         email = VALUES(email),
-        name = VALUES(name),
-        is_active = 1
+        name = VALUES(name)
     `,
     [input.firebaseUid, input.email, input.name],
   );

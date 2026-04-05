@@ -19,6 +19,7 @@ import {
     ShoppingCart,
     Tag,
     UserRound,
+    Users,
     Plus,
 } from "lucide-react";
 
@@ -94,7 +95,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     {
                         label: "User Management",
                         items: [
-                            { href: "/admin/users", label: "Users", icon: UserRound },
+                            { href: "/admin/users", label: "Admins", icon: UserRound },
+                            { href: "/admin/customers", label: "Users", icon: Users },
                         ],
                     },
                     {
@@ -163,9 +165,9 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
     function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         return (
-            <div className="flex h-full flex-col overflow-hidden">
-                <div className="border-b border-zinc-200 p-4">
-                    <div className="flex items-center gap-3">
+            <div className="flex h-full w-full flex-col overflow-hidden">
+                <div className="w-full border-b border-zinc-200">
+                    <div className="flex items-center gap-3 px-4 py-4">
                         <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-orange-500 to-red-500 text-white shadow-sm">
                             <Shield className="h-4 w-4" />
                         </div>
@@ -205,10 +207,10 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     ))}
                 </div>
 
-                <div className="border-t border-zinc-200 p-3">
+                <div className="w-full border-t border-zinc-200">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-auto w-full justify-start gap-3 rounded-lg p-2">
+                            <Button variant="ghost" className="h-auto w-full justify-start gap-3 rounded-none px-4 py-3">
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback>
                                         {(user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? "U").toUpperCase()}
@@ -237,7 +239,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
     return (
         <div className="flex h-screen overflow-hidden bg-zinc-50">
-            <aside className="hidden h-screen w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex">
+            <aside className="hidden h-screen w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex md:flex-col">
                 <SidebarContent />
             </aside>
 

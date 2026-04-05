@@ -168,6 +168,10 @@ export const apiClient = {
     return apiFetch<{ items: AppUser[]; total: number }>("/api/admin/users", { token });
   },
 
+  async adminGetRegularUsers(token?: string) {
+    return apiFetch<{ items: AppUser[]; total: number }>("/api/admin/customers", { token });
+  },
+
   async adminCreateAdminUser(payload: { email: string; name: string }, token?: string) {
     return apiFetch<{ item: AppUser }>("/api/admin/users", {
       method: "POST",
@@ -188,6 +192,14 @@ export const apiClient = {
     return apiFetch<{ success: boolean }>(`/api/admin/users/${id}`, {
       method: "DELETE",
       token,
+    });
+  },
+
+  async adminUpdateRegularUserStatus(id: number, payload: { isActive: boolean }, token?: string) {
+    return apiFetch<{ item: AppUser }>(`/api/admin/customers/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
     });
   },
 

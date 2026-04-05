@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AdminUserManager } from "@/components/admin/admin-user-manager";
+import { RegularUserManager } from "@/components/admin/regular-user-manager";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,26 +11,25 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { requireServerRole } from "@/lib/server/auth/server-session";
-import { getAdminUsers } from "@/lib/server/services/admin-service";
+import { getRegularUsers } from "@/lib/server/services/admin-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminUsersPage() {
-  let session: Awaited<ReturnType<typeof requireServerRole>>;
+export default async function AdminCustomersPage() {
   try {
-    session = await requireServerRole(["admin"]);
+    await requireServerRole(["admin"]);
   } catch {
     redirect("/dashboard");
   }
 
-  const result = await getAdminUsers({ page: 1, pageSize: 100, role: "admin" });
+  const result = await getRegularUsers({ page: 1, pageSize: 200 });
 
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Admin Accounts</h1>
+        <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Regular Users</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Create admin accounts and manage their access state from one place.
+          Ban or unban regular users. Banned users cannot log in until reactivated.
         </p>
         <div className="mt-3 border-t border-zinc-200 pt-2">
           <Breadcrumb>
@@ -42,14 +41,14 @@ export default async function AdminUsersPage() {
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                <BreadcrumbPage>Admins</BreadcrumbPage>
+                <BreadcrumbPage>Regular Users</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
 
-      <AdminUserManager initialUsers={result.items} currentUserId={session.userId} />
+      <RegularUserManager initialUsers={result.items} />
     </div>
   );
 }

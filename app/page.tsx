@@ -56,17 +56,17 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
+        <section className="rounded-2xl bg-white">
           <h2 className="text-4xl font-semibold text-zinc-900">
             Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Categories</span>
           </h2>
 
-          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8 p-5 sm:p-7">
             {categoryHighlights.map((category) => (
               <Link
                 href={`/category/${category.slug}`}
                 key={category.id}
-                className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                className="group overflow-hidden rounded-2xl border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
                   {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
@@ -83,17 +83,16 @@ export default async function HomePage() {
                 </div>
 
                 <div className="space-y-0.5 p-2 sm:p-3">
-                  <p className="line-clamp-1 text-xs font-semibold text-zinc-900 group-hover:text-(--accent) sm:text-sm">
+                  <p className="line-clamp-1 text-xs text-center text-zinc-900 group-hover:text-(--accent) sm:text-sm">
                     {category.name}
                   </p>
-                  <p className="text-[11px] text-zinc-500 sm:text-xs">{category.children.length} subcategories</p>
                 </div>
               </Link>
             ))}
           </div>
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
+        <section className="space-y-4 rounded-2xl bg-white">
           <h2 className="text-4xl font-semibold text-zinc-900">
             Shop By <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Brands</span>
           </h2>
@@ -101,14 +100,14 @@ export default async function HomePage() {
           {brandHighlights.length === 0 ? (
             <p className="text-sm text-zinc-500">No brands available yet.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6  p-5 sm:p-7">
               {brandHighlights.map((brand) => (
                 <Link
                   href={`/brand/${brand.slug}`}
                   key={brand.id}
                   className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="flex h-20 items-center justify-center bg-zinc-50 p-3 sm:h-24">
+                  <div className="flex h-20 items-center justify-center p-3 sm:h-24">
                     {brand.imageUrl ? (
                       <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
                     ) : (

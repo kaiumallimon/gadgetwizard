@@ -96,6 +96,17 @@ export async function getAdminUsers(input: {
   return listUsers(input);
 }
 
+export async function getRegularUsers(input: {
+  page: number;
+  pageSize: number;
+  search?: string;
+}) {
+  return listUsers({
+    ...input,
+    role: "user",
+  });
+}
+
 export async function getAdminActivityFeed(limit = 30) {
   return getRecentCartActivity(limit);
 }
@@ -233,4 +244,25 @@ export async function deleteAdminAccount(input: {
   if (!removed) {
     throw notFound("Admin account not found");
   }
+}
+
+export async function updateRegularUserStatus(input: {
+  targetUserId: number;
+  isActive: boolean;
+}): Promise<AppUser> {
+  const target = await findUserById(input.targetUserId);
+  if (!target) {
+    throw notFound("User account not found");
+  }
+
+  if (target.role !== "user") {
+    throw badRequest("Only regular user accounts can be managed from this page");
+  }
+
+  const updated = await updateUserActiveStatus(target.id, input.isActive);
+  if (!updated) {
+    throw notFound("User account not found");
+  }
+
+  return updated;
 }
