@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Inter } from "next/font/google";
 
 import { LayoutChrome } from "@/components/layout-chrome";
+import { Toaster } from "@/components/ui/sonner";
 
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en" className={`${inter.variable} ${bricolageGrotesque.variable} h-full antialiased`}>
       <body className="min-h-full">
         <LayoutChrome>{children}</LayoutChrome>
+        <Toaster />
       </body>
     </html>
   );

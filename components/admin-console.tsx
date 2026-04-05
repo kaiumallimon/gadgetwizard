@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2, Upload } from "lucide-react";
+import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { Banner, Category, Product } from "@/lib/client/types";
@@ -62,6 +63,28 @@ export function AdminConsole({
     [categories],
   );
   const activeTab = lockedTab ?? tab;
+
+  useEffect(() => {
+    if (!notice) {
+      return;
+    }
+
+    const normalized = notice.toLowerCase();
+    const isError =
+      normalized.includes("failed") ||
+      normalized.includes("required") ||
+      normalized.includes("invalid") ||
+      normalized.includes("unable") ||
+      normalized.includes("limit");
+
+    if (isError) {
+      toast.error(notice);
+    } else {
+      toast.success(notice);
+    }
+
+    setNotice("");
+  }, [notice]);
 
   async function refreshCategories() {
     const response = await apiClient.adminGetCategories(token ?? undefined);
@@ -414,14 +437,6 @@ export function AdminConsole({
 
   return (
     <div className="space-y-6">
-      {notice && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-4">
-            <p className="text-sm font-medium text-orange-700">{notice}</p>
-          </CardContent>
-        </Card>
-      )}
-
       <Tabs value={activeTab} onValueChange={(value) => !lockedTab && setTab(value as TabId)}>
         {!lockedTab && (
           <TabsList className="grid h-auto w-full grid-cols-2 gap-1 p-1 md:inline-flex md:w-auto md:grid-cols-4">
