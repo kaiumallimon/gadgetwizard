@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { BadgePercent, CreditCard, Headset, RefreshCcw, Truck, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
@@ -32,12 +33,12 @@ export default async function HomePage() {
     }
   }
 
-  const serviceHighlights = [
-    "36 Months EMI",
-    "Fastest Home Delivery",
-    "Exchange Facility",
-    "Best Price Deals",
-    "After Sales Service",
+  const serviceHighlights: Array<{ title: string; note: string; icon: LucideIcon }> = [
+    { title: "36 Months EMI", note: "Flexible monthly plans", icon: CreditCard },
+    { title: "Fastest Home Delivery", note: "Express dispatch nationwide", icon: Truck },
+    { title: "Exchange Facility", note: "Upgrade with trade-in", icon: RefreshCcw },
+    { title: "Best Price Deals", note: "Daily promo pricing", icon: BadgePercent },
+    { title: "After Sales Service", note: "Dedicated support team", icon: Headset },
   ];
 
   return (
@@ -45,14 +46,29 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-7xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
-        <section className="rounded-2xl border border-zinc-200 bg-white px-4 py-3">
-          <div className="grid gap-3 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
-            {serviceHighlights.map((item) => (
-              <div key={item} className="flex items-center gap-2 rounded-xl px-2 py-1.5">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-(--accent)" />
-                <span className="font-medium">{item}</span>
-              </div>
-            ))}
+        <section className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-1">
+          <div className="rounded-xl border border-white/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-4">
+            <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
+              {serviceHighlights.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                <div
+                  key={item.title}
+                  className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm"
+                >
+                  <span className="absolute inset-y-0 left-0 w-1 bg-linear-to-b from-orange-300 via-(--accent) to-orange-500" />
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-(--accent) ring-1 ring-orange-200">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-zinc-800">{item.title}</span>
+                    <span className="block truncate text-xs text-zinc-500">{item.note}</span>
+                  </span>
+                </div>
+                );
+              })}
+            </div>
           </div>
         </section>
 
