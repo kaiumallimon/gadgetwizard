@@ -20,6 +20,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.example.com",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.gadgetwizard.com.au",
+      }
     ],
   },
 };

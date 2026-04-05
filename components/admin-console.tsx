@@ -44,6 +44,37 @@ function safeErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function normalizeBannerClickUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/") && typeof window !== "undefined") {
+    return new URL(trimmed, window.location.origin).toString();
+  }
+
+  throw new Error("Click URL must be a full URL or start with /");
+}
+
+function parseBannerSortOrder(raw: string): number {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return 0;
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error("Sort order must be a non-negative whole number");
+  }
+
+  return parsed;
+}
+
 export function AdminConsole({
   initialAnalytics,
   initialCategories,
@@ -312,18 +343,34 @@ export function AdminConsole({
   }
 
   async function handleCreateBanner() {
-    if (!bannerForm.title.trim() || !bannerForm.desktopImageUrl) {
-      setNotice("Banner title and banner image are required.");
+    const title = bannerForm.title.trim();
+    if (title.length < 2) {
+      setNotice("Banner title must be at least 2 characters.");
+      return;
+    }
+
+    if (!bannerForm.desktopImageUrl) {
+      setNotice("Banner image is required.");
+      return;
+    }
+
+    let clickUrl: string | null;
+    let sortOrder: number;
+    try {
+      clickUrl = normalizeBannerClickUrl(bannerForm.clickUrl);
+      sortOrder = parseBannerSortOrder(bannerForm.sortOrder);
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner input is invalid"));
       return;
     }
 
     try {
       await apiClient.adminCreateBanner(
         {
-          title: bannerForm.title.trim(),
+          title,
           desktopImageUrl: bannerForm.desktopImageUrl,
-          clickUrl: bannerForm.clickUrl || null,
-          sortOrder: Number(bannerForm.sortOrder || 0),
+          clickUrl,
+          sortOrder,
           isActive: true,
         },
         token ?? undefined,
@@ -742,9 +789,12 @@ export function AdminConsole({
                   <Input
                     value={bannerForm.clickUrl}
                     onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))}
-                    placeholder="Click URL"
+                    placeholder="Click URL (optional: https://... or /path)"
                   />
                   <Input
+                    type="number"
+                    min={0}
+                    step={1}
                     value={bannerForm.sortOrder}
                     onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
                     placeholder="Sort order"
