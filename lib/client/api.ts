@@ -137,6 +137,33 @@ export const apiClient = {
     return apiFetch<{ analytics: unknown }>("/api/admin/analytics", { token });
   },
 
+  async adminGetUsers(token?: string) {
+    return apiFetch<{ items: AppUser[]; total: number }>("/api/admin/users", { token });
+  },
+
+  async adminCreateAdminUser(payload: { email: string; name: string }, token?: string) {
+    return apiFetch<{ item: AppUser }>("/api/admin/users", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateAdminUserStatus(id: number, payload: { isActive: boolean }, token?: string) {
+    return apiFetch<{ item: AppUser }>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteAdminUser(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/users/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
   async adminGetCategories(token?: string) {
     return apiFetch<{ items: Category[] }>("/api/admin/categories", { token });
   },

@@ -45,6 +45,15 @@ export const adminBannerSchema = z.object({
   endsAt: z.string().datetime().nullable().optional(),
 });
 
+export const adminCreateUserSchema = z.object({
+  email: z.string().trim().email().max(255),
+  name: z.string().trim().min(2).max(120),
+});
+
+export const adminUserStatusSchema = z.object({
+  isActive: z.boolean(),
+});
+
 export const cartAddSchema = z.object({
   productId: z.number().int().positive(),
   quantity: z.number().int().positive().max(100),
