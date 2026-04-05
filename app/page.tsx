@@ -4,19 +4,22 @@ import Link from "next/link";
 import { BannerShowcase } from "@/components/banner-showcase";
 import { ProductCard } from "@/components/product-card";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
+import { getPublicBrands } from "@/lib/server/services/brand-service";
 import { getPublicCategoryTree } from "@/lib/server/services/category-service";
 import { getPublicProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [banners, categories, productPool] = await Promise.all([
+  const [banners, categories, brands, productPool] = await Promise.all([
     getPublicBanners(),
     getPublicCategoryTree(),
+    getPublicBrands(),
     getPublicProducts({ page: 1, pageSize: 48 }),
   ]);
 
   const categoryHighlights = categories.slice(0, 12);
+  const brandHighlights = brands.slice(0, 24);
   const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
   const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
   const fallbackTrends = newTrends.length > 0 ? newTrends : productPool.items.slice(0, 6);
@@ -58,14 +61,14 @@ export default async function HomePage() {
             Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Categories</span>
           </h2>
 
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
             {categoryHighlights.map((category) => (
               <Link
                 href={`/category/${category.slug}`}
                 key={category.id}
                 className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="flex h-28 w-full items-center justify-center bg-white p-2">
+                <div className="flex h-20 w-full items-center justify-center bg-white p-2 sm:h-24">
                   {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
                     <img
                       src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
@@ -79,15 +82,48 @@ export default async function HomePage() {
                   )}
                 </div>
 
-                <div className="space-y-0.5 p-3">
-                  <p className="line-clamp-1 text-sm font-semibold text-zinc-900 group-hover:text-(--accent)">
+                <div className="space-y-0.5 p-2 sm:p-3">
+                  <p className="line-clamp-1 text-xs font-semibold text-zinc-900 group-hover:text-(--accent) sm:text-sm">
                     {category.name}
                   </p>
-                  <p className="text-xs text-zinc-500">{category.children.length} subcategories</p>
+                  <p className="text-[11px] text-zinc-500 sm:text-xs">{category.children.length} subcategories</p>
                 </div>
               </Link>
             ))}
           </div>
+        </section>
+
+        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
+          <h2 className="text-4xl font-semibold text-zinc-900">
+            Shop By <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Brands</span>
+          </h2>
+
+          {brandHighlights.length === 0 ? (
+            <p className="text-sm text-zinc-500">No brands available yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {brandHighlights.map((brand) => (
+                <Link
+                  href={`/brand/${brand.slug}`}
+                  key={brand.id}
+                  className="group overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex h-20 items-center justify-center bg-zinc-50 p-3 sm:h-24">
+                    {brand.imageUrl ? (
+                      <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center rounded-xl bg-linear-to-br from-zinc-100 to-zinc-200 text-lg font-semibold text-zinc-600">
+                        {brand.name.slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2 text-center sm:p-3">
+                    <p className="line-clamp-1 text-xs font-semibold text-zinc-900 group-hover:text-(--accent) sm:text-sm">{brand.name}</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">

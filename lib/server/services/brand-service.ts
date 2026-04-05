@@ -2,6 +2,7 @@ import {
   createBrand,
   deleteBrand,
   findBrandById,
+  findBrandBySlug,
   listBrands,
   updateBrand,
   type BrandRecord,
@@ -12,6 +13,15 @@ import { assertValidCdnUrls } from "@/lib/server/utils/cdn";
 
 export async function getPublicBrands(): Promise<BrandRecord[]> {
   return listBrands(true);
+}
+
+export async function getPublicBrandBySlug(slug: string): Promise<BrandRecord> {
+  const brand = await findBrandBySlug(slug);
+  if (!brand || !brand.isActive) {
+    throw notFound("Brand not found");
+  }
+
+  return brand;
 }
 
 export async function getAdminBrands(): Promise<BrandRecord[]> {
