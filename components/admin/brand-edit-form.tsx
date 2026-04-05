@@ -6,6 +6,7 @@ import { Save, Upload } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand } from "@/lib/client/types";
+import { slugify } from "@/lib/shared/slug";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -29,13 +30,13 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
     name: initialBrand.name,
-    slug: initialBrand.slug,
     imageUrl: initialBrand.imageUrl ?? "",
     description: initialBrand.description ?? "",
     sortOrder: String(initialBrand.sortOrder),
     isActive: initialBrand.isActive,
     isFeatured: initialBrand.isFeatured,
   });
+  const generatedSlug = slugify(form.name);
 
   async function handleImageUpload(file: File | null) {
     if (!file) {
@@ -72,7 +73,7 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
         initialBrand.id,
         {
           name: form.name.trim(),
-          slug: form.slug.trim() || undefined,
+          slug: generatedSlug || undefined,
           imageUrl: form.imageUrl.trim() || null,
           description: form.description.trim() || null,
           sortOrder: parsedSortOrder,
@@ -118,10 +119,10 @@ export function BrandEditForm({ initialBrand }: BrandEditFormProps) {
           <label className="space-y-1">
             <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Slug</span>
             <Input
-              value={form.slug}
-              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
-              placeholder="Slug (optional)"
-              disabled={isSaving}
+              value={generatedSlug}
+              placeholder="Auto-generated from brand name"
+              readOnly
+              disabled
             />
           </label>
           <label className="space-y-1">

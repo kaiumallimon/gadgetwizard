@@ -5,6 +5,7 @@ import { Image as ImageIcon, Upload } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand } from "@/lib/client/types";
+import { slugify } from "@/lib/shared/slug";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -27,13 +28,13 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    slug: "",
     imageUrl: "",
     description: "",
     sortOrder: String(brands.length),
     isActive: true,
     isFeatured: false,
   });
+  const generatedSlug = slugify(form.name);
 
   async function handleImageUpload(file: File | null) {
     if (!file) {
@@ -69,7 +70,7 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
       await apiClient.adminCreateBrand(
         {
           name: form.name.trim(),
-          slug: form.slug.trim() || undefined,
+          slug: generatedSlug || undefined,
           imageUrl: form.imageUrl.trim() || null,
           description: form.description.trim() || null,
           sortOrder: parsedSortOrder,
@@ -81,7 +82,6 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
 
       setForm({
         name: "",
-        slug: "",
         imageUrl: "",
         description: "",
         sortOrder: String(brands.length + 1),
@@ -122,10 +122,10 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
           <label className="space-y-1">
             <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Slug</span>
             <Input
-              value={form.slug}
-              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
-              placeholder="Slug (optional)"
-              disabled={isSaving}
+              value={generatedSlug}
+              placeholder="Auto-generated from brand name"
+              readOnly
+              disabled
             />
           </label>
           <label className="space-y-1">

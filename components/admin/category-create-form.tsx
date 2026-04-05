@@ -5,6 +5,7 @@ import { Image as ImageIcon, Upload } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
+import { slugify } from "@/lib/shared/slug";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,6 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    slug: "",
     imageUrl: "",
     isHeaderCategory: false,
     isFeatured: false,
@@ -37,6 +37,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
 
   const headerPinnedCount = categories.filter((category) => category.isHeaderCategory).length;
   const featuredCount = categories.filter((category) => category.isFeatured).length;
+  const generatedSlug = slugify(form.name);
 
   async function handleImageUpload(file: File | null) {
     if (!file) {
@@ -71,7 +72,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
       await apiClient.adminCreateCategory(
         {
           name: form.name.trim(),
-          slug: form.slug || undefined,
+          slug: generatedSlug || undefined,
           imageUrl: form.imageUrl || null,
           isHeaderCategory: form.isHeaderCategory,
           isFeatured: form.isFeatured,
@@ -79,7 +80,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
         token ?? undefined,
       );
 
-      setForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false, isFeatured: false });
+      setForm({ name: "", imageUrl: "", isHeaderCategory: false, isFeatured: false });
       setNotice("Category created successfully.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category creation failed"));
@@ -114,10 +115,10 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           <label className={fieldWrapClass}>
             <span className={fieldLabelClass}>Slug</span>
             <Input
-              value={form.slug}
-              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
-              placeholder="Slug (optional)"
-              disabled={isSaving}
+              value={generatedSlug}
+              placeholder="Auto-generated from category name"
+              readOnly
+              disabled
             />
           </label>
           <div className={fieldWrapClass}>

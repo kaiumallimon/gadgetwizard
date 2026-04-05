@@ -6,6 +6,7 @@ import { Plus, Trash2, Upload, X } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Brand, Category, Product } from "@/lib/client/types";
+import { slugify } from "@/lib/shared/slug";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -123,7 +124,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const { token } = useAuthStore();
 
   const [name, setName] = useState(initialProduct?.name ?? "");
-  const [slug, setSlug] = useState(initialProduct?.slug ?? "");
+  const slug = useMemo(() => slugify(name), [name]);
   const [shortDescription, setShortDescription] = useState(initialProduct?.shortDescription ?? "");
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.originalPrice) : "");
   const [discountedPrice, setDiscountedPrice] = useState(
@@ -415,7 +416,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
           </Field>
           <Field label="Slug">
-            <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="Slug (optional)" />
+            <Input value={slug} placeholder="Auto-generated from product name" readOnly disabled />
           </Field>
           <Field label="Short Description">
             <Input
