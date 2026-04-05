@@ -8,6 +8,9 @@
   --muted: #6b7280;
   --accent: #f37021;
   --border: #e4e4e7;
+  --border-soft-light: rgba(148, 163, 184, 0.32);
+  --border-soft-dark: rgba(148, 163, 184, 0.28);
+  --border-soft-accent: rgba(243, 112, 33, 0.28);
 }
 
 @theme inline {
@@ -182,4 +185,16 @@ button {
 
 .tiptap-content .selectedCell {
   background: color-mix(in srgb, var(--accent) 15%, white);
+}
+
+.gw-soft-border-light {
+  border-color: var(--border-soft-light) !important;
+}
+
+.gw-soft-border-dark {
+  border-color: var(--border-soft-dark) !important;
+}
+
+.gw-soft-ring-accent {
+  box-shadow: inset 0 0 0 1px var(--border-soft-accent);
 }
