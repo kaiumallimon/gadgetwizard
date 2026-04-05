@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HardDrive, Image as ImageIcon } from "lucide-react";
 
+import { CdnUploadButton } from "@/components/admin/cdn-upload-button";
 import { Badge } from "@/components/ui/badge";
 import {
   Breadcrumb,
@@ -50,9 +51,13 @@ export default async function AdminCdnPage() {
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
-        
-        <h1 className="mt-1 text-3xl font-semibold text-zinc-900">CDN Statistics</h1>
-        <p className="mt-2 text-sm text-zinc-600">Detailed storage and access monitoring for uploaded CDN assets.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">CDN Statistics</h1>
+            <p className="mt-2 text-sm text-zinc-600">Detailed storage and access monitoring for uploaded CDN assets.</p>
+          </div>
+          <CdnUploadButton />
+        </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">
           <Breadcrumb>
             <BreadcrumbList>
