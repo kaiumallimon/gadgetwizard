@@ -26,6 +26,25 @@ interface ProductFormProps {
 type SpecRow = { key: string; value: string };
 type SpecGroup = { title: string; rows: SpecRow[] };
 
+const PRODUCT_FIELD_LIMITS = {
+  name: 200,
+  shortDescription: 500,
+  modelNumber: 120,
+  color: 80,
+  metaTitle: 255,
+  metaDescription: 500,
+} as const;
+
+const TAG_LIMITS = {
+  maxTags: 32,
+  maxTagLength: 40,
+} as const;
+
+const HIGHLIGHT_LIMITS = {
+  maxLines: 12,
+  maxLineLength: 120,
+} as const;
+
 function normalizeSpecValue(value: unknown): string {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
@@ -111,10 +130,54 @@ function toSpecificationObject(groups: SpecGroup[]): Record<string, Record<strin
   return Object.keys(output).length > 0 ? output : null;
 }
 
-function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+function clampText(value: string, limit: number): string {
+  return value.length > limit ? value.slice(0, limit) : value;
+}
+
+function clampTagsInput(value: string): string {
+  const tags = value
+    .split(",")
+    .slice(0, TAG_LIMITS.maxTags)
+    .map((entry) => entry.trim().slice(0, TAG_LIMITS.maxTagLength));
+
+  return tags.join(", ");
+}
+
+function clampHighlightPointsInput(value: string): string {
+  const lines = value
+    .split("\n")
+    .slice(0, HIGHLIGHT_LIMITS.maxLines)
+    .map((entry) => entry.slice(0, HIGHLIGHT_LIMITS.maxLineLength));
+
+  return lines.join("\n");
+}
+
+function getLimitLabelClass(currentLength: number, limit: number): string {
+  if (currentLength >= limit) {
+    return "font-semibold text-red-600 motion-safe:animate-pulse";
+  }
+
+  if (currentLength >= Math.floor(limit * 0.85)) {
+    return "font-semibold text-orange-600";
+  }
+
+  return "font-medium text-zinc-700";
+}
+
+function Field({
+  label,
+  children,
+  className,
+  labelClassName,
+}: {
+  label: ReactNode;
+  children: ReactNode;
+  className?: string;
+  labelClassName?: string;
+}) {
   return (
     <label className={`flex flex-col gap-1 ${className ?? ""}`.trim()}>
-      <span className="text-xs font-medium">{label}</span>
+      <span className={`text-xs transition-colors ${labelClassName ?? "font-medium"}`}>{label}</span>
       {children}
     </label>
   );
@@ -239,6 +302,16 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const [busy, setBusy] = useState(false);
 
   const categoryOptions = useMemo(() => categories, [categories]);
+  const parsedTags = tagsInput
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  const maxTagLength = parsedTags.reduce((maxLength, entry) => Math.max(maxLength, entry.length), 0);
+  const highlightLines = highlightPointsInput
+    .split("\n")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  const maxHighlightLineLength = highlightLines.reduce((maxLength, entry) => Math.max(maxLength, entry.length), 0);
 
   function updateSpecGroup(index: number, patch: Partial<SpecGroup>) {
     setSpecGroups((previous) =>
@@ -525,16 +598,28 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
           <CardDescription>Use rich content for descriptions and structured key/value specifications.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
-          <Field label="Product Name">
-            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
+          <Field
+            label={`Product Name (${name.length}/${PRODUCT_FIELD_LIMITS.name})`}
+            labelClassName={getLimitLabelClass(name.length, PRODUCT_FIELD_LIMITS.name)}
+          >
+            <Input
+              value={name}
+              maxLength={PRODUCT_FIELD_LIMITS.name}
+              onChange={(event) => setName(clampText(event.target.value, PRODUCT_FIELD_LIMITS.name))}
+              placeholder="Product name"
+            />
           </Field>
           <Field label="Slug">
             <Input value={slug} placeholder="Auto-generated from product name" readOnly disabled />
           </Field>
-          <Field label="Short Description">
+          <Field
+            label={`Short Description (${shortDescription.length}/${PRODUCT_FIELD_LIMITS.shortDescription})`}
+            labelClassName={getLimitLabelClass(shortDescription.length, PRODUCT_FIELD_LIMITS.shortDescription)}
+          >
             <Input
               value={shortDescription}
-              onChange={(event) => setShortDescription(event.target.value)}
+              maxLength={PRODUCT_FIELD_LIMITS.shortDescription}
+              onChange={(event) => setShortDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.shortDescription))}
               placeholder="Short description (optional)"
             />
           </Field>
@@ -594,11 +679,27 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
           <Field label="SKU">
             <Input value={generatedSku} placeholder="Auto-generated unique SKU (GWIZ)" readOnly disabled />
           </Field>
-          <Field label="Model Number">
-            <Input value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} placeholder="Model number (optional)" />
+          <Field
+            label={`Model Number (${modelNumber.length}/${PRODUCT_FIELD_LIMITS.modelNumber})`}
+            labelClassName={getLimitLabelClass(modelNumber.length, PRODUCT_FIELD_LIMITS.modelNumber)}
+          >
+            <Input
+              value={modelNumber}
+              maxLength={PRODUCT_FIELD_LIMITS.modelNumber}
+              onChange={(event) => setModelNumber(clampText(event.target.value, PRODUCT_FIELD_LIMITS.modelNumber))}
+              placeholder="Model number (optional)"
+            />
           </Field>
-          <Field label="Color">
-            <Input value={color} onChange={(event) => setColor(event.target.value)} placeholder="Color (optional)" />
+          <Field
+            label={`Color (${color.length}/${PRODUCT_FIELD_LIMITS.color})`}
+            labelClassName={getLimitLabelClass(color.length, PRODUCT_FIELD_LIMITS.color)}
+          >
+            <Input
+              value={color}
+              maxLength={PRODUCT_FIELD_LIMITS.color}
+              onChange={(event) => setColor(clampText(event.target.value, PRODUCT_FIELD_LIMITS.color))}
+              placeholder="Color (optional)"
+            />
           </Field>
           <Field label="Warranty Months">
             <Input
@@ -627,11 +728,32 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               placeholder="Weight (grams)"
             />
           </Field>
-          <Field label="Tags">
-            <Input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="Tags (comma separated)" />
+          <Field
+            label={`Tags (${parsedTags.length}/${TAG_LIMITS.maxTags}, each <= ${TAG_LIMITS.maxTagLength} chars)`}
+            labelClassName={
+              parsedTags.length >= TAG_LIMITS.maxTags || maxTagLength >= TAG_LIMITS.maxTagLength
+                ? "font-semibold text-red-600 motion-safe:animate-pulse"
+                : parsedTags.length >= Math.floor(TAG_LIMITS.maxTags * 0.75) || maxTagLength >= Math.floor(TAG_LIMITS.maxTagLength * 0.85)
+                  ? "font-semibold text-orange-600"
+                  : "font-medium text-zinc-700"
+            }
+          >
+            <Input
+              value={tagsInput}
+              onChange={(event) => setTagsInput(clampTagsInput(event.target.value))}
+              placeholder="Tags (comma separated)"
+            />
           </Field>
-          <Field label="SEO Title">
-            <Input value={metaTitle} onChange={(event) => setMetaTitle(event.target.value)} placeholder="SEO title (optional)" />
+          <Field
+            label={`SEO Title (${metaTitle.length}/${PRODUCT_FIELD_LIMITS.metaTitle})`}
+            labelClassName={getLimitLabelClass(metaTitle.length, PRODUCT_FIELD_LIMITS.metaTitle)}
+          >
+            <Input
+              value={metaTitle}
+              maxLength={PRODUCT_FIELD_LIMITS.metaTitle}
+              onChange={(event) => setMetaTitle(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaTitle))}
+              placeholder="SEO title (optional)"
+            />
           </Field>
           <Field label="Rating Average">
             <Input
@@ -653,18 +775,33 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               placeholder="Rating count"
             />
           </Field>
-          <Field label="SEO Description" className="col-span-full">
+          <Field
+            label={`SEO Description (${metaDescription.length}/${PRODUCT_FIELD_LIMITS.metaDescription})`}
+            className="col-span-full"
+            labelClassName={getLimitLabelClass(metaDescription.length, PRODUCT_FIELD_LIMITS.metaDescription)}
+          >
             <Textarea
               value={metaDescription}
-              onChange={(event) => setMetaDescription(event.target.value)}
+              maxLength={PRODUCT_FIELD_LIMITS.metaDescription}
+              onChange={(event) => setMetaDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaDescription))}
               className="min-h-22.5"
               placeholder="SEO description (optional)"
             />
           </Field>
-          <Field label="Highlight Points" className="col-span-full">
+          <Field
+            label={`Highlight Points (${highlightLines.length}/${HIGHLIGHT_LIMITS.maxLines}, each <= ${HIGHLIGHT_LIMITS.maxLineLength} chars)`}
+            className="col-span-full"
+            labelClassName={
+              highlightLines.length >= HIGHLIGHT_LIMITS.maxLines || maxHighlightLineLength >= HIGHLIGHT_LIMITS.maxLineLength
+                ? "font-semibold text-red-600 motion-safe:animate-pulse"
+                : highlightLines.length >= Math.floor(HIGHLIGHT_LIMITS.maxLines * 0.75) || maxHighlightLineLength >= Math.floor(HIGHLIGHT_LIMITS.maxLineLength * 0.85)
+                  ? "font-semibold text-orange-600"
+                  : "font-medium text-zinc-700"
+            }
+          >
             <Textarea
               value={highlightPointsInput}
-              onChange={(event) => setHighlightPointsInput(event.target.value)}
+              onChange={(event) => setHighlightPointsInput(clampHighlightPointsInput(event.target.value))}
               className="min-h-25"
               placeholder="Highlight points (one per line)"
             />
