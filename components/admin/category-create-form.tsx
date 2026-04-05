@@ -98,41 +98,53 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
         )}
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <Input
-            value={form.name}
-            onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
-            placeholder="Category name"
-            disabled={isSaving}
-          />
-          <Input
-            value={form.slug}
-            onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
-            placeholder="Slug (optional)"
-            disabled={isSaving}
-          />
-          <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-            <Upload className="h-4 w-4" />
-            {isUploadingImage ? "Uploading image..." : "Upload Category Image"}
-            <input
-              type="file"
-              accept="image/*"
-              className="hidden"
-              disabled={isUploadingImage || isSaving}
-              onChange={async (event) => {
-                const input = event.currentTarget;
-                const file = input.files?.[0] ?? null;
-                input.value = "";
-                await handleImageUpload(file);
-              }}
+          <label className="space-y-1">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Category Name</span>
+            <Input
+              value={form.name}
+              onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
+              placeholder="Category name"
+              disabled={isSaving}
             />
           </label>
-          <Input
-            value={form.parentId}
-            onChange={(event) => setForm((prev) => ({ ...prev, parentId: event.target.value }))}
-            placeholder="Parent ID (optional)"
-            disabled={isSaving}
-            list="category-parent-options"
-          />
+          <label className="space-y-1">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Slug</span>
+            <Input
+              value={form.slug}
+              onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
+              placeholder="Slug (optional)"
+              disabled={isSaving}
+            />
+          </label>
+          <div className="space-y-1">
+            <span className="block text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Category Image</span>
+            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+              <Upload className="h-4 w-4" />
+              {isUploadingImage ? "Uploading image..." : "Upload Category Image"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={isUploadingImage || isSaving}
+                onChange={async (event) => {
+                  const input = event.currentTarget;
+                  const file = input.files?.[0] ?? null;
+                  input.value = "";
+                  await handleImageUpload(file);
+                }}
+              />
+            </label>
+          </div>
+          <label className="space-y-1">
+            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Parent Category ID</span>
+            <Input
+              value={form.parentId}
+              onChange={(event) => setForm((prev) => ({ ...prev, parentId: event.target.value }))}
+              placeholder="Parent ID (optional)"
+              disabled={isSaving}
+              list="category-parent-options"
+            />
+          </label>
           <label className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
             <input
               type="checkbox"

@@ -194,34 +194,49 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
                 )}
 
                 <div className="grid gap-2">
-                  <Input
-                    value={draft.name}
-                    onChange={(event) => updateDraft(brand.id, { name: event.target.value })}
-                    placeholder="Brand name"
-                  />
-                  <Input
-                    value={draft.slug}
-                    onChange={(event) => updateDraft(brand.id, { slug: event.target.value })}
-                    placeholder="Slug"
-                  />
-                  <Input
-                    value={draft.imageUrl}
-                    onChange={(event) => updateDraft(brand.id, { imageUrl: event.target.value })}
-                    placeholder="Image URL"
-                  />
-                  <Textarea
-                    value={draft.description}
-                    onChange={(event) => updateDraft(brand.id, { description: event.target.value })}
-                    className="min-h-22.5"
-                    placeholder="Description"
-                  />
-                  <Input
-                    type="number"
-                    min={0}
-                    value={draft.sortOrder}
-                    onChange={(event) => updateDraft(brand.id, { sortOrder: event.target.value })}
-                    placeholder="Sort order"
-                  />
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Brand Name</span>
+                    <Input
+                      value={draft.name}
+                      onChange={(event) => updateDraft(brand.id, { name: event.target.value })}
+                      placeholder="Brand name"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Slug</span>
+                    <Input
+                      value={draft.slug}
+                      onChange={(event) => updateDraft(brand.id, { slug: event.target.value })}
+                      placeholder="Slug"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Image URL</span>
+                    <Input
+                      value={draft.imageUrl}
+                      onChange={(event) => updateDraft(brand.id, { imageUrl: event.target.value })}
+                      placeholder="Image URL"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Description</span>
+                    <Textarea
+                      value={draft.description}
+                      onChange={(event) => updateDraft(brand.id, { description: event.target.value })}
+                      className="min-h-22.5"
+                      placeholder="Description"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Sort Order</span>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={draft.sortOrder}
+                      onChange={(event) => updateDraft(brand.id, { sortOrder: event.target.value })}
+                      placeholder="Sort order"
+                    />
+                  </label>
 
                   <label className="flex items-center gap-2 text-sm">
                     <input

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useMemo, useState } from "react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, Upload, X } from "lucide-react";
 
@@ -107,6 +107,15 @@ function toSpecificationObject(groups: SpecGroup[]): Record<string, Record<strin
   }
 
   return Object.keys(output).length > 0 ? output : null;
+}
+
+function Field({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
+  return (
+    <label className={`space-y-1 ${className ?? ""}`.trim()}>
+      <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">{label}</span>
+      {children}
+    </label>
+  );
 }
 
 export function ProductForm({ mode, categories, brands, initialProduct }: ProductFormProps) {
@@ -405,108 +414,150 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
           <CardDescription>Use rich content for descriptions and structured key/value specifications.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-3 md:grid-cols-2">
-          <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
-          <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="Slug (optional)" />
-          <Input
-            value={shortDescription}
-            onChange={(event) => setShortDescription(event.target.value)}
-            placeholder="Short description (optional)"
-          />
-          <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Original price" />
-          <Input
-            type="number"
-            min={0}
-            step="0.01"
-            value={discountedPrice}
-            onChange={(event) => setDiscountedPrice(event.target.value)}
-            placeholder="Discounted price (optional)"
-          />
-          <Input
-            type="number"
-            min={0}
-            step="0.01"
-            value={loyalCustomerPrice}
-            onChange={(event) => setLoyalCustomerPrice(event.target.value)}
-            placeholder="Loyal customer price (optional)"
-          />
-          <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
-          <select
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
-            className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
-          >
-            {rootCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-          <select
-            value={brandId}
-            onChange={(event) => setBrandId(event.target.value)}
-            className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
-          >
-            <option value="">No brand</option>
-            {brands.map((brand) => (
-              <option key={brand.id} value={brand.id}>
-                {brand.name}
-              </option>
-            ))}
-          </select>
-          <Input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="SKU (optional)" />
-          <Input value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} placeholder="Model number (optional)" />
-          <Input value={color} onChange={(event) => setColor(event.target.value)} placeholder="Color (optional)" />
-          <Input
-            type="number"
-            min={0}
-            value={warrantyMonths}
-            onChange={(event) => setWarrantyMonths(event.target.value)}
-            placeholder="Warranty months"
-          />
-          <Input
-            type="number"
-            min={0}
-            value={returnWindowDays}
-            onChange={(event) => setReturnWindowDays(event.target.value)}
-            placeholder="Return window (days)"
-          />
-          <Input
-            type="number"
-            min={0}
-            value={weightGrams}
-            onChange={(event) => setWeightGrams(event.target.value)}
-            placeholder="Weight (grams)"
-          />
-          <Input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="Tags (comma separated)" />
-          <Input value={metaTitle} onChange={(event) => setMetaTitle(event.target.value)} placeholder="SEO title (optional)" />
-          <Input
-            type="number"
-            min={0}
-            max={5}
-            step="0.1"
-            value={ratingAvg}
-            onChange={(event) => setRatingAvg(event.target.value)}
-            placeholder="Rating average (0-5)"
-          />
-          <Input
-            type="number"
-            min={0}
-            value={ratingCount}
-            onChange={(event) => setRatingCount(event.target.value)}
-            placeholder="Rating count"
-          />
-          <Textarea
-            value={metaDescription}
-            onChange={(event) => setMetaDescription(event.target.value)}
-            className="col-span-full min-h-22.5"
-            placeholder="SEO description (optional)"
-          />
-          <Textarea
-            value={highlightPointsInput}
-            onChange={(event) => setHighlightPointsInput(event.target.value)}
-            className="col-span-full min-h-25"
-            placeholder="Highlight points (one per line)"
-          />
+          <Field label="Product Name">
+            <Input value={name} onChange={(event) => setName(event.target.value)} placeholder="Product name" />
+          </Field>
+          <Field label="Slug">
+            <Input value={slug} onChange={(event) => setSlug(event.target.value)} placeholder="Slug (optional)" />
+          </Field>
+          <Field label="Short Description">
+            <Input
+              value={shortDescription}
+              onChange={(event) => setShortDescription(event.target.value)}
+              placeholder="Short description (optional)"
+            />
+          </Field>
+          <Field label="Original Price">
+            <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="Original price" />
+          </Field>
+          <Field label="Discounted Price">
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              value={discountedPrice}
+              onChange={(event) => setDiscountedPrice(event.target.value)}
+              placeholder="Discounted price (optional)"
+            />
+          </Field>
+          <Field label="Loyal Customer Price">
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              value={loyalCustomerPrice}
+              onChange={(event) => setLoyalCustomerPrice(event.target.value)}
+              placeholder="Loyal customer price (optional)"
+            />
+          </Field>
+          <Field label="Stock">
+            <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
+          </Field>
+          <Field label="Category">
+            <select
+              value={categoryId}
+              onChange={(event) => setCategoryId(event.target.value)}
+              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+            >
+              {rootCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Brand">
+            <select
+              value={brandId}
+              onChange={(event) => setBrandId(event.target.value)}
+              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+            >
+              <option value="">No brand</option>
+              {brands.map((brand) => (
+                <option key={brand.id} value={brand.id}>
+                  {brand.name}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="SKU">
+            <Input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="SKU (optional)" />
+          </Field>
+          <Field label="Model Number">
+            <Input value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} placeholder="Model number (optional)" />
+          </Field>
+          <Field label="Color">
+            <Input value={color} onChange={(event) => setColor(event.target.value)} placeholder="Color (optional)" />
+          </Field>
+          <Field label="Warranty Months">
+            <Input
+              type="number"
+              min={0}
+              value={warrantyMonths}
+              onChange={(event) => setWarrantyMonths(event.target.value)}
+              placeholder="Warranty months"
+            />
+          </Field>
+          <Field label="Return Window (Days)">
+            <Input
+              type="number"
+              min={0}
+              value={returnWindowDays}
+              onChange={(event) => setReturnWindowDays(event.target.value)}
+              placeholder="Return window (days)"
+            />
+          </Field>
+          <Field label="Weight (Grams)">
+            <Input
+              type="number"
+              min={0}
+              value={weightGrams}
+              onChange={(event) => setWeightGrams(event.target.value)}
+              placeholder="Weight (grams)"
+            />
+          </Field>
+          <Field label="Tags">
+            <Input value={tagsInput} onChange={(event) => setTagsInput(event.target.value)} placeholder="Tags (comma separated)" />
+          </Field>
+          <Field label="SEO Title">
+            <Input value={metaTitle} onChange={(event) => setMetaTitle(event.target.value)} placeholder="SEO title (optional)" />
+          </Field>
+          <Field label="Rating Average">
+            <Input
+              type="number"
+              min={0}
+              max={5}
+              step="0.1"
+              value={ratingAvg}
+              onChange={(event) => setRatingAvg(event.target.value)}
+              placeholder="Rating average (0-5)"
+            />
+          </Field>
+          <Field label="Rating Count">
+            <Input
+              type="number"
+              min={0}
+              value={ratingCount}
+              onChange={(event) => setRatingCount(event.target.value)}
+              placeholder="Rating count"
+            />
+          </Field>
+          <Field label="SEO Description" className="col-span-full">
+            <Textarea
+              value={metaDescription}
+              onChange={(event) => setMetaDescription(event.target.value)}
+              className="min-h-22.5"
+              placeholder="SEO description (optional)"
+            />
+          </Field>
+          <Field label="Highlight Points" className="col-span-full">
+            <Textarea
+              value={highlightPointsInput}
+              onChange={(event) => setHighlightPointsInput(event.target.value)}
+              className="min-h-25"
+              placeholder="Highlight points (one per line)"
+            />
+          </Field>
 
           <div className="col-span-full grid gap-2 rounded-md border border-zinc-200 p-3 md:grid-cols-2 xl:grid-cols-3">
             <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} /> Featured</label>
@@ -597,12 +648,15 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         <CardContent className="space-y-3">
           {specGroups.map((group, groupIndex) => (
             <div key={`${groupIndex}-${group.title}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  value={group.title}
-                  onChange={(event) => updateSpecGroup(groupIndex, { title: event.target.value })}
-                  placeholder="Section title (e.g., Display)"
-                />
+              <div className="flex items-end gap-2">
+                <label className="flex-1 space-y-1">
+                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Section Title</span>
+                  <Input
+                    value={group.title}
+                    onChange={(event) => updateSpecGroup(groupIndex, { title: event.target.value })}
+                    placeholder="Section title (e.g., Display)"
+                  />
+                </label>
                 <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecGroup(groupIndex)}>
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -610,16 +664,22 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
 
               {group.rows.map((row, rowIndex) => (
                 <div key={`${groupIndex}-${rowIndex}-${row.key}`} className="grid gap-2 md:grid-cols-[1fr_1fr_auto]">
-                  <Input
-                    value={row.key}
-                    onChange={(event) => updateSpecRow(groupIndex, rowIndex, { key: event.target.value })}
-                    placeholder="Key"
-                  />
-                  <Input
-                    value={row.value}
-                    onChange={(event) => updateSpecRow(groupIndex, rowIndex, { value: event.target.value })}
-                    placeholder="Value"
-                  />
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Key</span>
+                    <Input
+                      value={row.key}
+                      onChange={(event) => updateSpecRow(groupIndex, rowIndex, { key: event.target.value })}
+                      placeholder="Key"
+                    />
+                  </label>
+                  <label className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Value</span>
+                    <Input
+                      value={row.value}
+                      onChange={(event) => updateSpecRow(groupIndex, rowIndex, { value: event.target.value })}
+                      placeholder="Value"
+                    />
+                  </label>
                   <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecRow(groupIndex, rowIndex)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
