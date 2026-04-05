@@ -1,11 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   FiChevronRight,
-  FiGrid,
   FiHeadphones,
   FiLogOut,
   FiPackage,
@@ -187,13 +187,15 @@ export function SiteHeader() {
       <div className="bg-black text-zinc-100">
         <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6">
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="/" className="group flex shrink-0 items-center gap-2">
-              <span className="gw-soft-ring-accent grid h-10 w-10 place-items-center rounded-xl bg-(--accent) text-white shadow-sm">
-                <FiGrid className="h-4 w-4" />
-              </span>
-              <span className="text-xl font-semibold tracking-tight text-white group-hover:text-orange-300">
-                GadgetWizard
-              </span>
+            <Link href="/" className="group flex shrink-0 items-center">
+              <Image
+                src="/logo-black-surfacce.svg"
+                alt="GadgetWizard"
+                width={308}
+                height={60}
+                priority
+                className="h-11 w-auto sm:h-15"
+              />
             </Link>
 
             <div className="order-3 w-full md:order-0 md:flex-1">

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -14,7 +15,6 @@ import {
     Menu,
     Megaphone,
     Package,
-    Shield,
     ShoppingBag,
     ShoppingCart,
     Tag,
@@ -168,9 +168,21 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             <div className="flex h-full w-full flex-col overflow-hidden">
                 <div className="w-full border-b border-zinc-200">
                     <div className="flex items-center gap-3 px-4 py-4">
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-orange-500 to-red-500 text-white shadow-sm">
-                            <Shield className="h-4 w-4" />
-                        </div>
+                        {variant === "admin" ? (
+                            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
+                                <Image
+                                    src="/nameless-logo.svg"
+                                    alt="Admin"
+                                    width={36}
+                                    height={36}
+                                    className="h-8 w-8 object-contain"
+                                />
+                            </div>
+                        ) : (
+                            <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-orange-500 to-red-500 text-white shadow-sm">
+                                <LayoutGrid className="h-4 w-4" />
+                            </div>
+                        )}
                         <div>
                             <p className="text-sm font-semibold text-zinc-900">{nav.title}</p>
                             <p className="text-xs text-zinc-500">{nav.subtitle}</p>
@@ -253,7 +265,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                 </SheetContent>
 
                 <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur">
+                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-4 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Button
                                 type="button"
