@@ -185,10 +185,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const rootCategories = useMemo(
-    () => categories.filter((category) => category.parentId === null || category.parentId === undefined),
-    [categories],
-  );
+  const categoryOptions = useMemo(() => categories, [categories]);
 
   function updateSpecGroup(index: number, patch: Partial<SpecGroup>) {
     setSpecGroups((previous) =>
@@ -459,7 +456,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               onChange={(event) => setCategoryId(event.target.value)}
               className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
             >
-              {rootCategories.map((category) => (
+              {categoryOptions.map((category) => (
                 <option key={category.id} value={category.id}>
                   {category.name}
                 </option>

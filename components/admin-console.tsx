@@ -127,7 +127,6 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -155,7 +154,6 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: url,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -192,7 +190,6 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: !category.isHeaderCategory,
-          parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -219,7 +216,6 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: !category.isActive,
         },
@@ -584,7 +580,6 @@ export function AdminConsole({
                         <PinOff className="h-3 w-3" /> Not Pinned
                       </Badge>
                     )}
-                    {category.parentId !== null && <Badge variant="outline">Parent: {category.parentId}</Badge>}
                   </div>
 
                   <div className="overflow-hidden rounded-md border border-zinc-200">

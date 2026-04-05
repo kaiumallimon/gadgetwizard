@@ -17,38 +17,16 @@ export interface CategoryTreeNode extends CategoryRecord {
   children: CategoryTreeNode[];
 }
 
-function buildTree(categories: CategoryRecord[]): CategoryTreeNode[] {
-  const map = new Map<number, CategoryTreeNode>();
-
-  for (const category of categories) {
-    map.set(category.id, {
-      ...category,
-      children: [],
-    });
-  }
-
-  const roots: CategoryTreeNode[] = [];
-  for (const category of map.values()) {
-    if (category.parentId === null) {
-      roots.push(category);
-      continue;
-    }
-
-    const parent = map.get(category.parentId);
-    if (!parent) {
-      roots.push(category);
-      continue;
-    }
-
-    parent.children.push(category);
-  }
-
-  return roots;
+function withEmptyChildren(categories: CategoryRecord[]): CategoryTreeNode[] {
+  return categories.map((category) => ({
+    ...category,
+    children: [],
+  }));
 }
 
 export async function getPublicCategoryTree(): Promise<CategoryTreeNode[]> {
   const categories = await listCategories(true);
-  return buildTree(categories);
+  return withEmptyChildren(categories);
 }
 
 export async function getAdminCategories(): Promise<CategoryRecord[]> {
@@ -61,20 +39,12 @@ export async function createCategoryAdmin(input: {
   icon?: string | null;
   imageUrl?: string | null;
   isHeaderCategory?: boolean;
-  parentId?: number | null;
   sortOrder?: number;
   isActive?: boolean;
 }): Promise<CategoryRecord> {
   const normalizedSlug = slugify(input.slug ?? input.name);
   if (!normalizedSlug) {
     throw badRequest("Category slug cannot be empty");
-  }
-
-  if (input.parentId) {
-    const parent = await findCategoryById(input.parentId);
-    if (!parent) {
-      throw badRequest("Parent category not found");
-    }
   }
 
   if (input.imageUrl) {
@@ -94,7 +64,6 @@ export async function createCategoryAdmin(input: {
     slug: normalizedSlug,
     icon: input.icon ?? null,
     imageUrl: input.imageUrl ?? null,
-    parentId: input.parentId ?? null,
     sortOrder: input.sortOrder ?? 0,
     isActive: input.isActive ?? true,
     isHeaderCategory: shouldBeHeaderCategory,
@@ -109,7 +78,6 @@ export async function updateCategoryAdmin(
     icon?: string | null;
     imageUrl?: string | null;
     isHeaderCategory?: boolean;
-    parentId?: number | null;
     sortOrder?: number;
     isActive?: boolean;
   },
@@ -122,18 +90,6 @@ export async function updateCategoryAdmin(
   const normalizedSlug = slugify(input.slug ?? input.name);
   if (!normalizedSlug) {
     throw badRequest("Category slug cannot be empty");
-  }
-
-  const nextParent = input.parentId ?? null;
-  if (nextParent === id) {
-    throw badRequest("Category cannot be parent of itself");
-  }
-
-  if (nextParent) {
-    const parent = await findCategoryById(nextParent);
-    if (!parent) {
-      throw badRequest("Parent category not found");
-    }
   }
 
   if (input.imageUrl) {
@@ -153,7 +109,6 @@ export async function updateCategoryAdmin(
     slug: normalizedSlug,
     icon: input.icon ?? null,
     imageUrl: input.imageUrl !== undefined ? input.imageUrl : existing.imageUrl,
-    parentId: nextParent,
     sortOrder: input.sortOrder ?? existing.sortOrder,
     isActive: input.isActive ?? existing.isActive,
     isHeaderCategory: shouldBeHeaderCategory,

@@ -15,6 +15,9 @@ interface CategoryCreateFormProps {
   categories: Category[];
 }
 
+const fieldLabelClass = "text-xs font-medium uppercase tracking-[0.12em] leading-4 text-zinc-500";
+const fieldWrapClass = "grid grid-rows-[auto_2.5rem] gap-1";
+
 function safeErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -28,7 +31,6 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
     name: "",
     slug: "",
     imageUrl: "",
-    parentId: "",
     isHeaderCategory: false,
   });
 
@@ -70,12 +72,11 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           slug: form.slug || undefined,
           imageUrl: form.imageUrl || null,
           isHeaderCategory: form.isHeaderCategory,
-          parentId: form.parentId ? Number(form.parentId) : null,
         },
         token ?? undefined,
       );
 
-      setForm({ name: "", slug: "", imageUrl: "", parentId: "", isHeaderCategory: false });
+      setForm({ name: "", slug: "", imageUrl: "", isHeaderCategory: false });
       setNotice("Category created successfully.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category creation failed"));
@@ -97,9 +98,9 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           </div>
         )}
 
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-          <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Category Name</span>
+        <div className="grid items-start gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <label className={fieldWrapClass}>
+            <span className={fieldLabelClass}>Category Name</span>
             <Input
               value={form.name}
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
@@ -107,8 +108,8 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
               disabled={isSaving}
             />
           </label>
-          <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Slug</span>
+          <label className={fieldWrapClass}>
+            <span className={fieldLabelClass}>Slug</span>
             <Input
               value={form.slug}
               onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))}
@@ -116,9 +117,9 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
               disabled={isSaving}
             />
           </label>
-          <div className="space-y-1">
-            <span className="block text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Category Image</span>
-            <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
+          <div className={fieldWrapClass}>
+            <span className={fieldLabelClass}>Category Image</span>
+            <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50">
               <Upload className="h-4 w-4" />
               {isUploadingImage ? "Uploading image..." : "Upload Category Image"}
               <input
@@ -135,34 +136,20 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
               />
             </label>
           </div>
-          <label className="space-y-1">
-            <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Parent Category ID</span>
-            <Input
-              value={form.parentId}
-              onChange={(event) => setForm((prev) => ({ ...prev, parentId: event.target.value }))}
-              placeholder="Parent ID (optional)"
-              disabled={isSaving}
-              list="category-parent-options"
-            />
-          </label>
-          <label className="flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.isHeaderCategory}
-              disabled={isSaving}
-              onChange={(event) => setForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
-            />
-            Add to header ({headerPinnedCount}/8 pinned)
+          <label className={fieldWrapClass}>
+            <span className={fieldLabelClass}>Header Visibility</span>
+            <span className="flex h-10 items-center gap-2 rounded-md border border-zinc-200 px-3 text-sm">
+              <input
+                type="checkbox"
+                className="h-4 w-4 shrink-0"
+                checked={form.isHeaderCategory}
+                disabled={isSaving}
+                onChange={(event) => setForm((prev) => ({ ...prev, isHeaderCategory: event.target.checked }))}
+              />
+              <span className="truncate">Add to header ({headerPinnedCount}/8 pinned)</span>
+            </span>
           </label>
         </div>
-
-        <datalist id="category-parent-options">
-          {categories.map((category) => (
-            <option key={category.id} value={String(category.id)}>
-              {category.name}
-            </option>
-          ))}
-        </datalist>
 
         {form.imageUrl && (
           <div className="overflow-hidden rounded-md border border-zinc-200">
@@ -174,7 +161,7 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2 border-t border-zinc-200 pt-2">
           <Button onClick={handleCreateCategory} disabled={isSaving}>
             <ImageIcon className="h-4 w-4" /> {isSaving ? "Creating..." : "Create Category"}
           </Button>

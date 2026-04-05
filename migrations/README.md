@@ -17,6 +17,7 @@ These SQL files are ordered and should be executed sequentially.
 11. 011_seed_dummy_products.sql (optional seed data)
 12. 012_create_password_reset_tokens.sql
 13. 013_add_brands_and_product_metadata.sql
+14. 014_drop_category_parent.sql
 
 ## Run Migrations Manually
 
@@ -37,12 +38,13 @@ mysql -u <username> -p <database_name> < migrations/010_drop_banner_mobile_image
 mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
 mysql -u <username> -p <database_name> < migrations/012_create_password_reset_tokens.sql
 mysql -u <username> -p <database_name> < migrations/013_add_brands_and_product_metadata.sql
+mysql -u <username> -p <database_name> < migrations/014_drop_category_parent.sql
 ```
 
 ## Notes
 
 - MySQL 8+ is recommended for JSON support and CHECK constraint behavior.
-- Category hierarchy is self-referencing via categories.parent_id.
+- Categories are now flat (no parent-child relationship).
 - Product images and specifications are stored as JSON for flexible CDN URL arrays and specs.
 - Cart design uses one active cart per user for now (no checkout/order yet).
 - Cart activity logs support basic admin analytics.
@@ -53,3 +55,4 @@ mysql -u <username> -p <database_name> < migrations/013_add_brands_and_product_m
 - 011 is optional and inserts or updates dummy products for development/testing.
 - 012 stores one-time password reset token fingerprints for universal user/admin reset flow.
 - 013 adds brand management plus production-grade product metadata and pricing fields.
+- 014 removes parent category support by dropping categories.parent_id and related constraints/indexes.
