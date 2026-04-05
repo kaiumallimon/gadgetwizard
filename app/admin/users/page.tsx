@@ -16,8 +16,9 @@ import { getAdminUsers } from "@/lib/server/services/admin-service";
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
+  let session: Awaited<ReturnType<typeof requireServerRole>>;
   try {
-    await requireServerRole(["admin"]);
+    session = await requireServerRole(["admin"]);
   } catch {
     redirect("/dashboard");
   }
@@ -48,7 +49,7 @@ export default async function AdminUsersPage() {
         </div>
       </header>
 
-      <AdminUserManager initialUsers={result.items} />
+      <AdminUserManager initialUsers={result.items} currentUserId={session.userId} />
     </div>
   );
 }
