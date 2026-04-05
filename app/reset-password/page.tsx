@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
           {submitError && <p className="mt-3 text-sm text-red-600">{submitError}</p>}
 
           <Button asChild variant="ghost" className="mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900">
-            <Link href="/login">Back to login</Link>
+            <Link href="/?auth=login">Back to login</Link>
           </Button>
         </CardContent>
       </Card>

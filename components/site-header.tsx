@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   FiGrid,
@@ -14,6 +14,7 @@ import {
 import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { AuthDialog } from "@/components/auth-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,11 @@ function flattenCategories(items: Category[]): Category[] {
 
 export function SiteHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
   const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
@@ -103,6 +108,28 @@ export function SiteHeader() {
     }
   }
 
+  useEffect(() => {
+    const authParam = searchParams.get("auth");
+    if (!user && (authParam === "login" || authParam === "signup")) {
+      setAuthDialogMode(authParam);
+      setAuthDialogOpen(true);
+    }
+  }, [searchParams, user]);
+
+  function onAuthDialogChange(nextOpen: boolean) {
+    setAuthDialogOpen(nextOpen);
+
+    if (!nextOpen) {
+      const authParam = searchParams.get("auth");
+      if (authParam === "login" || authParam === "signup") {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete("auth");
+        const query = params.toString();
+        router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      }
+    }
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-200 bg-white/95 text-zinc-900 backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -138,11 +165,17 @@ export function SiteHeader() {
           )}
 
           {!loading && !user && (
-            <Button asChild size="sm" className="rounded-full">
-              <Link href="/login">
-                <FiUser className="h-4 w-4" />
-                Login
-              </Link>
+            <Button
+              type="button"
+              size="sm"
+              className="rounded-full"
+              onClick={() => {
+                setAuthDialogMode("login");
+                setAuthDialogOpen(true);
+              }}
+            >
+              <FiUser className="h-4 w-4" />
+              Login
             </Button>
           )}
 
@@ -176,6 +209,13 @@ export function SiteHeader() {
           )}
         </div>
       </div>
+
+      <AuthDialog
+        open={authDialogOpen}
+        onOpenChange={onAuthDialogChange}
+        mode={authDialogMode}
+        onModeChange={setAuthDialogMode}
+      />
     </header>
   );
 }

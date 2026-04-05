@@ -146,7 +146,7 @@ export default async function HomePage() {
               <Link href="/dashboard" className="rounded-full bg-(--accent) px-5 py-2 font-semibold text-white hover:brightness-95">
                 User Dashboard
               </Link>
-              <Link href="/login" className="rounded-full border border-zinc-700 px-5 py-2 font-semibold text-zinc-200 hover:border-zinc-500">
+              <Link href="/?auth=login" className="rounded-full border border-zinc-700 px-5 py-2 font-semibold text-zinc-200 hover:border-zinc-500">
                 Sign In
               </Link>
             </div>
