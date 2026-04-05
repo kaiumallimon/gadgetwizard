@@ -88,7 +88,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
             <article className="pt-8">
               <h2 className="text-xl font-medium tracking-tight text-zinc-900 mb-6 border-b border-zinc-100 pb-2">Overview</h2>
               <div
-                className="prose prose-zinc mt-4 max-w-none text-[15px] leading-relaxed text-zinc-600 prose-headings:font-medium prose-a:text-blue-600 hover:prose-a:text-blue-500"
+                className="tiptap-content mt-4 text-[15px] text-zinc-700"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             </article>
