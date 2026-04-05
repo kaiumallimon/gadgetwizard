@@ -119,12 +119,38 @@ function Field({ label, children, className }: { label: string; children: ReactN
   );
 }
 
+function createSkuToken(): string {
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `${timestamp}${random}`;
+}
+
+function generateSkuFromName(name: string, token?: string): string {
+  const normalized = slugify(name).toUpperCase();
+  const compact = normalized.replace(/-+/g, "-").slice(0, 40);
+  const base = compact ? `GWIZ-${compact}` : "GWIZ";
+
+  if (!token) {
+    return base;
+  }
+
+  return `${base}-${token}`;
+}
+
 export function ProductForm({ mode, categories, brands, initialProduct }: ProductFormProps) {
   const router = useRouter();
   const { token } = useAuthStore();
+  const createSkuTokenValue = useMemo(() => createSkuToken(), []);
 
   const [name, setName] = useState(initialProduct?.name ?? "");
   const slug = useMemo(() => slugify(name), [name]);
+  const generatedSku = useMemo(() => {
+    if (mode === "edit") {
+      return initialProduct?.sku?.trim() || generateSkuFromName(name, String(initialProduct?.id ?? "EDIT"));
+    }
+
+    return generateSkuFromName(name, createSkuTokenValue);
+  }, [createSkuTokenValue, initialProduct?.id, initialProduct?.sku, mode, name]);
   const [shortDescription, setShortDescription] = useState(initialProduct?.shortDescription ?? "");
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.originalPrice) : "");
   const [discountedPrice, setDiscountedPrice] = useState(
@@ -142,7 +168,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     initialProduct?.categoryId ? String(initialProduct.categoryId) : String(categories[0]?.id ?? ""),
   );
   const [brandId, setBrandId] = useState(initialProduct?.brandId ? String(initialProduct.brandId) : "");
-  const [sku, setSku] = useState(initialProduct?.sku ?? "");
   const [modelNumber, setModelNumber] = useState(initialProduct?.modelNumber ?? "");
   const [color, setColor] = useState(initialProduct?.color ?? "");
   const [warrantyMonths, setWarrantyMonths] = useState(
@@ -354,7 +379,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         stock: parsedStock,
         categoryId: parsedCategoryId,
         brandId: parsedBrandId,
-        sku: sku.trim() || null,
+        sku: generatedSku,
         modelNumber: modelNumber.trim() || null,
         color: color.trim() || null,
         warrantyMonths: parsedWarrantyMonths,
@@ -479,7 +504,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             </select>
           </Field>
           <Field label="SKU">
-            <Input value={sku} onChange={(event) => setSku(event.target.value)} placeholder="SKU (optional)" />
+            <Input value={generatedSku} placeholder="Auto-generated unique SKU (GWIZ)" readOnly disabled />
           </Field>
           <Field label="Model Number">
             <Input value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} placeholder="Model number (optional)" />
