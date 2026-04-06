@@ -151,31 +151,9 @@ export default async function HomePage() {
 
           <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
             {fallbackTrends.map((product) => (
-              <article
-                key={product.id}
-                className="min-w-55 rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm"
-              >
-                <Link href={`/product/${product.slug}`}>
-                  <div className="h-36 overflow-hidden rounded-xl bg-zinc-100">
-                    <img
-                      src={product.images[0] ?? "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200"}
-                      alt={product.name}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </Link>
-
-                <div className="mt-3 space-y-1">
-                  <Link href={`/product/${product.slug}`} className="line-clamp-2 font-semibold text-zinc-900 hover:text-(--accent)">
-                    {product.name}
-                  </Link>
-                  <p className="text-xl font-semibold text-zinc-950">
-                    AUD {(product.discountedPrice !== null && product.discountedPrice < product.originalPrice
-                      ? product.discountedPrice
-                      : product.originalPrice).toLocaleString()}
-                  </p>
-                </div>
-              </article>
+              <div key={product.id} className="w-65 min-w-65">
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         </section>
