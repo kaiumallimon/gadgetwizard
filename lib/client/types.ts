@@ -110,6 +110,16 @@ export interface Banner {
   updatedAt: string;
 }
 
+export interface Faq {
+  id: number;
+  question: string;
+  answer: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CartItem {
   id: number;
   productId: number;

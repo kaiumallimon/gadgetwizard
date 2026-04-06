@@ -3,6 +3,7 @@ import { CreditCard, Headset, MapPin, Phone, ShieldCheck, Truck } from "lucide-r
 
 const quickShopLinks = [
   { href: "/", label: "Home" },
+  { href: "/faqs", label: "FAQs" },
   { href: "/cart", label: "Cart" },
   { href: "/?auth=login", label: "Sign In" },
   { href: "/?auth=signup", label: "Create Account" },

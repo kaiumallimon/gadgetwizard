@@ -18,6 +18,9 @@ These SQL files are ordered and should be executed sequentially.
 12. 012_create_password_reset_tokens.sql
 13. 013_add_brands_and_product_metadata.sql
 14. 014_drop_category_parent.sql
+15. 015_add_category_featured_flag.sql
+16. 016_enforce_unique_product_sku.sql
+17. 017_create_faqs.sql
 
 ## Run Migrations Manually
 
@@ -39,6 +42,9 @@ mysql -u <username> -p <database_name> < migrations/011_seed_dummy_products.sql
 mysql -u <username> -p <database_name> < migrations/012_create_password_reset_tokens.sql
 mysql -u <username> -p <database_name> < migrations/013_add_brands_and_product_metadata.sql
 mysql -u <username> -p <database_name> < migrations/014_drop_category_parent.sql
+mysql -u <username> -p <database_name> < migrations/015_add_category_featured_flag.sql
+mysql -u <username> -p <database_name> < migrations/016_enforce_unique_product_sku.sql
+mysql -u <username> -p <database_name> < migrations/017_create_faqs.sql
 ```
 
 ## Notes
@@ -56,3 +62,6 @@ mysql -u <username> -p <database_name> < migrations/014_drop_category_parent.sql
 - 012 stores one-time password reset token fingerprints for universal user/admin reset flow.
 - 013 adds brand management plus production-grade product metadata and pricing fields.
 - 014 removes parent category support by dropping categories.parent_id and related constraints/indexes.
+- 015 adds is_featured category flag for homepage category highlights.
+- 016 enforces a unique SKU constraint for products.
+- 017 creates FAQs for public help content and admin management.

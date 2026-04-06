@@ -95,7 +95,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <span className="text-xl font-bold tracking-tight text-zinc-950">
               {formatAud(displayPrice)}
             </span>
-            {hasDiscount && <span className="text-xs text-zinc-500 line-through">{formatAud(product.originalPrice)}</span>}
+            {hasDiscount && <span className="text-xs font-semibold text-red-500 line-through">{formatAud(product.originalPrice)}</span>}
           </div>
 
           {(hasDiscount || hasLoyal) && (

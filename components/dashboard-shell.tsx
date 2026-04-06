@@ -14,6 +14,7 @@ import {
     LogOut,
     Menu,
     Megaphone,
+    CircleHelp,
     Package,
     ShoppingBag,
     ShoppingCart,
@@ -84,6 +85,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                             { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
                             { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
+                            { href: "/admin/faqs", label: "FAQs", icon: CircleHelp, exact: true },
                         ],
                     },
                     {

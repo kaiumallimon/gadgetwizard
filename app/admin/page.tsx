@@ -38,6 +38,7 @@ export default async function AdminPage() {
     },
     { href: "/admin/banners", label: "Banners", description: "Manage homepage campaigns with one responsive image source." },
     { href: "/admin/cdn", label: "CDN", description: "Upload media assets and view detailed CDN statistics." },
+    { href: "/admin/faqs", label: "FAQs", description: "Create and manage frequently asked questions for the public support page." },
     { href: "/admin/users", label: "Admins", description: "Create and manage admin accounts and access state." },
     { href: "/admin/customers", label: "Users", description: "Ban or unban regular users and control login access." },
     {

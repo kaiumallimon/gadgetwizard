@@ -130,6 +130,13 @@ export const adminBannerSchema = z.object({
   endsAt: z.string().datetime().nullable().optional(),
 });
 
+export const adminFaqSchema = z.object({
+  question: z.string().trim().min(5).max(255),
+  answer: z.string().trim().min(10).max(20000),
+  sortOrder: z.number().int().min(0).max(100000).optional(),
+  isActive: z.boolean().optional(),
+});
+
 export const adminCreateUserSchema = z.object({
   email: z.string().trim().email().max(255),
   name: z.string().trim().min(2).max(120),

@@ -8,6 +8,7 @@ import type {
   Category,
   CdnFileAsset,
   CdnStats,
+  Faq,
   Product,
 } from "@/lib/client/types";
 
@@ -113,6 +114,10 @@ export const apiClient = {
 
   async getBrands() {
     return apiFetch<{ items: Brand[] }>("/api/brands");
+  },
+
+  async getFaqs() {
+    return apiFetch<{ items: Faq[] }>("/api/faqs");
   },
 
   async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string }) {
@@ -294,6 +299,47 @@ export const apiClient = {
 
   async adminDeleteCategory(id: number, token?: string) {
     return apiFetch<{ success: boolean }>(`/api/admin/categories/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async adminGetFaqs(token?: string) {
+    return apiFetch<{ items: Faq[] }>("/api/admin/faqs", { token });
+  },
+
+  async adminCreateFaq(payload: {
+    question: string;
+    answer: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Faq }>("/api/admin/faqs", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateFaq(
+    id: number,
+    payload: {
+      question: string;
+      answer: string;
+      sortOrder?: number;
+      isActive?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Faq }>(`/api/admin/faqs/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteFaq(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/faqs/${id}`, {
       method: "DELETE",
       token,
     });
