@@ -91,10 +91,17 @@ export function AdminConsole({
   const [notice, setNotice] = useState<string>("");
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
   const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
+  const [isBannerEditDialogOpen, setIsBannerEditDialogOpen] = useState(false);
+  const [editingBannerId, setEditingBannerId] = useState<number | null>(null);
 
   const [bannerForm, setBannerForm] = useState({
     title: "",
     desktopImageUrl: "",
+    clickUrl: "",
+    sortOrder: "0",
+  });
+  const [bannerEditForm, setBannerEditForm] = useState({
+    title: "",
     clickUrl: "",
     sortOrder: "0",
   });
@@ -460,11 +467,41 @@ export function AdminConsole({
   }
 
   async function handleQuickEditBanner(banner: Banner) {
-    const title = window.prompt("Banner title", banner.title);
-    if (!title) return;
+    setEditingBannerId(banner.id);
+    setBannerEditForm({
+      title: banner.title,
+      clickUrl: banner.clickUrl ?? "",
+      sortOrder: String(banner.sortOrder),
+    });
+    setIsBannerEditDialogOpen(true);
+  }
 
-    const sortOrderInput = window.prompt("Sort order", String(banner.sortOrder));
-    if (!sortOrderInput) return;
+  async function handleSaveBannerEdit() {
+    if (editingBannerId === null) {
+      return;
+    }
+
+    const banner = banners.find((item) => item.id === editingBannerId);
+    if (!banner) {
+      setNotice("Unable to find banner for editing.");
+      return;
+    }
+
+    const title = bannerEditForm.title.trim();
+    if (title.length < 2) {
+      setNotice("Banner title must be at least 2 characters.");
+      return;
+    }
+
+    let clickUrl: string | null;
+    let sortOrder: number;
+    try {
+      clickUrl = normalizeBannerClickUrl(bannerEditForm.clickUrl);
+      sortOrder = parseBannerSortOrder(bannerEditForm.sortOrder);
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner input is invalid"));
+      return;
+    }
 
     try {
       await apiClient.adminUpdateBanner(
@@ -472,14 +509,16 @@ export function AdminConsole({
         {
           title,
           desktopImageUrl: banner.desktopImageUrl,
-          clickUrl: banner.clickUrl,
-          sortOrder: Number(sortOrderInput),
+          clickUrl,
+          sortOrder,
           isActive: banner.isActive,
           startsAt: banner.startsAt,
           endsAt: banner.endsAt,
         },
         token ?? undefined,
       );
+      setIsBannerEditDialogOpen(false);
+      setEditingBannerId(null);
       await refreshBanners();
       setNotice("Banner updated.");
     } catch (error) {
@@ -867,6 +906,53 @@ export function AdminConsole({
                   <Button onClick={handleCreateBanner}>
                     <ImageIcon className="h-4 w-4" /> Create Banner
                   </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={isBannerEditDialogOpen}
+              onOpenChange={(open) => {
+                setIsBannerEditDialogOpen(open);
+                if (!open) {
+                  setEditingBannerId(null);
+                }
+              }}
+            >
+              <DialogContent className="max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Edit Banner</DialogTitle>
+                  <DialogDescription>
+                    Update banner title, optional click URL, and sort order.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-3">
+                  <Input
+                    value={bannerEditForm.title}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, title: event.target.value }))}
+                    placeholder="Banner title"
+                  />
+                  <Input
+                    value={bannerEditForm.clickUrl}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, clickUrl: event.target.value }))}
+                    placeholder="Click URL (optional: https://... or /path)"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={bannerEditForm.sortOrder}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
+                    placeholder="Sort order"
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsBannerEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveBannerEdit}>Save Changes</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
