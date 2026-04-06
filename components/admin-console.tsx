@@ -773,7 +773,7 @@ export function AdminConsole({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-zinc-600">
-                    Price: ৳ {product.price.toLocaleString()} | Stock: {product.stock}
+                    Price: AUD {product.price.toLocaleString()} | Stock: {product.stock}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleProductActive(product)}>

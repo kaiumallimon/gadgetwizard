@@ -170,7 +170,7 @@ export default async function HomePage() {
                     {product.name}
                   </Link>
                   <p className="text-xl font-semibold text-zinc-950">
-                    ৳ {(product.discountedPrice !== null && product.discountedPrice < product.originalPrice
+                    AUD {(product.discountedPrice !== null && product.discountedPrice < product.originalPrice
                       ? product.discountedPrice
                       : product.originalPrice).toLocaleString()}
                   </p>

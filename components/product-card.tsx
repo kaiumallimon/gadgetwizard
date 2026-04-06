@@ -61,16 +61,16 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className="text-lg font-semibold text-zinc-900">
-              ৳ {(hasDiscount ? product.discountedPrice : product.originalPrice)?.toLocaleString()}
+              AUD {(hasDiscount ? product.discountedPrice : product.originalPrice)?.toLocaleString()}
             </span>
-            {hasDiscount && <span className="text-xs text-zinc-500 line-through">৳ {product.originalPrice.toLocaleString()}</span>}
+            {hasDiscount && <span className="text-xs text-zinc-500 line-through">AUD {product.originalPrice.toLocaleString()}</span>}
           </div>
           {(hasDiscount || hasLoyal) && (
             <div className="flex flex-wrap gap-1">
               {hasDiscount && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Deal</Badge>}
               {hasLoyal && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  Loyal ৳ {product.loyalCustomerPrice.toLocaleString()}
+                  Loyal AUD {product.loyalCustomerPrice.toLocaleString()}
                 </Badge>
               )}
               {product.isNewArrival && <Badge variant="outline">New</Badge>}

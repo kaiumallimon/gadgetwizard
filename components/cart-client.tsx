@@ -77,7 +77,7 @@ export function CartClient({ initialCart }: CartClientProps) {
             <div>
               <p className="font-medium text-zinc-900">{item.productName}</p>
               <p className="text-sm text-zinc-600">
-              Unit: ৳ {(item.appliedDiscountedPrice ?? item.unitPrice).toLocaleString()} | Stock: {item.stock}
+              Unit: AUD {(item.appliedDiscountedPrice ?? item.unitPrice).toLocaleString()} | Stock: {item.stock}
               </p>
             </div>
 
@@ -118,7 +118,7 @@ export function CartClient({ initialCart }: CartClientProps) {
       <Card className="border-emerald-200 bg-emerald-50">
         <CardContent className="p-4 text-right">
           <p className="text-sm text-emerald-700">Cart Total</p>
-          <p className="text-2xl font-semibold text-emerald-900">৳ {total.toLocaleString()}</p>
+          <p className="text-2xl font-semibold text-emerald-900">AUD {total.toLocaleString()}</p>
         </CardContent>
       </Card>
     </section>
