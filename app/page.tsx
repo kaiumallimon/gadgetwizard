@@ -46,8 +46,8 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-7xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
-        <section className="relative overflow-hidden rounded-2xl border border-zinc-200/90 bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-1">
-          <div className="rounded-xl border border-white/80 bg-white/80 px-3 py-3 backdrop-blur sm:px-4">
+        <section className="relative overflow-hidden border-zinc-200/90 bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-1">
+          
             <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
               {serviceHighlights.map((item) => {
                 const Icon = item.icon;
@@ -55,9 +55,8 @@ export default async function HomePage() {
                 return (
                   <div
                     key={item.title}
-                    className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-3 py-2.5 transition hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm"
+                    className="group flex flex-col gap-3 items-center justify-center relative overflow-hidden rounded-xl border border-zinc-200 bg-white px-3 py-4 transition hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/50 hover:shadow-sm"
                   >
-                    <span className="absolute inset-y-0 left-0 w-1 bg-linear-to-b from-orange-300 via-(--accent) to-orange-500" />
                     <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-(--accent) ring-1 ring-orange-200">
                       <Icon className="h-4 w-4" />
                     </span>
@@ -69,7 +68,6 @@ export default async function HomePage() {
                 );
               })}
             </div>
-          </div>
         </section>
 
         <section className="rounded-2xl bg-white">
@@ -80,14 +78,14 @@ export default async function HomePage() {
           {featuredCategoryHighlights.length === 0 ? (
             <p className="mt-6 text-sm text-zinc-500">No featured categories available right now.</p>
           ) : (
-            <div className="mt-6 grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 sm:p-7 lg:grid-cols-8">
+            <div className="mt-6 grid grid-cols-2 gap-3 p-5 md:grid-cols-4 sm:p-7 lg:grid-cols-6">
               {featuredCategoryHighlights.map((category) => (
                 <Link
                   href={`/category/${category.slug}`}
                   key={category.id}
                   className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
                 >
-                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 sm:h-12">
+                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 md:h-12 lg:h-14">
                     {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
                       <img
                         src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
@@ -102,7 +100,7 @@ export default async function HomePage() {
                   </div>
 
                   <div className="space-y-0.5 p-2 sm:p-3">
-                    <p className="line-clamp-1 text-xs text-center text-zinc-900 group-hover:text-(--accent) sm:text-sm">
+                    <p className="line-clamp-1 text-xs text-center text-zinc-900 group-hover:text-(--accent)">
                       {category.name}
                     </p>
                   </div>
@@ -120,14 +118,14 @@ export default async function HomePage() {
           {brandHighlights.length === 0 ? (
             <p className="text-sm text-zinc-500">No brands available yet.</p>
           ) : (
-            <div className="mt-6 grid grid-cols-2 gap-3 p-5 sm:grid-cols-4 sm:p-7 lg:grid-cols-8">
+            <div className="mt-6 grid grid-cols-2 gap-3 p-5 md:grid-cols-4 sm:p-7 lg:grid-cols-6">
               {brandHighlights.map((brand) => (
                 <Link
                   href={`/brand/${brand.slug}`}
                   key={brand.id}
                   className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
                 >
-                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 sm:h-12">
+                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 md:h-12 lg:h-14">
                     {brand.imageUrl ? (
                       <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
                     ) : (
@@ -138,7 +136,7 @@ export default async function HomePage() {
                   </div>
 
                   <div className="space-y-0.5 p-2 sm:p-3">
-                    <p className="line-clamp-1 text-center text-xs text-zinc-900 group-hover:text-(--accent) sm:text-sm">{brand.name}</p>
+                    {/* <p className="line-clamp-1 text-center text-xs text-zinc-900 group-hover:text-(--accent) sm:text-sm">{brand.name}</p> */}
                   </div>
                 </Link>
               ))}
