@@ -1,11 +1,9 @@
 import Link from "next/link";
-import { notFound as nextNotFound } from "next/navigation";
 import { ArrowLeft, CircleCheck, ShieldCheck, Truck } from "lucide-react";
 
 import { AddToCartInline } from "@/components/add-to-cart-inline";
 import { ProductGallery } from "@/components/product-gallery";
 import { Badge } from "@/components/ui/badge";
-import { HttpError } from "@/lib/server/core/errors";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
@@ -15,22 +13,30 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function normalizeSpecificationSections(specifications: Record<string, unknown> | null) {
-  if (!specifications) return [];
+  if (!specifications) {
+    return [] as Array<{ title: string; rows: Array<{ key: string; value: string }> }>;
+  }
 
   const entries = Object.entries(specifications);
-  if (entries.length === 0) return [];
+  if (entries.length === 0) {
+    return [] as Array<{ title: string; rows: Array<{ key: string; value: string }> }>;
+  }
 
   const allNestedObjects = entries.every(([, value]) => isPlainObject(value));
 
   if (allNestedObjects) {
     return entries
-      .map(([title, value]) => ({
-        title,
-        rows: Object.entries(value as Record<string, unknown>).map(([key, rowValue]) => ({
+      .map(([title, value]) => {
+        const rows = Object.entries(value as Record<string, unknown>).map(([key, rowValue]) => ({
           key,
           value: typeof rowValue === "string" ? rowValue : JSON.stringify(rowValue),
-        })),
-      }))
+        }));
+
+        return {
+          title,
+          rows,
+        };
+      })
       .filter((section) => section.rows.length > 0);
   }
 
@@ -45,164 +51,199 @@ function normalizeSpecificationSections(specifications: Record<string, unknown> 
   ];
 }
 
-export default async function ProductDetailsPage({ params }: { params: { slug: string } }) {
-  let product;
-
-  try {
-    product = await getPublicProductBySlug(params.slug);
-  } catch (error) {
-    if (error instanceof HttpError && error.code === "NOT_FOUND") {
-      nextNotFound();
-    }
-
-    throw error;
+function parseColorOptions(colorValue: string | null): string[] {
+  if (!colorValue) {
+    return [];
   }
 
-  const specificationSections = normalizeSpecificationSections(product.specifications);
+  const seen = new Set<string>();
 
+  return colorValue
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => {
+      if (!entry) {
+        return false;
+      }
+
+      const normalized = entry.toLowerCase();
+      if (seen.has(normalized)) {
+        return false;
+      }
+
+      seen.add(normalized);
+      return true;
+    });
+}
+
+export default async function ProductDetailsPage(context: { params: Promise<{ slug: string }> }) {
+  const { slug } = await context.params;
+  const product = await getPublicProductBySlug(slug);
+  const specificationSections = normalizeSpecificationSections(product.specifications);
+  const colorOptions = parseColorOptions(product.color);
   const fallbackImage = "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
   const galleryImages = product.images.length > 0 ? product.images : [fallbackImage];
-
-  const discountedPrice = product.discountedPrice ?? product.originalPrice;
-  const hasDiscount = discountedPrice < product.originalPrice;
-  const savings = hasDiscount ? product.originalPrice - discountedPrice : 0;
+  const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
+  const hasLoyalPrice = product.loyalCustomerPrice < product.originalPrice;
+  const discountedPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
+  const savingsAmount = hasDiscount ? product.originalPrice - discountedPrice : 0;
+  const savingsPercent = hasDiscount && product.originalPrice > 0
+    ? Math.max(0, Math.round((savingsAmount / product.originalPrice) * 100))
+    : 0;
 
   return (
-    <div className="bg-white min-h-screen">
-      {/* Breadcrumb */}
-      <div className="border-b bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center text-sm text-gray-500">
-          <div className="flex gap-2 items-center">
-            <Link href="/" className="hover:text-black">Home</Link>
+    <div className="w-full px-4 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
+      <div className="mx-auto w-full max-w-450 space-y-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
+          <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
+            <Link href="/" className="transition-colors hover:text-zinc-900">Home</Link>
             <span>/</span>
-            <Link href={`/category/${product.categorySlug}`} className="hover:text-black">
-              {product.categoryName}
-            </Link>
+            <Link href={`/category/${product.categorySlug}`} className="transition-colors hover:text-zinc-900">{product.categoryName}</Link>
             <span>/</span>
-            <span className="text-black font-medium line-clamp-1">{product.name}</span>
-          </div>
+            <span className="line-clamp-1 font-medium text-zinc-900">{product.name}</span>
+          </nav>
 
           <Link
             href={`/category/${product.categorySlug}`}
-            className="flex items-center gap-1 hover:text-black"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
           >
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-10 grid lg:grid-cols-2 gap-12">
-        {/* LEFT */}
-        <div className="space-y-10">
-          <ProductGallery images={galleryImages} productName={product.name} />
+        <div className="grid gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-16">
+          <section className="space-y-12">
+            <ProductGallery images={galleryImages} productName={product.name} />
 
-          {/* Description */}
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Product Overview</h2>
             {product.description ? (
-              <div
-                className="prose max-w-none text-gray-600"
-                dangerouslySetInnerHTML={{ __html: product.description }}
-              />
+              <article className="space-y-4 border-t border-zinc-100 pt-10">
+                <h2 className="text-xl font-medium tracking-tight text-zinc-900">Overview</h2>
+                <div
+                  className="tiptap-content text-[15px] text-zinc-700"
+                  dangerouslySetInnerHTML={{ __html: product.description }}
+                />
+              </article>
             ) : (
-              <p className="text-gray-400 italic">No description available</p>
+              <article className="border-t border-zinc-100 pt-10 text-zinc-500 italic">
+                No detailed overview provided.
+              </article>
             )}
-          </div>
 
-          {/* Specs */}
-          {specificationSections.length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6">Specifications</h2>
-              <div className="space-y-8">
-                {specificationSections.map((section) => (
-                  <div key={section.title}>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase mb-3">
-                      {section.title}
-                    </h3>
+            {specificationSections.length > 0 && (
+              <section className="space-y-8 border-t border-zinc-100 pt-10">
+                <h2 className="text-xl font-medium tracking-tight text-zinc-900">Tech Specs</h2>
+                <div className="space-y-8">
+                  {specificationSections.map((section) => (
+                    <section key={section.title} className="space-y-4">
+                      <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">{section.title}</h3>
+                      <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
+                        {section.rows.map((row) => (
+                          <div
+                            key={`${section.title}-${row.key}`}
+                            className="border-b border-zinc-100 pb-3"
+                          >
+                            <p className="text-sm text-zinc-500">{row.key}</p>
+                            <p className="mt-1 text-sm font-medium text-zinc-900">{row.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </section>
+            )}
+          </section>
 
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {section.rows.map((row) => (
-                        <div
-                          key={row.key}
-                          className="border rounded-xl p-4 bg-gray-50"
-                        >
-                          <p className="text-xs text-gray-500">{row.key}</p>
-                          <p className="font-medium text-gray-900 mt-1">{row.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+          <aside className="space-y-8">
+            <section className="space-y-5">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-600">{product.categoryName}</Badge>
+                {product.brandName && (
+                  <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-600">{product.brandName}</Badge>
+                )}
+                <Badge
+                  variant="secondary"
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${product.stock > 0 ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}
+                >
+                  {product.stock > 0 ? "In Stock" : "Out Of Stock"}
+                </Badge>
+                {product.isNewArrival && <Badge variant="secondary" className="rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">New Arrival</Badge>}
+                {product.isBestSeller && <Badge variant="secondary" className="rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">Best Seller</Badge>}
               </div>
-            </div>
-          )}
-        </div>
 
-        {/* RIGHT */}
-        <div className="lg:sticky top-20 h-fit space-y-6">
-          {/* Card */}
-          <div className="border rounded-2xl p-6 shadow-sm space-y-5">
-            {/* Badges */}
-            <div className="flex flex-wrap gap-2">
-              <Badge>{product.categoryName}</Badge>
-              {product.brandName && <Badge variant="outline">{product.brandName}</Badge>}
-              <Badge
-                variant={product.stock > 0 ? "default" : "outline"}
-                className={product.stock > 0 ? undefined : "border-red-200 bg-red-50 text-red-700"}
-              >
-                {product.stock > 0 ? "In Stock" : "Out of Stock"}
-              </Badge>
-            </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl">{product.name}</h1>
+                {product.shortDescription && <p className="max-w-2xl leading-relaxed text-zinc-600">{product.shortDescription}</p>}
+              </div>
 
-            {/* Title */}
-            <h1 className="text-2xl font-semibold">{product.name}</h1>
+              {(product.modelNumber || product.sku) && (
+                <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.12em] text-zinc-500">
+                  {product.modelNumber && <span>Model: {product.modelNumber}</span>}
+                  {product.sku && <span>SKU: {product.sku}</span>}
+                </div>
+              )}
+            </section>
 
-            {/* Price */}
-            <div>
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-black">
-                  AUD {discountedPrice.toLocaleString()}
-                </span>
+            <section className="space-y-6 border-y border-zinc-200/80 py-7">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-3">
+                  <span className="text-4xl font-semibold tracking-tight text-zinc-900">AUD {discountedPrice.toLocaleString()}</span>
+                  {hasDiscount && (
+                    <span className="text-lg text-zinc-400 line-through">AUD {product.originalPrice.toLocaleString()}</span>
+                  )}
+                </div>
 
                 {hasDiscount && (
-                  <span className="line-through text-gray-400">
-                    AUD {product.originalPrice.toLocaleString()}
+                  <span className="text-sm font-medium text-green-600">
+                    Save AUD {savingsAmount.toLocaleString()} ({savingsPercent}%)
+                  </span>
+                )}
+
+                {hasLoyalPrice && (
+                  <span className="mt-1 text-sm font-medium text-blue-600">
+                    Loyalty Price: AUD {product.loyalCustomerPrice.toLocaleString()}
                   </span>
                 )}
               </div>
 
-              {hasDiscount && (
-                <p className="text-green-600 text-sm mt-1">
-                  Save AUD {savings.toLocaleString()}
+              <AddToCartInline productId={product.id} stock={product.stock} colorOptions={colorOptions} />
+            </section>
+
+            <section className="space-y-5">
+              <div className="grid gap-3">
+                {product.isFreeDelivery && (
+                  <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                    <Truck className="h-4 w-4 text-zinc-900" /> Free nationwide delivery
+                  </p>
+                )}
+                {(product.isOfficialWarranty || (product.warrantyMonths ?? 0) > 0) && (
+                  <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                    <ShieldCheck className="h-4 w-4 text-zinc-900" />
+                    {product.warrantyMonths ? `${product.warrantyMonths}-month official warranty` : "Official warranty support"}
+                  </p>
+                )}
+                <p className="inline-flex items-center gap-2 text-sm text-zinc-600">
+                  <CircleCheck className="h-4 w-4 text-zinc-900" /> Secure checkout-ready cart flow
                 </p>
+                {product.isCashOnDelivery && <p className="text-sm text-zinc-600">Cash on Delivery available</p>}
+                {product.isEmiAvailable && <p className="text-sm text-zinc-600">EMI options available</p>}
+              </div>
+
+              {product.highlightPoints.length > 0 && (
+                <div className="space-y-3 border-t border-zinc-100 pt-5">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Why this product</h2>
+                  <ul className="space-y-2">
+                    {product.highlightPoints.map((point, index) => (
+                      <li key={`${point}-${index}`} className="flex items-start gap-2 text-sm text-zinc-600">
+                        <CircleCheck className="mt-0.5 h-4 w-4 shrink-0 text-zinc-900" />
+                        <span>{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-            </div>
-
-            {/* CTA */}
-            <AddToCartInline productId={product.id} stock={product.stock} />
-
-            {/* Features */}
-            <div className="border-t pt-4 space-y-3 text-sm text-gray-600">
-              {product.isFreeDelivery && (
-                <p className="flex items-center gap-2">
-                  <Truck className="h-4 w-4" /> Free delivery
-                </p>
-              )}
-
-              {(product.isOfficialWarranty || (product.warrantyMonths ?? 0) > 0) && (
-                <p className="flex items-center gap-2">
-                  <ShieldCheck className="h-4 w-4" />
-                  {product.warrantyMonths
-                    ? `${product.warrantyMonths} months warranty`
-                    : "Official warranty"}
-                </p>
-              )}
-
-              <p className="flex items-center gap-2">
-                <CircleCheck className="h-4 w-4" /> Secure checkout
-              </p>
-            </div>
-          </div>
+            </section>
+          </aside>
         </div>
       </div>
     </div>
