@@ -93,7 +93,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
 
   return (
     <div className="w-full px-4 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
-      <div className="mx-auto w-full max-w-450 space-y-8">
+      <div className="mx-auto w-full max-w-7xl space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
             <Link href="/" className="transition-colors hover:text-zinc-900">Home</Link>
@@ -111,50 +111,12 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
           </Link>
         </div>
 
-        <div className="grid gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-16">
-          <section className="space-y-12">
+        <div className="grid gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:items-start xl:gap-16">
+          <section className="order-1 xl:col-start-1">
             <ProductGallery images={galleryImages} productName={product.name} />
-
-            {product.description ? (
-              <article className="space-y-4 border-t border-zinc-100 pt-10">
-                <h2 className="text-xl font-medium tracking-tight text-zinc-900">Overview</h2>
-                <div
-                  className="tiptap-content text-[15px] text-zinc-700"
-                  dangerouslySetInnerHTML={{ __html: product.description }}
-                />
-              </article>
-            ) : (
-              <article className="border-t border-zinc-100 pt-10 text-zinc-500 italic">
-                No detailed overview provided.
-              </article>
-            )}
-
-            {specificationSections.length > 0 && (
-              <section className="space-y-8 border-t border-zinc-100 pt-10">
-                <h2 className="text-xl font-medium tracking-tight text-zinc-900">Tech Specs</h2>
-                <div className="space-y-8">
-                  {specificationSections.map((section) => (
-                    <section key={section.title} className="space-y-4">
-                      <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">{section.title}</h3>
-                      <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
-                        {section.rows.map((row) => (
-                          <div
-                            key={`${section.title}-${row.key}`}
-                            className="border-b border-zinc-100 pb-3"
-                          >
-                            <p className="text-sm text-zinc-500">{row.key}</p>
-                            <p className="mt-1 text-sm font-medium text-zinc-900">{row.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </section>
-                  ))}
-                </div>
-              </section>
-            )}
           </section>
 
-          <aside className="space-y-8">
+          <aside className="order-2 space-y-8 xl:col-start-2">
             <section className="space-y-5">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-600">{product.categoryName}</Badge>
@@ -177,9 +139,19 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               </div>
 
               {(product.modelNumber || product.sku) && (
-                <div className="flex flex-wrap items-center gap-4 text-xs uppercase tracking-[0.12em] text-zinc-500">
-                  {product.modelNumber && <span>Model: {product.modelNumber}</span>}
-                  {product.sku && <span>SKU: {product.sku}</span>}
+                <div className="flex flex-wrap items-center gap-2">
+                  {product.modelNumber && (
+                    <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700">
+                      <span className="uppercase tracking-widest text-zinc-500">Model</span>
+                      <span className="ml-1 text-zinc-800">{product.modelNumber}</span>
+                    </Badge>
+                  )}
+                  {product.sku && (
+                    <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700">
+                      <span className="uppercase tracking-widest text-zinc-500">SKU</span>
+                      <span className="ml-1 text-zinc-800">{product.sku}</span>
+                    </Badge>
+                  )}
                 </div>
               )}
             </section>
@@ -244,6 +216,44 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               )}
             </section>
           </aside>
+
+          {specificationSections.length > 0 && (
+            <section className="order-3 space-y-8 border-t border-zinc-100 pt-10 xl:col-span-2">
+              <h2 className="inline-flex w-fit items-center border-l-4 border-zinc-900 bg-zinc-100 px-3 py-1 text-xl font-semibold tracking-tight text-zinc-900">Tech Specs</h2>
+              <div className="space-y-8">
+                {specificationSections.map((section) => (
+                  <section key={section.title} className="space-y-4">
+                    <h3 className="font-bold uppercase text-zinc-800">{section.title}</h3>
+                    <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
+                      {section.rows.map((row) => (
+                        <div
+                          key={`${section.title}-${row.key}`}
+                          className="border-b border-zinc-100 pb-3"
+                        >
+                          <p className="text-sm text-zinc-500">{row.key}</p>
+                          <p className="mt-1 text-sm font-medium text-zinc-900">{row.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {product.description ? (
+            <article className="order-4 space-y-4 border-t border-zinc-100 pt-10 xl:col-span-2">
+              <h2 className="text-xl font-medium tracking-tight text-zinc-900">Description</h2>
+              <div
+                className="tiptap-content text-[15px] text-zinc-700"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            </article>
+          ) : (
+            <article className="order-4 border-t border-zinc-100 pt-10 text-zinc-500 italic xl:col-span-2">
+              No detailed description provided.
+            </article>
+          )}
         </div>
       </div>
     </div>
