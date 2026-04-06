@@ -675,3 +675,12 @@ export async function updateProduct(
 export async function deleteProduct(id: number): Promise<void> {
   await execute("DELETE FROM products WHERE id = ?", [id]);
 }
+
+export async function countCartItemsByProductId(productId: number): Promise<number> {
+  const row = await queryOne<{ total: number }>(
+    "SELECT COUNT(*) AS total FROM cart_items WHERE product_id = ?",
+    [productId],
+  );
+
+  return row?.total ?? 0;
+}

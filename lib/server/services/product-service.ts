@@ -1,4 +1,5 @@
 import {
+  countCartItemsByProductId,
   createProduct,
   deleteProduct,
   findProductById,
@@ -8,9 +9,19 @@ import {
 } from "@/lib/server/repositories/product-repository";
 import { findCategoryById } from "@/lib/server/repositories/category-repository";
 import { findBrandById } from "@/lib/server/repositories/brand-repository";
-import { badRequest, notFound } from "@/lib/server/core/errors";
+import { badRequest, conflict, notFound } from "@/lib/server/core/errors";
 import { assertValidCdnUrls } from "@/lib/server/utils/cdn";
 import { slugify } from "@/lib/server/utils/slug";
+
+type MySqlError = {
+  code?: string;
+  errno?: number;
+};
+
+function isForeignKeyConstraintError(error: unknown): boolean {
+  const dbError = error as MySqlError;
+  return dbError?.code === "ER_ROW_IS_REFERENCED_2" || dbError?.errno === 1451;
+}
 
 interface ProductAdminInput {
   name: string;
@@ -362,5 +373,23 @@ export async function deleteProductAdmin(id: number): Promise<void> {
     throw notFound("Product not found");
   }
 
-  await deleteProduct(id);
+  const linkedCartItemCount = await countCartItemsByProductId(id);
+  if (linkedCartItemCount > 0) {
+    throw conflict(
+      "Cannot delete this product because it is currently present in one or more carts. Remove it from carts first.",
+    );
+  }
+
+  try {
+    await deleteProduct(id);
+  } catch (error) {
+    // Defensive fallback for race conditions where a cart item is created after the pre-check.
+    if (isForeignKeyConstraintError(error)) {
+      throw conflict(
+        "Cannot delete this product because it is currently present in one or more carts. Remove it from carts first.",
+      );
+    }
+
+    throw error;
+  }
 }
