@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -11,15 +10,47 @@ interface ProductGalleryProps {
 
 export function ProductGallery({ images, productName }: ProductGalleryProps) {
   const [selectedImage, setSelectedImage] = useState(images[0]);
+  const [zoomStyle, setZoomStyle] = useState({});
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+
+    let x = (e.clientX - left) / width;
+    let y = (e.clientY - top) / height;
+
+    // 🔒 Clamp values to avoid showing edges
+    const clamp = (val: number, min: number, max: number) =>
+      Math.min(Math.max(val, min), max);
+
+    x = clamp(x, 0.15, 0.85);
+    y = clamp(y, 0.15, 0.85);
+
+    setZoomStyle({
+      transform: "scale(2)",
+      transformOrigin: `${x * 100}% ${y * 100}%`,
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setZoomStyle({
+      transform: "scale(1)",
+      transformOrigin: "center",
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-[2rem] bg-zinc-50 flex items-center justify-center p-8 sm:p-12">
-        <div className="relative aspect-square w-full max-w-lg flex items-center justify-center">
+      <div className="overflow-hidden rounded-4xl bg-white border flex items-center justify-center">
+        <div
+          className="relative aspect-square w-full max-w-lg overflow-hidden"
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+        >
           <img
             src={selectedImage}
             alt={productName}
-            className="max-h-full max-w-full object-contain pointer-events-none transition-all duration-300"
+            style={zoomStyle}
+            className="w-full h-full object-cover transition-transform duration-200 ease-out hover:cursor-zoom-in"
           />
         </div>
       </div>
@@ -31,7 +62,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
               key={`${image}-${index}`}
               onClick={() => setSelectedImage(image)}
               className={cn(
-                "relative overflow-hidden rounded-2xl bg-zinc-50 p-2 transition-all w-20 h-20 sm:w-24 sm:h-24 hover:ring-2 hover:ring-zinc-300 focus:outline-none flex items-center justify-center",
+                "relative cursor-pointer overflow-hidden rounded-2xl bg-zinc-50 p-2 transition-all w-20 h-20 sm:w-24 sm:h-24 hover:ring-2 hover:ring-zinc-300 focus:outline-none flex items-center justify-center",
                 selectedImage === image
                   ? "ring-2 ring-zinc-900 shadow-sm"
                   : "ring-1 ring-zinc-200"

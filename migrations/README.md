@@ -21,6 +21,7 @@ These SQL files are ordered and should be executed sequentially.
 15. 015_add_category_featured_flag.sql
 16. 016_enforce_unique_product_sku.sql
 17. 017_create_faqs.sql
+18. 018_create_system_activity_logs.sql
 
 ## Run Migrations Manually
 
@@ -45,6 +46,7 @@ mysql -u <username> -p <database_name> < migrations/014_drop_category_parent.sql
 mysql -u <username> -p <database_name> < migrations/015_add_category_featured_flag.sql
 mysql -u <username> -p <database_name> < migrations/016_enforce_unique_product_sku.sql
 mysql -u <username> -p <database_name> < migrations/017_create_faqs.sql
+mysql -u <username> -p <database_name> < migrations/018_create_system_activity_logs.sql
 ```
 
 ## Notes
@@ -65,3 +67,4 @@ mysql -u <username> -p <database_name> < migrations/017_create_faqs.sql
 - 015 adds is_featured category flag for homepage category highlights.
 - 016 enforces a unique SKU constraint for products.
 - 017 creates FAQs for public help content and admin management.
+- 018 creates system_activity_logs for production-grade CRUD monitoring across API routes.

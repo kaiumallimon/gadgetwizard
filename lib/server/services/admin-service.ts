@@ -7,9 +7,12 @@ import { renderAdminWelcomeEmail } from "@/lib/server/mail/templates";
 import { assertSmtpConfigured, sendSmtpMail } from "@/lib/server/mail/smtp";
 import {
   getAnalyticsSummary,
-  getRecentCartActivity,
-  getRecentCartActivityPage,
 } from "@/lib/server/repositories/analytics-repository";
+import {
+  getSystemActivityPage,
+  getSystemActivitySummary,
+  type CrudAction,
+} from "@/lib/server/repositories/system-activity-repository";
 import {
   countActiveAdmins,
   createAdminUser,
@@ -107,12 +110,16 @@ export async function getRegularUsers(input: {
   });
 }
 
-export async function getAdminActivityFeed(limit = 30) {
-  return getRecentCartActivity(limit);
+export async function getAdminActivityFeedPage(input: {
+  page: number;
+  pageSize: number;
+  action?: CrudAction;
+}) {
+  return getSystemActivityPage(input);
 }
 
-export async function getAdminActivityFeedPage(input: { page: number; pageSize: number }) {
-  return getRecentCartActivityPage(input);
+export async function getAdminActivitySummary() {
+  return getSystemActivitySummary();
 }
 
 export async function createAdminAccount(input: {

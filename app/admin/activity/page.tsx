@@ -22,11 +22,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { requireServerRole } from "@/lib/server/auth/server-session";
-import { getAdminActivityFeedPage, getAdminAnalytics } from "@/lib/server/services/admin-service";
+import { getAdminActivityFeedPage, getAdminActivitySummary } from "@/lib/server/services/admin-service";
 
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 12;
+const VALID_ACTIONS = ["create", "read", "update", "delete"] as const;
+type CrudAction = (typeof VALID_ACTIONS)[number];
 
 function parsePage(value?: string): number {
   const parsed = Number(value);
@@ -36,8 +38,27 @@ function parsePage(value?: string): number {
   return Math.max(1, Math.floor(parsed));
 }
 
-function buildPageHref(page: number): string {
-  return `/admin/activity?page=${page}`;
+function parseAction(value?: string): CrudAction | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  const normalized = value.toLowerCase();
+  if ((VALID_ACTIONS as readonly string[]).includes(normalized)) {
+    return normalized as CrudAction;
+  }
+
+  return undefined;
+}
+
+function buildPageHref(page: number, action?: CrudAction): string {
+  const query = new URLSearchParams();
+  query.set("page", String(page));
+  if (action) {
+    query.set("action", action);
+  }
+
+  return `/admin/activity?${query.toString()}`;
 }
 
 function pageWindow(current: number, totalPages: number): number[] {
@@ -52,14 +73,15 @@ function pageWindow(current: number, totalPages: number): number[] {
   return pages;
 }
 
-function eventLabel(action: "add" | "update" | "remove"): string {
-  if (action === "add") return "cart.add";
-  if (action === "update") return "cart.update";
-  return "cart.remove";
+function eventLabel(action: CrudAction): string {
+  if (action === "create") return "CREATE";
+  if (action === "read") return "READ";
+  if (action === "update") return "UPDATE";
+  return "DELETE";
 }
 
-function actionVariant(action: "add" | "update" | "remove"): "default" | "secondary" | "outline" {
-  if (action === "add") return "default";
+function actionVariant(action: CrudAction): "default" | "secondary" | "outline" {
+  if (action === "create") return "default";
   if (action === "update") return "secondary";
   return "outline";
 }
@@ -67,7 +89,7 @@ function actionVariant(action: "add" | "update" | "remove"): "default" | "second
 export default async function AdminActivityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; action?: string }>;
 }) {
   try {
     await requireServerRole(["admin"]);
@@ -77,14 +99,18 @@ export default async function AdminActivityPage({
 
   const params = await searchParams;
   const page = parsePage(params.page);
+  const action = parseAction(params.action);
 
-  const [analytics, result] = await Promise.all([
-    getAdminAnalytics(),
-    getAdminActivityFeedPage({ page, pageSize: PAGE_SIZE }),
+  const [summary, result] = await Promise.all([
+    getAdminActivitySummary(),
+    getAdminActivityFeedPage({ page, pageSize: PAGE_SIZE, action }),
   ]);
 
-  const visibleActorCount = new Set(result.items.map((row) => row.userEmail ?? `unknown-${row.id}`)).size;
+  const visibleActorCount = new Set(
+    result.items.map((row) => row.actorEmail ?? `${row.actorRole}-${row.id}`),
+  ).size;
   const pages = pageWindow(result.page, result.totalPages);
+  const actionCountMap = new Map(summary.actionCounts.map((item) => [item.action, item.total]));
 
   return (
     <div className="w-full space-y-6">
@@ -92,7 +118,7 @@ export default async function AdminActivityPage({
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">System Monitoring</p>
         <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Activity Dashboard</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Audit who is doing what across cart events, with time-stamped actor and action tracking.
+          Audit who is doing what across CRUD actions, with actor identity, route target, and status.
         </p>
         <div className="mt-3 border-t border-zinc-200 pt-2">
           <Breadcrumb>
@@ -143,7 +169,7 @@ export default async function AdminActivityPage({
             <CardTitle className="text-base">Cart Action Total</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 text-2xl font-semibold">
-            {analytics.cartActivity.reduce((sum, item) => sum + item.total, 0)}
+            {summary.successful}
           </CardContent>
         </Card>
       </section>
@@ -153,6 +179,17 @@ export default async function AdminActivityPage({
           <CardTitle className="text-lg">Who Did What</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <PaginationLink href={buildPageHref(1)} isActive={!action}>
+              All ({summary.total})
+            </PaginationLink>
+            {VALID_ACTIONS.map((actionName) => (
+              <PaginationLink key={actionName} href={buildPageHref(1, actionName)} isActive={action === actionName}>
+                {eventLabel(actionName)} ({actionCountMap.get(actionName) ?? 0})
+              </PaginationLink>
+            ))}
+          </div>
+
           {result.items.length === 0 && <p className="text-sm text-zinc-500">No activity logs found.</p>}
 
           {result.items.length > 0 && (
@@ -163,7 +200,8 @@ export default async function AdminActivityPage({
                     <th className="px-4 py-3 font-medium">Actor</th>
                     <th className="px-4 py-3 font-medium">Action</th>
                     <th className="px-4 py-3 font-medium">Target</th>
-                    <th className="px-4 py-3 font-medium">Change</th>
+                    <th className="px-4 py-3 font-medium">Message</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
                     <th className="px-4 py-3 font-medium">Timestamp</th>
                   </tr>
                 </thead>
@@ -171,18 +209,23 @@ export default async function AdminActivityPage({
                   {result.items.map((row) => (
                     <tr key={row.id} className="border-t border-zinc-200 text-zinc-800">
                       <td className="px-4 py-3">
-                        <p className="font-medium">{row.userName ?? "Unknown user"}</p>
-                        <p className="text-xs text-zinc-500">{row.userEmail ?? "No email"}</p>
+                        <p className="font-medium">{row.actorName ?? "Unknown actor"}</p>
+                        <p className="text-xs text-zinc-500">{row.actorEmail ?? "No email"}</p>
+                        <p className="text-xs uppercase tracking-wider text-zinc-500">{row.actorRole}</p>
                       </td>
                       <td className="px-4 py-3">
-                        <Badge variant={actionVariant(row.action)}>{eventLabel(row.action)}</Badge>
+                        <Badge variant={actionVariant(row.crudAction)}>{eventLabel(row.crudAction)}</Badge>
                       </td>
                       <td className="px-4 py-3">
-                        <p className="font-medium">{row.productName ?? "Unknown product"}</p>
-                        <p className="text-xs text-zinc-500">Product ID: {row.productId ?? "N/A"}</p>
+                        <p className="font-medium">{row.resourceName}</p>
+                        <p className="text-xs text-zinc-500">{row.routePath}</p>
+                        {row.resourceId && <p className="text-xs text-zinc-500">Resource ID: {row.resourceId}</p>}
                       </td>
-                      <td className="px-4 py-3 text-zinc-600">
-                        {row.quantityBefore ?? 0} {"->"} {row.quantityAfter ?? 0}
+                      <td className="px-4 py-3 text-zinc-600">{row.message}</td>
+                      <td className="px-4 py-3">
+                        <Badge variant={row.isSuccess ? "secondary" : "destructive"}>
+                          {row.isSuccess ? "Success" : "Failed"} ({row.statusCode})
+                        </Badge>
                       </td>
                       <td className="px-4 py-3 text-zinc-600">{new Date(row.createdAt).toLocaleString()}</td>
                     </tr>
@@ -197,7 +240,7 @@ export default async function AdminActivityPage({
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    href={result.page > 1 ? buildPageHref(result.page - 1) : "#"}
+                    href={result.page > 1 ? buildPageHref(result.page - 1, action) : "#"}
                     className={result.page <= 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
@@ -205,7 +248,7 @@ export default async function AdminActivityPage({
                 {pages[0] !== 1 && (
                   <>
                     <PaginationItem>
-                      <PaginationLink href={buildPageHref(1)}>1</PaginationLink>
+                      <PaginationLink href={buildPageHref(1, action)}>1</PaginationLink>
                     </PaginationItem>
                     {pages[0] > 2 && (
                       <PaginationItem>
@@ -217,7 +260,7 @@ export default async function AdminActivityPage({
 
                 {pages.map((pageNumber) => (
                   <PaginationItem key={pageNumber}>
-                    <PaginationLink href={buildPageHref(pageNumber)} isActive={pageNumber === result.page}>
+                    <PaginationLink href={buildPageHref(pageNumber, action)} isActive={pageNumber === result.page}>
                       {pageNumber}
                     </PaginationLink>
                   </PaginationItem>
@@ -231,14 +274,14 @@ export default async function AdminActivityPage({
                       </PaginationItem>
                     )}
                     <PaginationItem>
-                      <PaginationLink href={buildPageHref(result.totalPages)}>{result.totalPages}</PaginationLink>
+                      <PaginationLink href={buildPageHref(result.totalPages, action)}>{result.totalPages}</PaginationLink>
                     </PaginationItem>
                   </>
                 )}
 
                 <PaginationItem>
                   <PaginationNext
-                    href={result.page < result.totalPages ? buildPageHref(result.page + 1) : "#"}
+                    href={result.page < result.totalPages ? buildPageHref(result.page + 1, action) : "#"}
                     className={result.page >= result.totalPages ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
