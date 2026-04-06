@@ -304,38 +304,37 @@ export default async function HomePage() {
           </section>
         ))}
 
-        <section className="relative overflow-hidden rounded-2xl bg-linear-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-5 text-white sm:p-7">
-          <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-orange-500/15 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-amber-500/10 blur-3xl" />
+        <section className="relative overflow-hidden rounded-2xl bg-linear-to-br from-orange-50/60 via-white to-amber-50/40 p-5 sm:p-7">
+          <div className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-24 h-64 w-64 rounded-full bg-amber-200/30 blur-3xl" />
 
           <div className="relative space-y-2">
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-400">About Gadget Wizard</p>
-            <h2 className="text-3xl font-semibold leading-tight sm:text-4xl">
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-zinc-500">About Gadget Wizard</p>
+            <h2 className="text-3xl font-semibold leading-tight text-zinc-900 sm:text-4xl">
               Built For Australia's
-              <span className="bg-linear-to-r from-orange-300 via-amber-200 to-orange-400 bg-clip-text text-transparent"> Modern Tech Lifestyle</span>
+              <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent"> Modern Tech Lifestyle</span>
             </h2>
-            <p className="max-w-3xl text-sm text-zinc-300 sm:text-base">
+            <p className="max-w-3xl text-sm text-zinc-600 sm:text-base">
               Everything you need in one trusted store - from flagship devices to everyday accessories and post-purchase support.
             </p>
           </div>
 
-          <div className="relative mt-6 grid gap-4 md:grid-cols-2">
+          <div className="relative mt-8 grid gap-x-8 gap-y-8 md:grid-cols-2">
             {storefrontInfoBlocks.map((block, index) => (
-              <article
-                key={block.title}
-                className="group rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-0.5 hover:border-orange-300/40 hover:bg-white/10"
-              >
-                <div className="mb-3 inline-flex h-7 min-w-7 items-center justify-center rounded-full bg-white/10 px-2 text-xs font-semibold text-orange-200">
-                  {String(index + 1).padStart(2, "0")}
+              <article key={block.title} className="space-y-2">
+                <div className="flex items-start gap-3">
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/90 text-xs font-semibold text-(--accent) shadow-sm ring-1 ring-orange-100">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="text-lg font-semibold leading-snug text-zinc-900">{block.title}</h3>
                 </div>
-                <h3 className="text-lg font-semibold leading-snug text-white">{block.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">{block.body}</p>
+                <p className="pl-11 text-sm leading-relaxed text-zinc-600">{block.body}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="rounded-2xl bg-white p-5 sm:p-7">
+        {/* <section className="rounded-2xl bg-white p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-zinc-950 px-5 py-6 text-white sm:px-7">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Member Benefits</p>
@@ -350,7 +349,7 @@ export default async function HomePage() {
               </Link>
             </div>
           </div>
-        </section>
+        </section> */}
       </div>
     </div>
   );
