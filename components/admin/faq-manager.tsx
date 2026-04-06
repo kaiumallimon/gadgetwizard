@@ -20,7 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
 interface FaqManagerProps {
   initialFaqs: Faq[];
@@ -55,6 +55,18 @@ function normalizeSortOrder(value: string): number {
   return parsed;
 }
 
+function plainTextFromHtml(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function hasValidRichTextAnswer(value: string): boolean {
+  return plainTextFromHtml(value).length >= 10;
+}
+
 function toEditForm(faq: Faq): FaqFormState {
   return {
     question: faq.question,
@@ -74,14 +86,14 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
 
   const [createForm, setCreateForm] = useState<FaqFormState>({
     question: "",
-    answer: "",
+    answer: "<p></p>",
     sortOrder: "0",
     isActive: true,
   });
 
   const [editForm, setEditForm] = useState<FaqFormState>({
     question: "",
-    answer: "",
+    answer: "<p></p>",
     sortOrder: "0",
     isActive: true,
   });
@@ -108,8 +120,8 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
     const question = createForm.question.trim();
     const answer = createForm.answer.trim();
 
-    if (!question || !answer) {
-      toast.error("Question and answer are required.");
+    if (!question || !hasValidRichTextAnswer(answer)) {
+      toast.error("Question and answer are required. Answer must include at least 10 characters.");
       return;
     }
 
@@ -128,7 +140,7 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
       );
 
       updateItems(response.item);
-      setCreateForm({ question: "", answer: "", sortOrder: "0", isActive: true });
+      setCreateForm({ question: "", answer: "<p></p>", sortOrder: "0", isActive: true });
       toast.success("FAQ created.");
     } catch (error) {
       toast.error(safeErrorMessage(error, "Unable to create FAQ"));
@@ -144,8 +156,8 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
 
     const question = editForm.question.trim();
     const answer = editForm.answer.trim();
-    if (!question || !answer) {
-      toast.error("Question and answer are required.");
+    if (!question || !hasValidRichTextAnswer(answer)) {
+      toast.error("Question and answer are required. Answer must include at least 10 characters.");
       return;
     }
 
@@ -255,16 +267,14 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
             </div>
           </div>
 
-          <label className="space-y-1">
+          <div className="space-y-1">
             <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Answer</span>
-            <Textarea
+            <RichTextEditor
               value={createForm.answer}
-              onChange={(event) => setCreateForm((previous) => ({ ...previous, answer: event.target.value }))}
+              onChange={(value) => setCreateForm((previous) => ({ ...previous, answer: value }))}
               placeholder="Type FAQ answer"
-              className="min-h-28"
-              disabled={isCreating}
             />
-          </label>
+          </div>
 
           <div className="flex justify-end border-t border-zinc-200 pt-3">
             <Button type="button" onClick={createFaq} disabled={isCreating}>
@@ -288,7 +298,7 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
             </CardHeader>
 
             <CardContent className="space-y-3">
-              <p className="line-clamp-5 whitespace-pre-line text-sm text-zinc-600">{faq.answer}</p>
+              <p className="line-clamp-5 text-sm leading-relaxed text-zinc-600">{plainTextFromHtml(faq.answer)}</p>
 
               <div className="flex flex-wrap gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => openEditDialog(faq)}>
@@ -325,15 +335,14 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
               />
             </label>
 
-            <label className="space-y-1">
+            <div className="space-y-1">
               <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Answer</span>
-              <Textarea
+              <RichTextEditor
                 value={editForm.answer}
-                onChange={(event) => setEditForm((previous) => ({ ...previous, answer: event.target.value }))}
-                className="min-h-32"
-                disabled={isSavingEdit}
+                onChange={(value) => setEditForm((previous) => ({ ...previous, answer: value }))}
+                placeholder="Type FAQ answer"
               />
-            </label>
+            </div>
 
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
               <label className="space-y-1">

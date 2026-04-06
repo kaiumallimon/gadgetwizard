@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+function stripHtmlToText(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const paginationQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().positive().max(50).default(12),
@@ -132,7 +140,14 @@ export const adminBannerSchema = z.object({
 
 export const adminFaqSchema = z.object({
   question: z.string().trim().min(5).max(255),
-  answer: z.string().trim().min(10).max(20000),
+  answer: z
+    .string()
+    .trim()
+    .min(1)
+    .max(20000)
+    .refine((value) => stripHtmlToText(value).length >= 10, {
+      message: "Answer must contain at least 10 characters of text",
+    }),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   isActive: z.boolean().optional(),
 });

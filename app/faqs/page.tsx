@@ -4,6 +4,13 @@ import { getPublicFaqs } from "@/lib/server/services/faq-service";
 
 export const dynamic = "force-dynamic";
 
+function sanitizeFaqHtml(value: string): string {
+  return value
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+=\"[^\"]*\"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "");
+}
+
 export default async function FaqsPage() {
   const faqs = await getPublicFaqs();
 
@@ -39,7 +46,10 @@ export default async function FaqsPage() {
                 </span>
                 <span className="text-base font-semibold text-zinc-900">{faq.question}</span>
               </summary>
-              <p className="pl-9 pt-3 text-sm leading-relaxed text-zinc-600">{faq.answer}</p>
+              <div
+                className="tiptap-content pl-9 pt-3 text-sm text-zinc-600"
+                dangerouslySetInnerHTML={{ __html: sanitizeFaqHtml(faq.answer) }}
+              />
             </details>
           ))}
         </section>
