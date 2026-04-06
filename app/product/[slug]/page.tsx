@@ -93,7 +93,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
 
   return (
     <div className="w-full px-4 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
-      <div className="mx-auto w-full max-w-7xl space-y-8">
+      <div className="mx-auto w-full max-w-6xl space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
             <Link href="/" className="transition-colors hover:text-zinc-900">Home</Link>
@@ -139,20 +139,20 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               </div>
 
               {(product.modelNumber || product.sku) && (
-                <div className="flex flex-wrap items-center gap-2">
+                <dl className="flex max-w-2xl flex-col gap-2">
                   {product.modelNumber && (
-                    <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700">
-                      <span className="uppercase tracking-widest text-zinc-500">Model</span>
-                      <span className="ml-1 text-zinc-800">{product.modelNumber}</span>
-                    </Badge>
+                    <div className="grid grid-cols-[auto_1fr] items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <dt className="pt-0.5 text-xs font-semibold uppercase tracking-widest text-zinc-500">Model</dt>
+                      <dd className="text-sm font-medium text-zinc-900 break-all">{product.modelNumber}</dd>
+                    </div>
                   )}
                   {product.sku && (
-                    <Badge variant="outline" className="rounded-full border-zinc-300 bg-zinc-50 px-3 py-1 text-xs font-medium text-zinc-700">
-                      <span className="uppercase tracking-widest text-zinc-500">SKU</span>
-                      <span className="ml-1 text-zinc-800">{product.sku}</span>
-                    </Badge>
+                    <div className="grid grid-cols-[auto_1fr] items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+                      <dt className="pt-0.5 text-xs font-semibold uppercase tracking-widest text-zinc-500">SKU</dt>
+                      <dd className="text-sm font-medium text-zinc-900 break-all">{product.sku}</dd>
+                    </div>
                   )}
-                </div>
+                </dl>
               )}
             </section>
 
