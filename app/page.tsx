@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
 import { ProductCard } from "@/components/product-card";
+import type { Product } from "@/lib/client/types";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
 import { getPublicBrands } from "@/lib/server/services/brand-service";
 import { getPublicCategoryTree } from "@/lib/server/services/category-service";
@@ -25,6 +26,50 @@ export default async function HomePage() {
   const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
   const fallbackTrends = newTrends.length > 0 ? newTrends : productPool.items.slice(0, 6);
   const fallbackFeatured = featuredGrid.length > 0 ? featuredGrid : productPool.items.slice(0, 8);
+  const bestSellerProducts = productPool.items.filter((item) => item.isBestSeller).slice(0, 8);
+  const topRatedProducts = productPool.items.filter((item) => item.isTopRated).slice(0, 8);
+  const newArrivalProducts = productPool.items.filter((item) => item.isNewArrival).slice(0, 8);
+  const freeDeliveryProducts = productPool.items.filter((item) => item.isFreeDelivery).slice(0, 8);
+  const limitedStockProducts = productPool.items.filter((item) => item.isLimitedStock).slice(0, 8);
+
+  const curatedProductSections: Array<{
+    key: string;
+    titleLead: string;
+    titleAccent: string;
+    items: Product[];
+  }> = [
+    {
+      key: "best-sellers",
+      titleLead: "Best",
+      titleAccent: "Sellers",
+      items: bestSellerProducts,
+    },
+    {
+      key: "top-rated",
+      titleLead: "Top",
+      titleAccent: "Rated",
+      items: topRatedProducts,
+    },
+    {
+      key: "new-arrivals",
+      titleLead: "New",
+      titleAccent: "Arrivals",
+      items: newArrivalProducts,
+    },
+    {
+      key: "free-delivery",
+      titleLead: "Free",
+      titleAccent: "Delivery",
+      items: freeDeliveryProducts,
+    },
+    {
+      key: "limited-stock",
+      titleLead: "Limited",
+      titleAccent: "Stock",
+      items: limitedStockProducts,
+    },
+  ];
+  const visibleCuratedProductSections = curatedProductSections.filter((section) => section.items.length > 0);
 
   const categoryImageById = new Map<number, string>();
   for (const product of productPool.items) {
@@ -46,7 +91,7 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-7xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
-        <section className="relative overflow-hidden border-zinc-200/90 bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-1">
+        <section className="relative overflow-hidden bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-1">
           
             <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
               {serviceHighlights.map((item) => {
@@ -144,37 +189,58 @@ export default async function HomePage() {
           )}
         </section>
 
-        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
-          <h2 className="text-4xl font-semibold text-zinc-900">
-            New <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Trends</span>
-          </h2>
-
-          <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-            {fallbackTrends.map((product) => (
-              <div key={product.id} className="w-65 min-w-65">
-                <ProductCard product={product} />
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
-          <div className="flex items-center justify-between">
+        {fallbackTrends.length > 0 && (
+          <section className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
             <h2 className="text-4xl font-semibold text-zinc-900">
-              Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Products</span>
+              New <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Trends</span>
             </h2>
-            <Link href="/cart" className="rounded-full bg-(--accent) px-4 py-2 text-sm font-semibold text-white hover:brightness-95">
-              Open Cart
-            </Link>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {fallbackFeatured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
 
-        <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-7">
+            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
+              {fallbackTrends.map((product) => (
+                <div key={product.id} className="w-65 min-w-65">
+                  <ProductCard product={product} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {fallbackFeatured.length > 0 && (
+          <section className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
+            <div className="flex items-center justify-between">
+              <h2 className="text-4xl font-semibold text-zinc-900">
+                Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Products</span>
+              </h2>
+              <Link href="/cart" className="rounded-full bg-(--accent) px-4 py-2 text-sm font-semibold text-white hover:brightness-95">
+                Open Cart
+              </Link>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {fallbackFeatured.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {visibleCuratedProductSections.map((section) => (
+          <section key={section.key} className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
+            <h2 className="text-4xl font-semibold text-zinc-900">
+              {section.titleLead}{" "}
+              <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">
+                {section.titleAccent}
+              </span>
+            </h2>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {section.items.map((product) => (
+                <ProductCard key={`${section.key}-${product.id}`} product={product} />
+              ))}
+            </div>
+          </section>
+        ))}
+
+        <section className="rounded-2xl bg-white p-5 sm:p-7">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-zinc-950 px-5 py-6 text-white sm:px-7">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Member Benefits</p>
