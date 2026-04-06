@@ -17,9 +17,9 @@ const customerCareLinks = [
 ];
 
 const companyLinks = [
-  { href: "/", label: "About GadgetWizard" },
-  { href: "/", label: "Privacy Policy" },
-  { href: "/", label: "Terms of Service" },
+  { href: "/about-us", label: "About GadgetWizard" },
+  { href: "/privacy-policy", label: "Privacy Policy" },
+  { href: "/terms-and-conditions", label: "Terms & Conditions" },
   { href: "/", label: "Refund Guidelines" },
 ];
 

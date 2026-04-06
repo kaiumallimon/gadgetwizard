@@ -142,9 +142,9 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1 text-sm text-zinc-600">
-                <p>Original: ৳ {product.originalPrice.toLocaleString()}</p>
-                <p>Discounted: {product.discountedPrice ? `৳ ${product.discountedPrice.toLocaleString()}` : "N/A"}</p>
-                <p>Loyal: ৳ {product.loyalCustomerPrice.toLocaleString()}</p>
+                <p>Original: AUD {product.originalPrice.toLocaleString()}</p>
+                <p>Discounted: {product.discountedPrice ? `AUD ${product.discountedPrice.toLocaleString()}` : "N/A"}</p>
+                <p>Loyal: AUD {product.loyalCustomerPrice.toLocaleString()}</p>
               </div>
               <p className="line-clamp-3 text-sm text-zinc-600">{stripHtml(product.description)}</p>
               <p className="text-xs text-zinc-500">
