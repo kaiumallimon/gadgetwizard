@@ -19,6 +19,8 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE_OPTIONS = [12, 24, 36, 48] as const;
 const DEFAULT_PAGE_SIZE = 24;
+const PRICE_FILTER_MIN = 0;
+const PRICE_FILTER_MAX = 1_000_000;
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest first" },
@@ -113,6 +115,7 @@ function buildCategoryHref(input: {
   page: number;
   pageSize: number;
   search?: string;
+  minPrice?: number;
   maxPrice?: number;
   brandSlugs: string[];
   availabilitySelections: Array<"in" | "out">;
@@ -125,6 +128,10 @@ function buildCategoryHref(input: {
 
   if (input.search) {
     query.set("search", input.search);
+  }
+
+  if (input.minPrice !== undefined) {
+    query.set("minPrice", String(input.minPrice));
   }
 
   if (input.maxPrice !== undefined) {
@@ -184,20 +191,16 @@ export default async function CategoryPage(context: {
     search,
   });
 
-  const hasPriceBounds = facets.price.min !== null && facets.price.max !== null;
-  const priceFloor = hasPriceBounds ? Math.floor(facets.price.min as number) : 0;
-  const priceCeil = hasPriceBounds ? Math.ceil(facets.price.max as number) : 0;
-
+  const rawMinPrice = parsePrice(firstParam(rawSearchParams.minPrice));
   const rawMaxPrice = parsePrice(firstParam(rawSearchParams.maxPrice));
-  let sliderMaxValue = hasPriceBounds ? priceCeil : (rawMaxPrice ?? 0);
 
-  if (hasPriceBounds) {
-    sliderMaxValue = rawMaxPrice === undefined ? priceCeil : clamp(rawMaxPrice, priceFloor, priceCeil);
-  }
+  const normalizedMinPrice = clamp(rawMinPrice ?? PRICE_FILTER_MIN, PRICE_FILTER_MIN, PRICE_FILTER_MAX);
+  const normalizedMaxPrice = clamp(rawMaxPrice ?? PRICE_FILTER_MAX, PRICE_FILTER_MIN, PRICE_FILTER_MAX);
+  const selectedMinPrice = Math.min(normalizedMinPrice, normalizedMaxPrice);
+  const selectedMaxPrice = Math.max(normalizedMinPrice, normalizedMaxPrice);
 
-  const maxPrice = hasPriceBounds
-    ? (sliderMaxValue < priceCeil ? sliderMaxValue : undefined)
-    : rawMaxPrice;
+  const minPrice = selectedMinPrice > PRICE_FILTER_MIN ? selectedMinPrice : undefined;
+  const maxPrice = selectedMaxPrice < PRICE_FILTER_MAX ? selectedMaxPrice : undefined;
 
   let currentPage = requestedPage;
   let result = await getPublicProducts({
@@ -206,6 +209,7 @@ export default async function CategoryPage(context: {
     categorySlug: slug,
     search,
     brandSlugs: selectedBrandSlugs,
+    minPrice,
     maxPrice,
     availability: availabilityFilter,
     sort: sortOrder,
@@ -220,28 +224,13 @@ export default async function CategoryPage(context: {
       categorySlug: slug,
       search,
       brandSlugs: selectedBrandSlugs,
+      minPrice,
       maxPrice,
       availability: availabilityFilter,
       sort: sortOrder,
     });
     totalPages = Math.max(1, Math.ceil(result.total / pageSize));
   }
-
-  const listedEffectivePrices = result.items
-    .map((product) => product.discountedPrice ?? product.originalPrice)
-    .filter((value) => Number.isFinite(value));
-
-  const fallbackPriceFloor =
-    listedEffectivePrices.length > 0 ? Math.floor(Math.min(...listedEffectivePrices)) : 0;
-  const fallbackPriceCeil =
-    listedEffectivePrices.length > 0 ? Math.ceil(Math.max(...listedEffectivePrices)) : 0;
-
-  const uiPriceFloor = hasPriceBounds ? priceFloor : fallbackPriceFloor;
-  const uiPriceCeil = hasPriceBounds ? priceCeil : fallbackPriceCeil;
-  const uiSliderMaxValue =
-    uiPriceCeil >= uiPriceFloor
-      ? clamp(rawMaxPrice ?? uiPriceCeil, uiPriceFloor, uiPriceCeil)
-      : 0;
 
   const categoryTitle = result.items[0]?.categoryName ?? slugToTitle(slug);
   const pages = pageWindow(currentPage, totalPages);
@@ -253,6 +242,7 @@ export default async function CategoryPage(context: {
     slug,
     pageSize,
     search,
+    minPrice,
     maxPrice,
     brandSlugs: selectedBrandSlugs,
     availabilitySelections,
@@ -262,6 +252,7 @@ export default async function CategoryPage(context: {
 
   const hasActiveFilters =
     Boolean(search) ||
+    minPrice !== undefined ||
     maxPrice !== undefined ||
     selectedBrandSlugs.length > 0 ||
     availabilityFilter !== "all" ||
@@ -293,9 +284,10 @@ export default async function CategoryPage(context: {
         <CategoryFilters
           slug={slug}
           search={search}
-          priceMin={uiPriceFloor}
-          priceMax={uiPriceCeil}
-          selectedMaxPrice={hasPriceBounds ? sliderMaxValue : uiSliderMaxValue}
+          priceMin={PRICE_FILTER_MIN}
+          priceMax={PRICE_FILTER_MAX}
+          selectedMinPrice={selectedMinPrice}
+          selectedMaxPrice={selectedMaxPrice}
           availabilityCounts={facets.availability}
           brands={facets.brands}
           selectedBrandSlugs={selectedBrandSlugs}
@@ -312,6 +304,7 @@ export default async function CategoryPage(context: {
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Active filters</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {search && <Badge variant="outline">Search: {search}</Badge>}
+              {minPrice !== undefined && <Badge variant="outline">From: AUD {minPrice.toLocaleString()}</Badge>}
               {maxPrice !== undefined && <Badge variant="outline">Up to: AUD {maxPrice.toLocaleString()}</Badge>}
               {selectedBrandSlugs.map((brandSlug) => (
                 <Badge key={brandSlug} variant="outline">Brand: {brandNameBySlug.get(brandSlug) ?? slugToTitle(brandSlug)}</Badge>

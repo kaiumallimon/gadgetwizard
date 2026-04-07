@@ -22,6 +22,7 @@ interface CategoryFiltersProps {
   search?: string;
   priceMin: number;
   priceMax: number;
+  selectedMinPrice: number;
   selectedMaxPrice: number;
   availabilityCounts: {
     inStock: number;
@@ -45,6 +46,7 @@ export function CategoryFilters({
   search,
   priceMin,
   priceMax,
+  selectedMinPrice,
   selectedMaxPrice,
   availabilityCounts,
   brands,
@@ -57,11 +59,22 @@ export function CategoryFilters({
   pageSizeOptions,
 }: CategoryFiltersProps) {
   const formRef = useRef<HTMLFormElement>(null);
+  const [minPriceValue, setMinPriceValue] = useState(selectedMinPrice);
   const [maxPriceValue, setMaxPriceValue] = useState(selectedMaxPrice);
-  const hasPriceRange = (priceMax > 0 || priceMin > 0) && priceMax >= priceMin;
+  const hasPriceRange = priceMax >= priceMin;
 
   function submitForm() {
     formRef.current?.requestSubmit();
+  }
+
+  function normalizePrice(rawValue: string, fallback: number) {
+    const parsed = Number(rawValue);
+    if (!Number.isFinite(parsed)) {
+      return fallback;
+    }
+
+    const rounded = Math.floor(parsed);
+    return Math.min(priceMax, Math.max(priceMin, rounded));
   }
 
   return (
@@ -94,22 +107,67 @@ export function CategoryFilters({
             <p className="text-sm font-medium text-zinc-800">Price Range</p>
             {hasPriceRange ? (
               <>
-                <div className="space-y-1 text-xs text-zinc-500">
-                  <p>From AUD {priceMin.toLocaleString()}</p>
-                  <p>To AUD {maxPriceValue.toLocaleString()}</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label htmlFor="minPrice" className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">
+                      Min (AUD)
+                    </label>
+                    <Input
+                      id="minPrice"
+                      type="number"
+                      name="minPrice"
+                      min={priceMin}
+                      max={priceMax}
+                      value={minPriceValue}
+                      onChange={(event) => {
+                        const nextMin = normalizePrice(event.target.value, minPriceValue);
+                        if (nextMin > maxPriceValue) {
+                          setMaxPriceValue(nextMin);
+                        }
+
+                        setMinPriceValue(nextMin);
+                      }}
+                      onBlur={submitForm}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          submitForm();
+                        }
+                      }}
+                      className="text-right"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label htmlFor="maxPrice" className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">
+                      Max (AUD)
+                    </label>
+                    <Input
+                      id="maxPrice"
+                      type="number"
+                      name="maxPrice"
+                      min={priceMin}
+                      max={priceMax}
+                      value={maxPriceValue}
+                      onChange={(event) => {
+                        const nextMax = normalizePrice(event.target.value, maxPriceValue);
+                        setMaxPriceValue(nextMax);
+                        if (nextMax < minPriceValue) {
+                          setMinPriceValue(nextMax);
+                        }
+                      }}
+                      onBlur={submitForm}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          submitForm();
+                        }
+                      }}
+                      className="text-right"
+                    />
+                  </div>
                 </div>
-                <input
-                  type="range"
-                  name="maxPrice"
-                  min={priceMin}
-                  max={priceMax}
-                  value={maxPriceValue}
-                  onChange={(event) => setMaxPriceValue(Number(event.target.value))}
-                  onMouseUp={submitForm}
-                  onTouchEnd={submitForm}
-                  onKeyUp={submitForm}
-                  className="w-full accent-(--accent)"
-                />
+                <p className="text-xs text-zinc-500">
+                  Set a range between AUD {priceMin.toLocaleString()} and AUD {priceMax.toLocaleString()}.
+                </p>
               </>
             ) : (
               <p className="text-xs text-zinc-500">No price range available for this category yet.</p>
