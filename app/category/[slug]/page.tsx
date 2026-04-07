@@ -90,6 +90,18 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
+function normalizeColorValue(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function formatColorLabel(value: string): string {
+  return value
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 function slugToTitle(slug: string): string {
   return slug
     .split("-")
@@ -118,6 +130,7 @@ function buildCategoryHref(input: {
   minPrice?: number;
   maxPrice?: number;
   brandSlugs: string[];
+  colors: string[];
   availabilitySelections: Array<"in" | "out">;
   sortPrimary: SortOption;
   sortSecondary?: SortOption;
@@ -140,6 +153,10 @@ function buildCategoryHref(input: {
 
   for (const brandSlug of input.brandSlugs) {
     query.append("brand", brandSlug);
+  }
+
+  for (const color of input.colors) {
+    query.append("color", color);
   }
 
   for (const availability of input.availabilitySelections) {
@@ -167,6 +184,9 @@ export default async function CategoryPage(context: {
   const search = firstParam(rawSearchParams.search)?.trim() || undefined;
   const selectedBrandSlugs = Array.from(
     new Set(arrayParam(rawSearchParams.brand).map((value) => value.trim()).filter((value) => value.length > 0)),
+  );
+  const selectedColors = Array.from(
+    new Set(arrayParam(rawSearchParams.color).map(normalizeColorValue).filter((value) => value.length > 0)),
   );
 
   const availabilitySelections = arrayParam(rawSearchParams.availability).filter(
@@ -209,6 +229,7 @@ export default async function CategoryPage(context: {
     categorySlug: slug,
     search,
     brandSlugs: selectedBrandSlugs,
+    colors: selectedColors,
     minPrice,
     maxPrice,
     availability: availabilityFilter,
@@ -224,6 +245,7 @@ export default async function CategoryPage(context: {
       categorySlug: slug,
       search,
       brandSlugs: selectedBrandSlugs,
+      colors: selectedColors,
       minPrice,
       maxPrice,
       availability: availabilityFilter,
@@ -237,6 +259,7 @@ export default async function CategoryPage(context: {
   const rangeStart = result.total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = result.total === 0 ? 0 : Math.min(currentPage * pageSize, result.total);
   const brandNameBySlug = new Map(facets.brands.map((brand) => [brand.slug, brand.name]));
+  const colorLabelByValue = new Map(facets.colors.map((color) => [color.value, color.label]));
 
   const queryState = {
     slug,
@@ -245,6 +268,7 @@ export default async function CategoryPage(context: {
     minPrice,
     maxPrice,
     brandSlugs: selectedBrandSlugs,
+    colors: selectedColors,
     availabilitySelections,
     sortPrimary,
     sortSecondary,
@@ -255,6 +279,7 @@ export default async function CategoryPage(context: {
     minPrice !== undefined ||
     maxPrice !== undefined ||
     selectedBrandSlugs.length > 0 ||
+    selectedColors.length > 0 ||
     availabilityFilter !== "all" ||
     sortPrimary !== "newest" ||
     Boolean(sortSecondary);
@@ -291,6 +316,8 @@ export default async function CategoryPage(context: {
           availabilityCounts={facets.availability}
           brands={facets.brands}
           selectedBrandSlugs={selectedBrandSlugs}
+          colors={facets.colors}
+          selectedColors={selectedColors}
           availabilitySelections={availabilitySelections}
           sortOptions={SORT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
           sortPrimary={sortPrimary}
@@ -308,6 +335,11 @@ export default async function CategoryPage(context: {
               {maxPrice !== undefined && <Badge variant="outline">Up to: AUD {maxPrice.toLocaleString()}</Badge>}
               {selectedBrandSlugs.map((brandSlug) => (
                 <Badge key={brandSlug} variant="outline">Brand: {brandNameBySlug.get(brandSlug) ?? slugToTitle(brandSlug)}</Badge>
+              ))}
+              {selectedColors.map((colorValue) => (
+                <Badge key={colorValue} variant="outline">
+                  Color: {colorLabelByValue.get(colorValue) ?? formatColorLabel(colorValue)}
+                </Badge>
               ))}
               {availabilityFilter === "in" && <Badge variant="outline">In stock only</Badge>}
               {availabilityFilter === "out" && <Badge variant="outline">Out of stock only</Badge>}

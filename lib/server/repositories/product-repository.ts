@@ -115,6 +115,10 @@ interface ProductFacetBrandRow {
   total: number;
 }
 
+interface ProductFacetColorRow {
+  color: string | null;
+}
+
 export type ProductAvailabilityFilter = "all" | "in" | "out";
 
 export type ProductSortOption =
@@ -141,6 +145,17 @@ const PRODUCT_SORT_SQL: Record<ProductSortOption, string> = {
   stock_high: "p.stock DESC",
   stock_low: "p.stock ASC",
 };
+
+const NORMALIZED_COLOR_SQL =
+  "REPLACE(REPLACE(REPLACE(LOWER(COALESCE(p.color, '')), ', ', ','), ' ,', ','), ',,', ',')";
+
+function normalizeColorToken(value: string): string {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function normalizeColorLabel(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
 
 function normalizeSortOptions(sort?: ProductSortOption[]): ProductSortOption[] {
   if (!sort || sort.length === 0) {
@@ -235,6 +250,7 @@ function buildProductWhereClause(input: {
   categorySlug?: string;
   brandSlug?: string;
   brandSlugs?: string[];
+  colors?: string[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -267,6 +283,17 @@ function buildProductWhereClause(input: {
     whereParams.push(`%${input.search}%`, `%${input.search}%`, `%${input.search}%`);
   }
 
+  const normalizedColors = Array.from(
+    new Set((input.colors ?? []).map(normalizeColorToken).filter((value) => value.length > 0)),
+  );
+  if (normalizedColors.length > 0) {
+    const colorConditions = normalizedColors
+      .map(() => `FIND_IN_SET(?, ${NORMALIZED_COLOR_SQL}) > 0`)
+      .join(" OR ");
+    whereParts.push(`(${colorConditions})`);
+    whereParams.push(...normalizedColors);
+  }
+
   if (input.minPrice !== undefined) {
     whereParts.push("COALESCE(p.discounted_price, p.original_price) >= ?");
     whereParams.push(input.minPrice);
@@ -297,6 +324,7 @@ export async function listProducts(input: {
   categorySlug?: string;
   brandSlug?: string;
   brandSlugs?: string[];
+  colors?: string[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -393,6 +421,7 @@ export async function getProductFilterFacets(input: {
   price: { min: number | null; max: number | null };
   availability: { inStock: number; outOfStock: number };
   brands: Array<{ slug: string; name: string; total: number }>;
+  colors: Array<{ value: string; label: string; total: number }>;
 }> {
   const { whereClause, whereParams } = buildProductWhereClause({
     activeOnly: input.activeOnly,
@@ -433,6 +462,51 @@ export async function getProductFilterFacets(input: {
     whereParams,
   );
 
+  const colorWhereClause = whereClause
+    ? `${whereClause} AND p.color IS NOT NULL AND p.color <> ''`
+    : "WHERE p.color IS NOT NULL AND p.color <> ''";
+
+  const colorRows = await queryRows<ProductFacetColorRow>(
+    `
+      SELECT p.color
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      LEFT JOIN brands b ON b.id = p.brand_id
+      ${colorWhereClause}
+    `,
+    whereParams,
+  );
+
+  const colorMap = new Map<string, { value: string; label: string; total: number }>();
+  for (const row of colorRows) {
+    if (!row.color) {
+      continue;
+    }
+
+    const uniquePerProduct = new Set<string>();
+    const tokens = row.color.split(",").map(normalizeColorLabel).filter((value) => value.length > 0);
+    for (const token of tokens) {
+      const value = normalizeColorToken(token);
+      if (!value || uniquePerProduct.has(value)) {
+        continue;
+      }
+
+      uniquePerProduct.add(value);
+      const existing = colorMap.get(value);
+      if (existing) {
+        existing.total += 1;
+      } else {
+        colorMap.set(value, {
+          value,
+          label: token,
+          total: 1,
+        });
+      }
+    }
+  }
+
+  const colors = Array.from(colorMap.values()).sort((a, b) => a.label.localeCompare(b.label));
+
   return {
     price: {
       min: summaryRow?.min_price === null || summaryRow?.min_price === undefined ? null : Number(summaryRow.min_price),
@@ -447,6 +521,7 @@ export async function getProductFilterFacets(input: {
       name: row.brand_name,
       total: Number(row.total),
     })),
+    colors,
   };
 }
 

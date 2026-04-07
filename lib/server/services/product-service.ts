@@ -107,6 +107,7 @@ export async function getPublicProducts(input: {
   categorySlug?: string;
   brandSlug?: string;
   brandSlugs?: string[];
+  colors?: string[];
   search?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -119,6 +120,7 @@ export async function getPublicProducts(input: {
     categorySlug: input.categorySlug,
     brandSlug: input.brandSlug,
     brandSlugs: input.brandSlugs,
+    colors: input.colors,
     search: input.search,
     minPrice: input.minPrice,
     maxPrice: input.maxPrice,

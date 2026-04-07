@@ -12,6 +12,12 @@ interface CategoryBrandFacet {
   total: number;
 }
 
+interface CategoryColorFacet {
+  value: string;
+  label: string;
+  total: number;
+}
+
 interface SortOption {
   value: string;
   label: string;
@@ -30,6 +36,8 @@ interface CategoryFiltersProps {
   };
   brands: CategoryBrandFacet[];
   selectedBrandSlugs: string[];
+  colors: CategoryColorFacet[];
+  selectedColors: string[];
   availabilitySelections: Array<"in" | "out">;
   sortOptions: SortOption[];
   sortPrimary: string;
@@ -51,6 +59,8 @@ export function CategoryFilters({
   availabilityCounts,
   brands,
   selectedBrandSlugs,
+  colors,
+  selectedColors,
   availabilitySelections,
   sortOptions,
   sortPrimary,
@@ -199,6 +209,30 @@ export function CategoryFilters({
               <p className="text-xs text-zinc-500">No brands found in this category.</p>
             )}
           </div>
+
+          {colors.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-zinc-800">Colors</p>
+              <div className="grid max-h-52 gap-2 overflow-y-auto pr-1">
+                {colors.map((color) => (
+                  <label key={color.value} className="block rounded-md border border-zinc-200 px-2 py-1.5 text-sm text-zinc-700">
+                    <span className="inline-flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        name="color"
+                        value={color.value}
+                        defaultChecked={selectedColors.includes(color.value)}
+                        onChange={submitForm}
+                        className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
+                      />
+                      {color.label}
+                    </span>
+                    <span className="mt-1 block pl-6 text-xs text-zinc-500">{color.total} products</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3">
             <p className="text-sm font-medium text-zinc-800">Availability</p>
