@@ -30,10 +30,6 @@ interface CategoryFiltersProps {
   priceMax: number;
   selectedMinPrice: number;
   selectedMaxPrice: number;
-  availabilityCounts: {
-    inStock: number;
-    outOfStock: number;
-  };
   brands: CategoryBrandFacet[];
   selectedBrandSlugs: string[];
   colors: CategoryColorFacet[];
@@ -56,7 +52,6 @@ export function CategoryFilters({
   priceMax,
   selectedMinPrice,
   selectedMaxPrice,
-  availabilityCounts,
   brands,
   selectedBrandSlugs,
   colors,
@@ -201,7 +196,6 @@ export function CategoryFilters({
                       />
                       {brand.name}
                     </span>
-                    <span className="mt-1 block pl-6 text-xs text-zinc-500">{brand.total} products</span>
                   </label>
                 ))}
               </div>
@@ -227,7 +221,6 @@ export function CategoryFilters({
                       />
                       {color.label}
                     </span>
-                    <span className="mt-1 block pl-6 text-xs text-zinc-500">{color.total} products</span>
                   </label>
                 ))}
               </div>
@@ -246,7 +239,7 @@ export function CategoryFilters({
                   onChange={submitForm}
                   className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
                 />
-                In stock ({availabilityCounts.inStock})
+                In stock
               </label>
               <label className="flex items-center gap-2 text-sm text-zinc-700">
                 <input
@@ -257,7 +250,7 @@ export function CategoryFilters({
                   onChange={submitForm}
                   className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
                 />
-                Out of stock ({availabilityCounts.outOfStock})
+                Out of stock
               </label>
             </div>
           </div>

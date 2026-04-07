@@ -313,7 +313,6 @@ export default async function CategoryPage(context: {
           priceMax={PRICE_FILTER_MAX}
           selectedMinPrice={selectedMinPrice}
           selectedMaxPrice={selectedMaxPrice}
-          availabilityCounts={facets.availability}
           brands={facets.brands}
           selectedBrandSlugs={selectedBrandSlugs}
           colors={facets.colors}
