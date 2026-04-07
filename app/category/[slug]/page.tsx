@@ -1,11 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react";
 
+import { CategoryFilters } from "@/components/category-filters";
 import { ProductCard } from "@/components/product-card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Pagination,
   PaginationContent,
@@ -115,7 +113,6 @@ function buildCategoryHref(input: {
   page: number;
   pageSize: number;
   search?: string;
-  minPrice?: number;
   maxPrice?: number;
   brandSlugs: string[];
   availabilitySelections: Array<"in" | "out">;
@@ -128,10 +125,6 @@ function buildCategoryHref(input: {
 
   if (input.search) {
     query.set("search", input.search);
-  }
-
-  if (input.minPrice !== undefined) {
-    query.set("minPrice", String(input.minPrice));
   }
 
   if (input.maxPrice !== undefined) {
@@ -195,21 +188,16 @@ export default async function CategoryPage(context: {
   const priceFloor = hasPriceBounds ? Math.floor(facets.price.min as number) : 0;
   const priceCeil = hasPriceBounds ? Math.ceil(facets.price.max as number) : 0;
 
-  const rawMinPrice = parsePrice(firstParam(rawSearchParams.minPrice));
   const rawMaxPrice = parsePrice(firstParam(rawSearchParams.maxPrice));
-
-  let sliderMinValue = hasPriceBounds ? priceFloor : 0;
-  let sliderMaxValue = hasPriceBounds ? priceCeil : 0;
+  let sliderMaxValue = hasPriceBounds ? priceCeil : (rawMaxPrice ?? 0);
 
   if (hasPriceBounds) {
-    const normalizedMin = rawMinPrice === undefined ? priceFloor : clamp(rawMinPrice, priceFloor, priceCeil);
-    const normalizedMax = rawMaxPrice === undefined ? priceCeil : clamp(rawMaxPrice, priceFloor, priceCeil);
-    sliderMinValue = Math.min(normalizedMin, normalizedMax);
-    sliderMaxValue = Math.max(normalizedMin, normalizedMax);
+    sliderMaxValue = rawMaxPrice === undefined ? priceCeil : clamp(rawMaxPrice, priceFloor, priceCeil);
   }
 
-  const minPrice = hasPriceBounds && sliderMinValue > priceFloor ? sliderMinValue : undefined;
-  const maxPrice = hasPriceBounds && sliderMaxValue < priceCeil ? sliderMaxValue : undefined;
+  const maxPrice = hasPriceBounds
+    ? (sliderMaxValue < priceCeil ? sliderMaxValue : undefined)
+    : rawMaxPrice;
 
   let currentPage = requestedPage;
   let result = await getPublicProducts({
@@ -218,7 +206,6 @@ export default async function CategoryPage(context: {
     categorySlug: slug,
     search,
     brandSlugs: selectedBrandSlugs,
-    minPrice,
     maxPrice,
     availability: availabilityFilter,
     sort: sortOrder,
@@ -233,13 +220,28 @@ export default async function CategoryPage(context: {
       categorySlug: slug,
       search,
       brandSlugs: selectedBrandSlugs,
-      minPrice,
       maxPrice,
       availability: availabilityFilter,
       sort: sortOrder,
     });
     totalPages = Math.max(1, Math.ceil(result.total / pageSize));
   }
+
+  const listedEffectivePrices = result.items
+    .map((product) => product.discountedPrice ?? product.originalPrice)
+    .filter((value) => Number.isFinite(value));
+
+  const fallbackPriceFloor =
+    listedEffectivePrices.length > 0 ? Math.floor(Math.min(...listedEffectivePrices)) : 0;
+  const fallbackPriceCeil =
+    listedEffectivePrices.length > 0 ? Math.ceil(Math.max(...listedEffectivePrices)) : 0;
+
+  const uiPriceFloor = hasPriceBounds ? priceFloor : fallbackPriceFloor;
+  const uiPriceCeil = hasPriceBounds ? priceCeil : fallbackPriceCeil;
+  const uiSliderMaxValue =
+    uiPriceCeil >= uiPriceFloor
+      ? clamp(rawMaxPrice ?? uiPriceCeil, uiPriceFloor, uiPriceCeil)
+      : 0;
 
   const categoryTitle = result.items[0]?.categoryName ?? slugToTitle(slug);
   const pages = pageWindow(currentPage, totalPages);
@@ -251,7 +253,6 @@ export default async function CategoryPage(context: {
     slug,
     pageSize,
     search,
-    minPrice,
     maxPrice,
     brandSlugs: selectedBrandSlugs,
     availabilitySelections,
@@ -259,9 +260,17 @@ export default async function CategoryPage(context: {
     sortSecondary,
   };
 
+  const hasActiveFilters =
+    Boolean(search) ||
+    maxPrice !== undefined ||
+    selectedBrandSlugs.length > 0 ||
+    availabilityFilter !== "all" ||
+    sortPrimary !== "newest" ||
+    Boolean(sortSecondary);
+
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-      <header className="space-y-3">
+      <header className="space-y-3 rounded-2xl border border-zinc-200/80 bg-white/90 p-5 shadow-sm backdrop-blur sm:p-6">
         <Link href="/" className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-900">
           <ArrowLeft className="h-4 w-4" /> Back Home
         </Link>
@@ -281,182 +290,46 @@ export default async function CategoryPage(context: {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Filter Products</CardTitle>
-            <CardDescription>Refine by price, brand, availability, and sorting.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form method="GET" className="space-y-6">
-              <input type="hidden" name="page" value="1" />
-
-              <div className="space-y-2">
-                <label htmlFor="search" className="text-sm font-medium text-zinc-800">Search</label>
-                <Input
-                  id="search"
-                  name="search"
-                  defaultValue={search ?? ""}
-                  placeholder="Search in this category"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-zinc-800">Price Range</p>
-                {hasPriceBounds ? (
-                  <>
-                    <div className="flex items-center justify-between text-xs text-zinc-500">
-                      <span>AUD {sliderMinValue.toLocaleString()}</span>
-                      <span>AUD {sliderMaxValue.toLocaleString()}</span>
-                    </div>
-
-                    <input
-                      type="range"
-                      name="minPrice"
-                      min={priceFloor}
-                      max={priceCeil}
-                      defaultValue={sliderMinValue}
-                      className="w-full accent-(--accent)"
-                    />
-                    <input
-                      type="range"
-                      name="maxPrice"
-                      min={priceFloor}
-                      max={priceCeil}
-                      defaultValue={sliderMaxValue}
-                      className="w-full accent-(--accent)"
-                    />
-                  </>
-                ) : (
-                  <p className="text-xs text-zinc-500">No price range available for this category yet.</p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-zinc-800">Brands</p>
-                {facets.brands.length > 0 ? (
-                  <div className="grid max-h-52 gap-2 overflow-y-auto pr-1">
-                    {facets.brands.map((brand) => (
-                      <label key={brand.slug} className="inline-flex items-center justify-between gap-2 rounded-md border border-zinc-200 px-2 py-1.5 text-sm text-zinc-700">
-                        <span className="inline-flex items-center gap-2">
-                          <input
-                            type="checkbox"
-                            name="brand"
-                            value={brand.slug}
-                            defaultChecked={selectedBrandSlugs.includes(brand.slug)}
-                            className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
-                          />
-                          {brand.name}
-                        </span>
-                        <span className="text-xs text-zinc-500">{brand.total}</span>
-                      </label>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-zinc-500">No brands found in this category.</p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-zinc-800">Availability</p>
-                <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    name="availability"
-                    value="in"
-                    defaultChecked={availabilitySelections.includes("in")}
-                    className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
-                  />
-                  In stock ({facets.availability.inStock})
-                </label>
-                <label className="inline-flex items-center gap-2 text-sm text-zinc-700">
-                  <input
-                    type="checkbox"
-                    name="availability"
-                    value="out"
-                    defaultChecked={availabilitySelections.includes("out")}
-                    className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
-                  />
-                  Out of stock ({facets.availability.outOfStock})
-                </label>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-zinc-800">Sort By (Multiple)</p>
-
-                <div className="space-y-2">
-                  <label htmlFor="sortPrimary" className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Primary sort</label>
-                  <select
-                    id="sortPrimary"
-                    name="sortPrimary"
-                    defaultValue={sortPrimary}
-                    className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
-                  >
-                    {SORT_OPTIONS.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="space-y-2">
-                  <label htmlFor="sortSecondary" className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Secondary sort</label>
-                  <select
-                    id="sortSecondary"
-                    name="sortSecondary"
-                    defaultValue={sortSecondary ?? ""}
-                    className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
-                  >
-                    <option value="">None</option>
-                    {SORT_OPTIONS.filter((option) => option.value !== sortPrimary).map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label htmlFor="pageSize" className="text-sm font-medium text-zinc-800">Products per page</label>
-                <select
-                  id="pageSize"
-                  name="pageSize"
-                  defaultValue={String(pageSize)}
-                  className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
-                >
-                  {PAGE_SIZE_OPTIONS.map((size) => (
-                    <option key={size} value={String(size)}>{size} per page</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                <Button type="submit" className="w-full">Apply Filters</Button>
-                <Button asChild type="button" variant="outline" className="w-full">
-                  <Link href={`/category/${slug}`}>Reset All</Link>
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+        <CategoryFilters
+          slug={slug}
+          search={search}
+          priceMin={uiPriceFloor}
+          priceMax={uiPriceCeil}
+          selectedMaxPrice={hasPriceBounds ? sliderMaxValue : uiSliderMaxValue}
+          availabilityCounts={facets.availability}
+          brands={facets.brands}
+          selectedBrandSlugs={selectedBrandSlugs}
+          availabilitySelections={availabilitySelections}
+          sortOptions={SORT_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+          sortPrimary={sortPrimary}
+          sortSecondary={sortSecondary}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+        />
 
         <div className="space-y-5">
-          <div className="flex flex-wrap items-center gap-2">
-            {search && <Badge variant="outline">Search: {search}</Badge>}
-            {minPrice !== undefined && <Badge variant="outline">Min: AUD {minPrice.toLocaleString()}</Badge>}
-            {maxPrice !== undefined && <Badge variant="outline">Max: AUD {maxPrice.toLocaleString()}</Badge>}
-            {selectedBrandSlugs.map((brandSlug) => (
-              <Badge key={brandSlug} variant="outline">Brand: {brandNameBySlug.get(brandSlug) ?? slugToTitle(brandSlug)}</Badge>
-            ))}
-            {availabilityFilter === "in" && <Badge variant="outline">In stock only</Badge>}
-            {availabilityFilter === "out" && <Badge variant="outline">Out of stock only</Badge>}
-            {sortPrimary !== "newest" && (
-              <Badge variant="outline">
-                Sort: {SORT_OPTIONS.find((option) => option.value === sortPrimary)?.label ?? "Custom"}
-              </Badge>
-            )}
-            {sortSecondary && (
-              <Badge variant="outline">
-                Then: {SORT_OPTIONS.find((option) => option.value === sortSecondary)?.label ?? "Custom"}
-              </Badge>
-            )}
+          <div className="rounded-2xl border border-zinc-200/80 bg-white/90 p-4 shadow-sm backdrop-blur">
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Active filters</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {search && <Badge variant="outline">Search: {search}</Badge>}
+              {maxPrice !== undefined && <Badge variant="outline">Up to: AUD {maxPrice.toLocaleString()}</Badge>}
+              {selectedBrandSlugs.map((brandSlug) => (
+                <Badge key={brandSlug} variant="outline">Brand: {brandNameBySlug.get(brandSlug) ?? slugToTitle(brandSlug)}</Badge>
+              ))}
+              {availabilityFilter === "in" && <Badge variant="outline">In stock only</Badge>}
+              {availabilityFilter === "out" && <Badge variant="outline">Out of stock only</Badge>}
+              {sortPrimary !== "newest" && (
+                <Badge variant="outline">
+                  Sort: {SORT_OPTIONS.find((option) => option.value === sortPrimary)?.label ?? "Custom"}
+                </Badge>
+              )}
+              {sortSecondary && (
+                <Badge variant="outline">
+                  Then: {SORT_OPTIONS.find((option) => option.value === sortSecondary)?.label ?? "Custom"}
+                </Badge>
+              )}
+              {!hasActiveFilters && <p className="text-sm text-zinc-500">No filters applied.</p>}
+            </div>
           </div>
 
           {result.items.length === 0 ? (
