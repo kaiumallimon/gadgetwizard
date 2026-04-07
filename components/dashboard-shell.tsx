@@ -68,51 +68,47 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                 groups: [
                     {
                         label: "Overview",
-                        items: [{ href: "/admin", label: "Dashboard", icon: Home, exact: true }],
+                        items: [
+                            { href: "/admin", label: "Dashboard", icon: Home, exact: true },
+                            { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
+                        ],
                     },
                     {
-                        label: "Product",
+                        label: "Catalog",
                         items: [
                             { href: "/admin/products", label: "Products", icon: Package, exact: true },
                             { href: "/admin/inventory", label: "Inventory", icon: Boxes, exact: true },
-                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
+                            { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
                             { href: "/admin/brands", label: "Brands", icon: Tag, exact: true },
-                            { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
                         ]
                     },
                     {
-                        label: "Categories & Banners",
+                        label: "Merchandising",
                         items: [
-                            { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
-                            { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
                             { href: "/admin/faqs", label: "FAQs", icon: CircleHelp, exact: true },
                         ],
                     },
                     {
-                        label: "Infrastructure",
+                        label: "Create New",
                         items: [
-                            { href: "/admin/cdn", label: "CDN Management", icon: HardDrive },
+                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
+                            { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
+                            { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
                         ],
                     },
                     {
-                        label: "User Management",
+                        label: "Users",
                         items: [
                             { href: "/admin/users", label: "Admins", icon: UserRound },
                             { href: "/admin/customers", label: "Users", icon: Users },
                         ],
                     },
                     {
-                        label: "Operations",
+                        label: "Platform",
                         items: [
+                            { href: "/admin/cdn", label: "CDN Management", icon: HardDrive },
                             { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
-                        ],
-                    },
-                    {
-                        label: "System",
-                        items: [
-                            { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
-
                         ],
                     },
                 ],
