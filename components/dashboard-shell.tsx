@@ -134,6 +134,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         };
     }, [variant]);
 
+    const navItems = useMemo(() => nav.groups.flatMap((group) => group.items), [nav]);
+
     const currentNavLabel = (() => {
         for (const group of nav.groups) {
             for (const item of group.items) {
@@ -156,10 +158,28 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     function isActive(item: NavItem) {
-        if (item.exact) {
-            return pathname === item.href;
+        if (pathname === item.href) {
+            return true;
         }
-        return pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        const isDescendantRoute = pathname.startsWith(`${item.href}/`);
+        if (!isDescendantRoute) {
+            return false;
+        }
+
+        if (!item.exact) {
+            return true;
+        }
+
+        const hasMoreSpecificNavMatch = navItems.some((entry) => {
+            if (entry.href === item.href) {
+                return false;
+            }
+
+            return pathname === entry.href || pathname.startsWith(`${entry.href}/`);
+        });
+
+        return !hasMoreSpecificNavMatch;
     }
 
     function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
