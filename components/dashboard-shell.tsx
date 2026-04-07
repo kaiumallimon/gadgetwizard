@@ -219,7 +219,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     </div>
                 </div>
 
-                <div className="flex-1 space-y-4 overflow-y-auto p-3">
+                <div className="dashboard-sidebar-scroll flex-1 space-y-4 overflow-y-auto p-3">
                     {nav.groups.map((group) => (
                         <section key={group.label} className="space-y-2">
                             <h3 className="px-2 text-xs uppercase tracking-[0.18em] text-zinc-500">{group.label}</h3>
