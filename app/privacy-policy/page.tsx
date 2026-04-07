@@ -16,7 +16,7 @@ const policySections = [
     title: "How We Use Information",
     points: [
       "To fulfill orders, coordinate delivery, and provide post-purchase assistance.",
-      "To manage account access, authentication sessions, and fraud prevention workflows.",
+      "To manage account access, authentication sessions, and fr$prevention workflows.",
       "To improve catalog relevance, website experience, and support response quality.",
       "To send transactional updates and important policy or service notices.",
     ],

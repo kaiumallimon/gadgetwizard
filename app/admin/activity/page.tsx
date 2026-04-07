@@ -121,7 +121,7 @@ export default async function AdminActivityPage({
         <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">System Monitoring</p>
         <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Activity Dashboard</h1>
         <p className="mt-2 text-sm text-zinc-600">
-          Audit who is doing what across CRUD actions, with actor identity, route target, and status.
+          $it who is doing what across CRUD actions, with actor identity, route target, and status.
         </p>
         <div className="mt-3 border-t border-zinc-200 pt-2">
           <Breadcrumb>

@@ -9,7 +9,7 @@ const aboutSections = [
   {
     id: "what-we-offer",
     title: "What We Offer",
-    body: "Our catalog includes smartphones, tablets, wearables, audio devices, MacBook accessories, charging essentials, and protection gear. We curate products from globally recognized brands and prioritize quality, compatibility, and long-term reliability.",
+    body: "Our catalog includes smartphones, tablets, wearables, $io devices, MacBook accessories, charging essentials, and protection gear. We curate products from globally recognized brands and prioritize quality, compatibility, and long-term reliability.",
   },
   {
     id: "customer-experience",

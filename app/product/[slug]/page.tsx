@@ -134,8 +134,8 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               </div>
 
               <div className="space-y-4">
-                <h1 className="text-4xl font-semibold tracking-tight text-zinc-900 sm:text-5xl">{product.name}</h1>
-                {product.shortDescription && <p className="max-w-2xl leading-relaxed text-zinc-600">{product.shortDescription}</p>}
+                <h1 className="text-xl font-semibold tracking-tight text-zinc-900 md:text-3xl">{product.name}</h1>
+                {product.shortDescription && <p className="max-w-2xl text-sm leading-relaxed text-zinc-600">{product.shortDescription}</p>}
               </div>
 
               {(product.modelNumber || product.sku) && (
@@ -147,9 +147,9 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
                     </div>
                   )}
                   {product.sku && (
-                    <div className="grid grid-cols-[auto_1fr] items-start gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
+                    <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2">
                       <dt className="pt-0.5 text-xs font-semibold uppercase tracking-widest text-zinc-500">SKU</dt>
-                      <dd className="text-sm font-medium text-zinc-900 break-all">{product.sku}</dd>
+                      <dd className="text-xs font-medium text-zinc-900 break-all">{product.sku}</dd>
                     </div>
                   )}
                 </dl>
@@ -159,21 +159,21 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
             <section className="space-y-6 border-y border-zinc-200/80 py-7">
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-semibold tracking-tight text-zinc-900">AUD {discountedPrice.toLocaleString()}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-zinc-900">${discountedPrice.toLocaleString()}</span>
                   {hasDiscount && (
-                    <span className="text-lg text-zinc-400 line-through">AUD {product.originalPrice.toLocaleString()}</span>
+                    <span className="text-lg text-zinc-400 line-through">${product.originalPrice.toLocaleString()}</span>
                   )}
                 </div>
 
                 {hasDiscount && (
                   <span className="text-sm font-medium text-green-600">
-                    Save AUD {savingsAmount.toLocaleString()} ({savingsPercent}%)
+                    Save ${savingsAmount.toLocaleString()} ({savingsPercent}%)
                   </span>
                 )}
 
                 {hasLoyalPrice && (
                   <span className="mt-1 text-sm font-medium text-blue-600">
-                    Loyalty Price: AUD {product.loyalCustomerPrice.toLocaleString()}
+                    Loyalty Price: ${product.loyalCustomerPrice.toLocaleString()}
                   </span>
                 )}
               </div>

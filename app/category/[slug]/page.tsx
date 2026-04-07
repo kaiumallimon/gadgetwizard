@@ -330,8 +330,8 @@ export default async function CategoryPage(context: {
             <p className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Active filters</p>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {search && <Badge variant="outline">Search: {search}</Badge>}
-              {minPrice !== undefined && <Badge variant="outline">From: AUD {minPrice.toLocaleString()}</Badge>}
-              {maxPrice !== undefined && <Badge variant="outline">Up to: AUD {maxPrice.toLocaleString()}</Badge>}
+              {minPrice !== undefined && <Badge variant="outline">From: ${minPrice.toLocaleString()}</Badge>}
+              {maxPrice !== undefined && <Badge variant="outline">Up to: ${maxPrice.toLocaleString()}</Badge>}
               {selectedBrandSlugs.map((brandSlug) => (
                 <Badge key={brandSlug} variant="outline">Brand: {brandNameBySlug.get(brandSlug) ?? slugToTitle(brandSlug)}</Badge>
               ))}

@@ -232,7 +232,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const router = useRouter();
   const { token } = useAuthStore();
   const createSkuTokenValue = useMemo(() => createSkuToken(), []);
-  const currencyHint = mode === "create" ? " (AUD)" : "";
+  const currencyHint = mode === "create" ? " ($)" : "";
 
   const [name, setName] = useState(initialProduct?.name ?? "");
   const slug = useMemo(() => slugify(name), [name]);
@@ -625,7 +625,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             />
           </Field>
           <Field label={`Original Price${currencyHint}`}>
-            <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder={mode === "create" ? "Original price in AUD (e.g. 199.99)" : "Original price"} />
+            <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder={mode === "create" ? "Original price in $(e.g. 199.99)" : "Original price"} />
           </Field>
           <Field label={`Discounted Price${currencyHint}`}>
             <Input
@@ -634,7 +634,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               step="0.01"
               value={discountedPrice}
               onChange={(event) => setDiscountedPrice(event.target.value)}
-              placeholder={mode === "create" ? "Discounted price in AUD (optional)" : "Discounted price (optional)"}
+              placeholder={mode === "create" ? "Discounted price in $(optional)" : "Discounted price (optional)"}
             />
           </Field>
           <Field label={`Loyal Customer Price${currencyHint}`}>
@@ -644,7 +644,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               step="0.01"
               value={loyalCustomerPrice}
               onChange={(event) => setLoyalCustomerPrice(event.target.value)}
-              placeholder={mode === "create" ? "Loyal customer price in AUD (optional)" : "Loyal customer price (optional)"}
+              placeholder={mode === "create" ? "Loyal customer price in $(optional)" : "Loyal customer price (optional)"}
             />
           </Field>
           <Field label="Stock">

@@ -18,8 +18,8 @@ interface ProductCardProps {
   product: Product;
 }
 
-function formatAud(value: number): string {
-  return `AUD ${value.toLocaleString()}`;
+function format$(value: number): string {
+  return `$${value.toLocaleString()}`;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -68,7 +68,7 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
             {hasDiscount && discountAmount > 0 && (
               <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                Save {formatAud(discountAmount)}
+                Save {format$(discountAmount)}
               </Badge>
             )}
           </div>
@@ -94,9 +94,9 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/65 p-3">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight text-zinc-950">
-              {formatAud(displayPrice)}
+              {format$(displayPrice)}
             </span>
-            {hasDiscount && <span className="text-xs font-semibold text-red-500 line-through">{formatAud(product.originalPrice)}</span>}
+            {hasDiscount && <span className="text-xs font-semibold text-red-500 line-through">{format$(product.originalPrice)}</span>}
           </div>
 
           {(hasDiscount || hasLoyal) && (
@@ -104,7 +104,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {hasDiscount && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Deal</Badge>}
               {hasLoyal && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  Loyal {formatAud(product.loyalCustomerPrice)}
+                  Loyal {format$(product.loyalCustomerPrice)}
                 </Badge>
               )}
               {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}

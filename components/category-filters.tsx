@@ -120,7 +120,7 @@ export function CategoryFilters({
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <label htmlFor={`${idPrefix}-minPrice`} className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">
-                    Min (AUD)
+                    Min ($)
                   </label>
                   <Input
                     id={`${idPrefix}-minPrice`}
@@ -149,7 +149,7 @@ export function CategoryFilters({
 
                 <div className="space-y-1.5">
                   <label htmlFor={`${idPrefix}-maxPrice`} className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">
-                    Max (AUD)
+                    Max ($)
                   </label>
                   <Input
                     id={`${idPrefix}-maxPrice`}
@@ -176,7 +176,7 @@ export function CategoryFilters({
                 </div>
               </div>
               <p className="text-xs text-zinc-500">
-                Set a range between AUD {priceMin.toLocaleString()} and AUD {priceMax.toLocaleString()}.
+                Set a range between ${priceMin.toLocaleString()} and ${priceMax.toLocaleString()}.
               </p>
             </>
           ) : (

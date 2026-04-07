@@ -403,11 +403,11 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
 
                       <TableCell>
                         <div className="space-y-1 text-xs text-zinc-700">
-                          <p>Original: AUD {product.originalPrice.toLocaleString()}</p>
+                          <p>Original: ${product.originalPrice.toLocaleString()}</p>
                           <p>
-                            Discounted: {product.discountedPrice !== null ? `AUD ${product.discountedPrice.toLocaleString()}` : "N/A"}
+                            Discounted: {product.discountedPrice !== null ? `$${product.discountedPrice.toLocaleString()}` : "N/A"}
                           </p>
-                          <p>Loyal: AUD {product.loyalCustomerPrice.toLocaleString()}</p>
+                          <p>Loyal: ${product.loyalCustomerPrice.toLocaleString()}</p>
                         </div>
                       </TableCell>
 

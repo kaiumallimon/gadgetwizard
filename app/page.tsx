@@ -106,8 +106,8 @@ export default async function HomePage() {
       body: "The right accessories make your tech life easier. At Gadget Wizard, we offer a complete range of reliable accessories like fast-charging cables, durable power banks, magnetic wireless chargers, docks, and more. We also have high-quality phone covers and screen protectors to keep your device safe. Need a stylus or an adapter for your MacBook? You'll find that too. Our accessories are selected for both quality and compatibility, so they work exactly how you need them to. Whether you're replacing an old charger or buying your first wireless power bank, we've got the right tool for the job.",
     },
     {
-      title: "AirPods, Wireless Earbuds & Premium Audio Devices",
-      body: "Music should sound rich, clear, and uninterrupted. That's what we aim for with our collection of audio gear. From original Apple AirPods to noise-cancelling earbuds, studio-quality over-ear headphones, and pocket-size Bluetooth speakers, we've got something for every listener. When you're tuning in during a commute or zoning out at home, our devices bring sound to life. All products are tested, original, and tuned for everyday listening.",
+      title: "AirPods, Wireless Earbuds & Premium $io Devices",
+      body: "Music should sound rich, clear, and uninterrupted. That's what we aim for with our collection of $io gear. From original Apple AirPods to noise-cancelling earbuds, studio-quality over-ear headphones, and pocket-size Bluetooth speakers, we've got something for every listener. When you're tuning in during a commute or zoning out at home, our devices bring sound to life. All products are tested, original, and tuned for everyday listening.",
     },
   ];
 
