@@ -102,6 +102,67 @@ interface ProductCountRow {
   total: number;
 }
 
+interface ProductFacetSummaryRow {
+  min_price: string | number | null;
+  max_price: string | number | null;
+  in_stock_total: number;
+  out_stock_total: number;
+}
+
+interface ProductFacetBrandRow {
+  brand_slug: string;
+  brand_name: string;
+  total: number;
+}
+
+export type ProductAvailabilityFilter = "all" | "in" | "out";
+
+export type ProductSortOption =
+  | "newest"
+  | "oldest"
+  | "price_low"
+  | "price_high"
+  | "rating_high"
+  | "rating_low"
+  | "name_az"
+  | "name_za"
+  | "stock_high"
+  | "stock_low";
+
+const PRODUCT_SORT_SQL: Record<ProductSortOption, string> = {
+  newest: "p.created_at DESC",
+  oldest: "p.created_at ASC",
+  price_low: "COALESCE(p.discounted_price, p.original_price) ASC",
+  price_high: "COALESCE(p.discounted_price, p.original_price) DESC",
+  rating_high: "p.rating_avg DESC, p.rating_count DESC",
+  rating_low: "p.rating_avg ASC, p.rating_count ASC",
+  name_az: "p.name ASC",
+  name_za: "p.name DESC",
+  stock_high: "p.stock DESC",
+  stock_low: "p.stock ASC",
+};
+
+function normalizeSortOptions(sort?: ProductSortOption[]): ProductSortOption[] {
+  if (!sort || sort.length === 0) {
+    return ["newest"];
+  }
+
+  const unique: ProductSortOption[] = [];
+  for (const candidate of sort) {
+    if (!(candidate in PRODUCT_SORT_SQL)) {
+      continue;
+    }
+
+    if (unique.includes(candidate)) {
+      continue;
+    }
+
+    unique.push(candidate);
+  }
+
+  return unique.length > 0 ? unique : ["newest"];
+}
+
 function toIso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
@@ -169,14 +230,16 @@ function mapProduct(row: ProductRow): ProductRecord {
   };
 }
 
-export async function listProducts(input: {
-  page: number;
-  pageSize: number;
+function buildProductWhereClause(input: {
+  activeOnly: boolean;
   categorySlug?: string;
   brandSlug?: string;
+  brandSlugs?: string[];
   search?: string;
-  activeOnly: boolean;
-}): Promise<{ items: ProductRecord[]; total: number }> {
+  minPrice?: number;
+  maxPrice?: number;
+  availability?: ProductAvailabilityFilter;
+}) {
   const whereParts: string[] = [];
   const whereParams: unknown[] = [];
 
@@ -189,7 +252,12 @@ export async function listProducts(input: {
     whereParams.push(input.categorySlug);
   }
 
-  if (input.brandSlug) {
+  const normalizedBrandSlugs = (input.brandSlugs ?? []).filter((slug) => slug.trim().length > 0);
+  if (normalizedBrandSlugs.length > 0) {
+    const placeholders = normalizedBrandSlugs.map(() => "?").join(", ");
+    whereParts.push(`b.slug IN (${placeholders})`);
+    whereParams.push(...normalizedBrandSlugs);
+  } else if (input.brandSlug) {
     whereParts.push("b.slug = ?");
     whereParams.push(input.brandSlug);
   }
@@ -199,7 +267,46 @@ export async function listProducts(input: {
     whereParams.push(`%${input.search}%`, `%${input.search}%`, `%${input.search}%`);
   }
 
+  if (input.minPrice !== undefined) {
+    whereParts.push("COALESCE(p.discounted_price, p.original_price) >= ?");
+    whereParams.push(input.minPrice);
+  }
+
+  if (input.maxPrice !== undefined) {
+    whereParts.push("COALESCE(p.discounted_price, p.original_price) <= ?");
+    whereParams.push(input.maxPrice);
+  }
+
+  if (input.availability === "in") {
+    whereParts.push("p.stock > 0");
+  } else if (input.availability === "out") {
+    whereParts.push("p.stock = 0");
+  }
+
   const whereClause = whereParts.length > 0 ? `WHERE ${whereParts.join(" AND ")}` : "";
+
+  return {
+    whereClause,
+    whereParams,
+  };
+}
+
+export async function listProducts(input: {
+  page: number;
+  pageSize: number;
+  categorySlug?: string;
+  brandSlug?: string;
+  brandSlugs?: string[];
+  search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availability?: ProductAvailabilityFilter;
+  sort?: ProductSortOption[];
+  activeOnly: boolean;
+}): Promise<{ items: ProductRecord[]; total: number }> {
+  const { whereClause, whereParams } = buildProductWhereClause(input);
+  const sortOptions = normalizeSortOptions(input.sort);
+  const orderBy = sortOptions.map((item) => PRODUCT_SORT_SQL[item]).join(", ");
   const offset = (input.page - 1) * input.pageSize;
 
   const rows = await queryRows<ProductRow>(
@@ -255,7 +362,7 @@ export async function listProducts(input: {
       INNER JOIN categories c ON c.id = p.category_id
       LEFT JOIN brands b ON b.id = p.brand_id
       ${whereClause}
-      ORDER BY p.created_at DESC
+      ORDER BY ${orderBy}, p.id DESC
       LIMIT ? OFFSET ?
     `,
     [...whereParams, input.pageSize, offset],
@@ -275,6 +382,71 @@ export async function listProducts(input: {
   return {
     items: rows.map(mapProduct),
     total: countRow?.total ?? 0,
+  };
+}
+
+export async function getProductFilterFacets(input: {
+  categorySlug?: string;
+  search?: string;
+  activeOnly: boolean;
+}): Promise<{
+  price: { min: number | null; max: number | null };
+  availability: { inStock: number; outOfStock: number };
+  brands: Array<{ slug: string; name: string; total: number }>;
+}> {
+  const { whereClause, whereParams } = buildProductWhereClause({
+    activeOnly: input.activeOnly,
+    categorySlug: input.categorySlug,
+    search: input.search,
+    availability: "all",
+  });
+
+  const summaryRow = await queryOne<ProductFacetSummaryRow>(
+    `
+      SELECT
+        MIN(COALESCE(p.discounted_price, p.original_price)) AS min_price,
+        MAX(COALESCE(p.discounted_price, p.original_price)) AS max_price,
+        SUM(CASE WHEN p.stock > 0 THEN 1 ELSE 0 END) AS in_stock_total,
+        SUM(CASE WHEN p.stock = 0 THEN 1 ELSE 0 END) AS out_stock_total
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      LEFT JOIN brands b ON b.id = p.brand_id
+      ${whereClause}
+    `,
+    whereParams,
+  );
+
+  const brandWhereClause = whereClause ? `${whereClause} AND b.id IS NOT NULL` : "WHERE b.id IS NOT NULL";
+  const brandRows = await queryRows<ProductFacetBrandRow>(
+    `
+      SELECT
+        b.slug AS brand_slug,
+        b.name AS brand_name,
+        COUNT(*) AS total
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      LEFT JOIN brands b ON b.id = p.brand_id
+      ${brandWhereClause}
+      GROUP BY b.id, b.slug, b.name
+      ORDER BY b.name ASC
+    `,
+    whereParams,
+  );
+
+  return {
+    price: {
+      min: summaryRow?.min_price === null || summaryRow?.min_price === undefined ? null : Number(summaryRow.min_price),
+      max: summaryRow?.max_price === null || summaryRow?.max_price === undefined ? null : Number(summaryRow.max_price),
+    },
+    availability: {
+      inStock: Number(summaryRow?.in_stock_total ?? 0),
+      outOfStock: Number(summaryRow?.out_stock_total ?? 0),
+    },
+    brands: brandRows.map((row) => ({
+      slug: row.brand_slug,
+      name: row.brand_name,
+      total: Number(row.total),
+    })),
   };
 }
 

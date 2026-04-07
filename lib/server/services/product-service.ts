@@ -4,7 +4,10 @@ import {
   deleteProduct,
   findProductById,
   findProductBySlug,
+  getProductFilterFacets,
   listProducts,
+  type ProductAvailabilityFilter,
+  type ProductSortOption,
   updateProduct,
 } from "@/lib/server/repositories/product-repository";
 import { findCategoryById } from "@/lib/server/repositories/category-repository";
@@ -103,13 +106,34 @@ export async function getPublicProducts(input: {
   pageSize: number;
   categorySlug?: string;
   brandSlug?: string;
+  brandSlugs?: string[];
   search?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  availability?: ProductAvailabilityFilter;
+  sort?: ProductSortOption[];
 }) {
   return listProducts({
     page: input.page,
     pageSize: input.pageSize,
     categorySlug: input.categorySlug,
     brandSlug: input.brandSlug,
+    brandSlugs: input.brandSlugs,
+    search: input.search,
+    minPrice: input.minPrice,
+    maxPrice: input.maxPrice,
+    availability: input.availability,
+    sort: input.sort,
+    activeOnly: true,
+  });
+}
+
+export async function getPublicProductFilterFacets(input: {
+  categorySlug?: string;
+  search?: string;
+}) {
+  return getProductFilterFacets({
+    categorySlug: input.categorySlug,
     search: input.search,
     activeOnly: true,
   });
