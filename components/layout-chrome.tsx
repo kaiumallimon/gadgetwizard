@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -13,8 +14,25 @@ export function LayoutChrome({ children }: LayoutChromeProps) {
   const pathname = usePathname();
   const hideChrome = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
 
+  useEffect(() => {
+    if (!hideChrome) {
+      return;
+    }
+
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+    };
+  }, [hideChrome]);
+
   if (hideChrome) {
-    return <>{children}</>;
+    return <div className="h-screen overflow-hidden">{children}</div>;
   }
 
   return (

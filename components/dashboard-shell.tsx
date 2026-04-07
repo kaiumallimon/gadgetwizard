@@ -279,8 +279,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-zinc-50">
-            <aside className="hidden h-screen w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex md:flex-col">
+        <div className="flex h-full overflow-hidden bg-zinc-50">
+            <aside className="hidden h-full w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex md:flex-col">
                 <SidebarContent />
             </aside>
 
@@ -314,7 +314,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         </div>
                     </header>
 
-                    <main className="flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">{children}</main>
+                    <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">{children}</main>
                     <Separator />
                 </div>
             </Sheet>
