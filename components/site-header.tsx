@@ -8,6 +8,7 @@ import {
   FiChevronRight,
   FiHeadphones,
   FiLogOut,
+  FiMenu,
   FiPackage,
   FiShield,
   FiSearch,
@@ -23,6 +24,15 @@ import { AuthDialog } from "@/components/auth-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 function flattenCategories(items: Category[]): Category[] {
   const flat: Category[] = [];
@@ -210,7 +220,125 @@ export function SiteHeader() {
               </div>
             </div>
 
-            <nav className="ml-auto flex items-center gap-2 text-sm sm:gap-3">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gw-soft-border-dark ml-auto inline-flex rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
+                >
+                  <FiMenu className="h-4 w-4" /> Menu
+                </Button>
+              </SheetTrigger>
+
+              <SheetContent
+                side="right"
+                className="gw-soft-border-dark w-[88vw] max-w-sm border bg-white/85 p-0 backdrop-blur-2xl"
+              >
+                <SheetHeader className="gw-soft-border-dark border-b bg-white/70 px-5 py-4">
+                  <SheetTitle className="text-base">Browse GadgetWizard</SheetTitle>
+                  <SheetDescription className="text-xs">
+                    Quick actions and category links in one place.
+                  </SheetDescription>
+                </SheetHeader>
+
+                <div className="max-h-[calc(100vh-84px)] space-y-5 overflow-y-auto px-5 py-4">
+                  <section className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Quick Actions</p>
+
+                    <div className="grid gap-2">
+                      <SheetClose asChild>
+                        <Button
+                          asChild
+                          variant="outline"
+                          className="gw-soft-border-dark justify-start rounded-xl border bg-white/70 text-zinc-800 hover:bg-zinc-50"
+                        >
+                          <Link href="/cart">
+                            <FiShoppingCart className="h-4 w-4" /> Cart
+                          </Link>
+                        </Button>
+                      </SheetClose>
+
+                      {session && (
+                        <SheetClose asChild>
+                          <Button
+                            asChild
+                            variant="outline"
+                            className="gw-soft-border-dark justify-start rounded-xl border bg-white/70 text-zinc-800 hover:bg-zinc-50"
+                          >
+                            <Link href={dashboardHref}>
+                              <FiUser className="h-4 w-4" /> Dashboard
+                            </Link>
+                          </Button>
+                        </SheetClose>
+                      )}
+
+                      {!loading && !user && (
+                        <SheetClose asChild>
+                          <Button
+                            type="button"
+                            className="justify-start rounded-xl"
+                            onClick={() => {
+                              setAuthDialogMode("login");
+                              setAuthDialogOpen(true);
+                            }}
+                          >
+                            <FiUser className="h-4 w-4" /> Login
+                          </Button>
+                        </SheetClose>
+                      )}
+
+                      {!loading && user && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="gw-soft-border-dark justify-start rounded-xl border bg-white/70 text-zinc-800 hover:bg-zinc-50"
+                          onClick={onLogout}
+                        >
+                          <FiLogOut className="h-4 w-4" /> Logout
+                        </Button>
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Categories</p>
+
+                    {headerCategories.length > 0 ? (
+                      <div className="grid gap-2">
+                        {headerCategories.map((entry) => (
+                          <SheetClose asChild key={entry.label}>
+                            <Link
+                              href={entry.href}
+                              className={`gw-soft-border-dark flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
+                                pathname === entry.href
+                                  ? "gw-soft-ring-accent bg-zinc-100 text-(--accent)"
+                                  : "bg-white/70 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
+                              }`}
+                            >
+                              <span>{entry.label}</span>
+                              <FiChevronRight className="h-4 w-4 opacity-70" />
+                            </Link>
+                          </SheetClose>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-zinc-500">No header categories selected yet.</p>
+                    )}
+                  </section>
+
+                  <div className="gw-soft-border-dark rounded-xl border bg-white/70 px-3 py-2.5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Support</p>
+                    <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-800">
+                      <FiHeadphones className="h-4 w-4 text-(--accent)" /> +880 1712-345678
+                    </p>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            <nav className="ml-auto hidden items-center gap-2 text-sm sm:gap-3 md:flex">
               <Button asChild variant="outline" size="sm" className="gw-soft-border-dark rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
                 <Link href="/cart">
                   <FiShoppingCart className="h-4 w-4" />
@@ -253,7 +381,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <div className="gw-soft-border-light border-t bg-white text-sm text-zinc-700">
+      <div className="gw-soft-border-light hidden border-t bg-white text-sm text-zinc-700 md:block">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2.5 sm:px-6">
           {headerCategories.map((entry) => (
             <Link
