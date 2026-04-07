@@ -16,6 +16,26 @@ import { getAdminProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
+const PRODUCT_BATCH_SIZE = 200;
+
+async function getAllAdminProducts() {
+  const items = [] as Awaited<ReturnType<typeof getAdminProducts>>["items"];
+  let page = 1;
+
+  while (true) {
+    const batch = await getAdminProducts({ page, pageSize: PRODUCT_BATCH_SIZE });
+    items.push(...batch.items);
+
+    if (items.length >= batch.total || batch.items.length === 0) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return items;
+}
+
 export default async function AdminProductsPage() {
   try {
     await requireServerRole(["admin"]);
@@ -23,14 +43,13 @@ export default async function AdminProductsPage() {
     redirect("/dashboard");
   }
 
-  const products = await getAdminProducts({ page: 1, pageSize: 100 });
+  const products = await getAllAdminProducts();
 
   return (
     <div className="w-full space-y-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Product Management</h1>
             <p className="mt-2 text-sm text-zinc-600">
               View, update, activate/deactivate, and delete products. Creation is handled in a dedicated add page.
@@ -57,7 +76,7 @@ export default async function AdminProductsPage() {
         </div>
       </header>
 
-      <ProductListManager initialProducts={products.items} />
+      <ProductListManager initialProducts={products} />
     </div>
   );
 }
