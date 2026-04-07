@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Image as ImageIcon, Pencil, Pin, PinOff, Power, Search, Star, StarOff, Trash2, Upload } from "lucide-react";
+import { Pencil, Pin, PinOff, Power, Search, Star, StarOff, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
@@ -120,7 +121,6 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState<(typeof PAGE_SIZE_OPTIONS)[number]>(12);
   const [pendingById, setPendingById] = useState<Record<number, boolean>>({});
-  const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
 
   const filteredItems = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -193,20 +193,6 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
     }
   }
 
-  async function handleQuickEditCategory(category: Category) {
-    const name = window.prompt("Category name", category.name)?.trim();
-    if (!name) {
-      return;
-    }
-
-    const slug = window.prompt("Category slug", category.slug)?.trim();
-    if (!slug) {
-      return;
-    }
-
-    await updateCategory(category, { name, slug }, "Category updated.");
-  }
-
   async function handleDeleteCategory(categoryId: number) {
     if (!window.confirm("Delete this category?")) {
       return;
@@ -218,24 +204,6 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
       toast.success("Category deleted.");
     } catch (error) {
       toast.error(safeErrorMessage(error, "Category delete failed"));
-    }
-  }
-
-  async function handleReplaceCategoryImage(category: Category, file: File | null) {
-    if (!file) {
-      return;
-    }
-
-    const target = `category-${category.id}`;
-    setUploadingTarget(target);
-
-    try {
-      const upload = await apiClient.adminUploadCdnImage(file, token ?? undefined);
-      await updateCategory(category, { imageUrl: upload.item.url }, "Category image updated.");
-    } catch (error) {
-      toast.error(safeErrorMessage(error, "Category image update failed"));
-    } finally {
-      setUploadingTarget(null);
     }
   }
 
@@ -374,6 +342,12 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
 
                       <TableCell>
                         <div className="flex flex-wrap justify-end gap-1.5">
+                          <Button asChild type="button" size="sm" variant="secondary" disabled={pending}>
+                            <Link href={`/admin/categories/${category.id}`}>
+                              <Pencil className="h-3.5 w-3.5" /> Edit
+                            </Link>
+                          </Button>
+
                           <Button
                             type="button"
                             size="sm"
@@ -432,18 +406,6 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
                           <Button
                             type="button"
                             size="sm"
-                            variant="secondary"
-                            disabled={pending}
-                            onClick={() => {
-                              void handleQuickEditCategory(category);
-                            }}
-                          >
-                            <Pencil className="h-3.5 w-3.5" /> Edit
-                          </Button>
-
-                          <Button
-                            type="button"
-                            size="sm"
                             variant="destructive"
                             disabled={pending}
                             onClick={() => {
@@ -452,22 +414,6 @@ export function CategoryListManager({ initialCategories }: CategoryListManagerPr
                           >
                             <Trash2 className="h-3.5 w-3.5" /> Delete
                           </Button>
-
-                          <label className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-zinc-200 px-2 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
-                            {uploadingTarget === `category-${category.id}` ? <Upload className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />} Replace Image
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              disabled={uploadingTarget === `category-${category.id}`}
-                              onChange={async (event) => {
-                                const input = event.currentTarget;
-                                const file = input.files?.[0] ?? null;
-                                input.value = "";
-                                await handleReplaceCategoryImage(category, file);
-                              }}
-                            />
-                          </label>
                         </div>
                       </TableCell>
                     </TableRow>
