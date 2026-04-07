@@ -74,6 +74,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Product",
                         items: [
                             { href: "/admin/products", label: "Products", icon: Package, exact: true },
+                            { href: "/admin/inventory", label: "Inventory", icon: Boxes, exact: true },
                             { href: "/admin/products/new", label: "Add Product", icon: Plus },
                             { href: "/admin/brands", label: "Brands", icon: Tag, exact: true },
                             { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
