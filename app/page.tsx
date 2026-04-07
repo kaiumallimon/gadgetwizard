@@ -116,7 +116,7 @@ export default async function HomePage() {
       <div className="mx-auto w-full max-w-7xl space-y-7 px-4 sm:px-6">
         <BannerShowcase banners={banners} />
 
-        <section className="relative overflow-hidden rounded-2xl bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-3">
+        <section className="hidden md:block relative overflow-hidden rounded-2xl bg-linear-to-br from-white via-zinc-50 to-orange-50/40 p-3">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2 px-1">
             <div>
               <p className="text-xs font-medium uppercase tracking-[0.14em] text-zinc-500">Storefront Highlights</p>
@@ -267,9 +267,6 @@ export default async function HomePage() {
                 </h2>
                 <p className="mt-2 text-sm text-zinc-500">Handpicked products with strong value and customer demand.</p>
               </div>
-              <Link href="/cart" className="rounded-full bg-(--accent) px-4 py-2 text-sm font-semibold text-white hover:brightness-95">
-                Open Cart
-              </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {fallbackFeatured.map((product) => (
