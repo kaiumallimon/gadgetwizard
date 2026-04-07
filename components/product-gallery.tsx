@@ -40,7 +40,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
 
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-4xl bg-white border flex items-center justify-center">
+      <div className="overflow-hidden rounded-4xl flex items-center justify-center">
         <div
           className="relative aspect-square w-full max-w-lg overflow-hidden"
           onMouseMove={handleMouseMove}
@@ -50,7 +50,7 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
             src={selectedImage}
             alt={productName}
             style={zoomStyle}
-            className="w-full h-full object-cover transition-transform duration-200 ease-out hover:cursor-zoom-in"
+            className="w-full h-full object-contain transition-transform duration-200 ease-out hover:cursor-zoom-in"
           />
         </div>
       </div>

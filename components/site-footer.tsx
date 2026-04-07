@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { CreditCard, Headset, MapPin, Phone, ShieldCheck, Truck } from "lucide-react";
 
@@ -36,9 +37,16 @@ export function SiteFooter() {
       <div className="relative mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
         <div className="grid gap-8 border-b border-zinc-800/50 pb-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
-            <p className="inline-flex rounded-full bg-zinc-900/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-orange-300 ring-1 ring-orange-300/30">
-              GadgetWizard Commerce
-            </p>
+            <Link href="/" className="inline-flex items-center">
+              <Image
+                src="/logo-black-surfacce.svg"
+                alt="GadgetWizard"
+                width={308}
+                height={60}
+                style={{ width: "auto" }}
+                className="h-11 w-auto sm:h-12"
+              />
+            </Link>
             <h2 className="max-w-2xl text-3xl font-semibold leading-tight text-white sm:text-4xl">
               Trusted gadgets, secure shopping, and support that actually responds.
             </h2>

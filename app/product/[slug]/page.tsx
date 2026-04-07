@@ -219,7 +219,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
 
           {specificationSections.length > 0 && (
             <section className="order-3 space-y-8 border-t border-zinc-100 pt-10 xl:col-span-2">
-              <h2 className="inline-flex w-fit items-center border-l-4 border-zinc-900 bg-zinc-100 px-3 py-1 text-xl font-semibold tracking-tight text-zinc-900">Tech Specs</h2>
+              <h2 className="inline-flex w-fit items-center border-l-4 border-zinc-900 bg-zinc-100 px-3 py-1 text-xl font-semibold tracking-tight text-zinc-900">Specs</h2>
               <div className="space-y-8">
                 {specificationSections.map((section) => (
                   <section key={section.title} className="space-y-4">
