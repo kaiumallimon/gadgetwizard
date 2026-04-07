@@ -6,11 +6,11 @@
   --surface: #ffffff;
   --surface-glass: rgba(255, 255, 255, 0.88);
   --muted: #6b7280;
-  --accent: #f37021;
+  --accent: #f36523;
   --border: #e4e4e7;
   --border-soft-light: rgba(148, 163, 184, 0.32);
   --border-soft-dark: rgba(148, 163, 184, 0.28);
-  --border-soft-accent: rgba(243, 112, 33, 0.28);
+  --border-soft-accent: rgba(243, 101, 35, 0.28);
 }
 
 @theme inline {

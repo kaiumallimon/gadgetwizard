@@ -138,20 +138,20 @@ export function SiteHeader() {
   return (
     <header className="gw-soft-border-light sticky top-0 z-50 border-b">
       <div className="bg-(--accent) text-zinc-950">
-        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-xs sm:px-6">
-          <div className="inline-flex items-center gap-3">
-            <span className="inline-flex items-center gap-1.5 text-zinc-950/90">
+        <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs sm:px-6 sm:py-2">
+          <div className="flex w-full items-center justify-center gap-2 md:w-auto md:justify-start">
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap leading-none text-zinc-950/90">
               <FiTruck className="h-3.5 w-3.5 text-zinc-950/80" /> Free delivery on selected products
             </span>
-            <span className="hidden items-center gap-1.5 text-zinc-950/80 sm:inline-flex">
+            <span className="hidden items-center gap-1.5 leading-none text-zinc-950/80 sm:inline-flex">
               <FiShield className="h-3.5 w-3.5 text-zinc-950/80" /> Secure payments
             </span>
-            <span className="hidden items-center gap-1.5 text-zinc-950/80 lg:inline-flex">
+            <span className="hidden items-center gap-1.5 leading-none text-zinc-950/80 lg:inline-flex">
               <FiPackage className="h-3.5 w-3.5 text-zinc-950/80" /> Fast order tracking
             </span>
           </div>
 
-          <div className="inline-flex items-center gap-3">
+          <div className="hidden items-center gap-3 md:inline-flex">
             <span className="hidden items-center gap-1.5 text-zinc-950/80 md:inline-flex">
               <FiHeadphones className="h-3.5 w-3.5 text-zinc-950/80" /> Support: +880 1712-345678
             </span>

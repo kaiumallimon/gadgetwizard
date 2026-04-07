@@ -11,7 +11,7 @@ interface EmailLayoutInput {
 function baseEmailLayout(input: EmailLayoutInput): string {
   const ctaHtml = input.ctaLabel && input.ctaUrl
     ? `<p style="margin: 28px 0 0;">
-        <a href="${input.ctaUrl}" style="display:inline-block;background:#f37021;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">${input.ctaLabel}</a>
+        <a href="${input.ctaUrl}" style="display:inline-block;background:#f36523;color:#ffffff;text-decoration:none;padding:12px 18px;border-radius:999px;font-weight:700;">${input.ctaLabel}</a>
       </p>`
     : "";
 

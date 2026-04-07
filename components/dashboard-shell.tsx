@@ -181,7 +181,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                 />
                             </div>
                         ) : (
-                            <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-orange-500 to-red-500 text-white shadow-sm">
+                            <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-[#f36523] to-red-500 text-white shadow-sm">
                                 <LayoutGrid className="h-4 w-4" />
                             </div>
                         )}
