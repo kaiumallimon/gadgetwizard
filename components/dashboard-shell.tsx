@@ -136,6 +136,37 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
     const navItems = useMemo(() => nav.groups.flatMap((group) => group.items), [nav]);
 
+    const normalizedPath = useMemo(() => {
+        if (pathname !== "/" && pathname.endsWith("/")) {
+            return pathname.slice(0, -1);
+        }
+
+        return pathname;
+    }, [pathname]);
+
+    const activeHref = useMemo(() => {
+        let bestHref: string | null = null;
+        let bestScore = -1;
+
+        for (const item of navItems) {
+            const candidate = item.href !== "/" && item.href.endsWith("/") ? item.href.slice(0, -1) : item.href;
+
+            let score = -1;
+            if (normalizedPath === candidate) {
+                score = candidate.length + 1000;
+            } else if (normalizedPath.startsWith(`${candidate}/`)) {
+                score = candidate.length;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestHref = item.href;
+            }
+        }
+
+        return bestHref;
+    }, [navItems, normalizedPath]);
+
     const currentNavLabel = (() => {
         for (const group of nav.groups) {
             for (const item of group.items) {
@@ -158,28 +189,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     function isActive(item: NavItem) {
-        if (pathname === item.href) {
-            return true;
-        }
-
-        const isDescendantRoute = pathname.startsWith(`${item.href}/`);
-        if (!isDescendantRoute) {
-            return false;
-        }
-
-        if (!item.exact) {
-            return true;
-        }
-
-        const hasMoreSpecificNavMatch = navItems.some((entry) => {
-            if (entry.href === item.href) {
-                return false;
-            }
-
-            return pathname === entry.href || pathname.startsWith(`${entry.href}/`);
-        });
-
-        return !hasMoreSpecificNavMatch;
+        return activeHref === item.href;
     }
 
     function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
