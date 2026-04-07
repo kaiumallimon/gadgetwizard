@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Pencil, Power, Search, Star, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Power, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
