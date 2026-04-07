@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AdminConsole } from "@/components/admin-console";
+import { CategoryListManager } from "@/components/admin/category-list-manager";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
-import { getAdminDashboardBundle } from "@/lib/server/services/admin-service";
+import { getAdminCategories } from "@/lib/server/services/category-service";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +23,7 @@ export default async function AdminCategoriesPage() {
     redirect("/dashboard");
   }
 
-  const { analytics, categories, products, banners } = await getAdminDashboardBundle();
+  const categories = await getAdminCategories();
 
   return (
     <div className="w-full space-y-6">
@@ -55,14 +55,7 @@ export default async function AdminCategoriesPage() {
         </div>
       </header>
 
-      <AdminConsole
-        initialAnalytics={analytics}
-        initialCategories={categories}
-        initialProducts={products}
-        initialBanners={banners}
-        initialTab="categories"
-        lockedTab="categories"
-      />
+      <CategoryListManager initialCategories={categories} />
     </div>
   );
 }
