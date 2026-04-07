@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Product } from "@/lib/client/types";
@@ -115,9 +116,17 @@ export function ProductCard({ product }: ProductCardProps) {
           type="button"
           onClick={onAddToCart}
           disabled={pending || product.stock === 0}
-          className="h-10 w-full rounded-xl text-sm font-semibold"
+          className="cursor-pointer h-10 w-full rounded-xl text-sm font-semibold hover:bg-orange-300 focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-500 transition-colors"
         >
-          {product.stock === 0 ? "Out Of Stock" : pending ? "Adding..." : "Add To Cart"}
+          {product.stock === 0 ? (
+            "Out Of Stock"
+          ) : pending ? (
+            "Adding..."
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <Plus className="h-4 w-4" /> Add To Cart
+            </span>
+          )}
         </Button>
       </CardContent>
     </Card>

@@ -331,7 +331,7 @@ export function CategoryFilters({
 
           <SheetContent
             side="bottom"
-            className="gw-soft-border-dark max-h-[88vh] rounded-t-3xl border bg-white/95 p-0 backdrop-blur-2xl"
+            className="gw-soft-border-dark max-h-[88vh] border bg-white/95 p-0 backdrop-blur-2xl"
           >
             <SheetHeader className="gw-soft-border-dark border-b bg-white/90 px-5 py-4 text-left">
               <SheetTitle className="inline-flex items-center gap-2 text-base">
