@@ -22,6 +22,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface BrandListManagerProps {
   initialBrands: Brand[];
@@ -123,6 +124,15 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
   const start = (page - 1) * pageSize;
   const pagedItems = filteredItems.slice(start, start + pageSize);
 
+  const stats = useMemo(() => {
+    return {
+      total: items.length,
+      active: items.filter((brand) => brand.isActive).length,
+      featured: items.filter((brand) => brand.isFeatured).length,
+      withImage: items.filter((brand) => (brand.imageUrl ?? "").trim().length > 0).length,
+    };
+  }, [items]);
+
   async function deleteBrand(brand: Brand) {
     const confirmed = window.confirm(`Delete ${brand.name}?`);
     if (!confirmed) {
@@ -143,6 +153,33 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
 
   return (
     <div className="space-y-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Total Brands</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-2xl font-semibold text-zinc-900">{stats.total}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Active</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-2xl font-semibold text-emerald-700">{stats.active}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Featured</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-2xl font-semibold text-zinc-900">{stats.featured}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">With Logo</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 text-2xl font-semibold text-zinc-900">{stats.withImage}</CardContent>
+        </Card>
+      </section>
+
       <Card>
         <CardHeader className="space-y-3">
           <CardTitle>Brand Directory</CardTitle>
@@ -194,56 +231,76 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {pagedItems.map((brand) => {
-          return (
-            <Card key={brand.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="line-clamp-1 text-base">{brand.name}</CardTitle>
-                  <div className="flex items-center gap-1">
-                    <Badge variant={brand.isActive ? "default" : "outline"}>{brand.isActive ? "Active" : "Inactive"}</Badge>
-                    {brand.isFeatured && <Badge variant="secondary">Featured</Badge>}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {brand.imageUrl && (
-                  <div className="overflow-hidden rounded-md border border-zinc-200">
-                    <div className="h-28 bg-zinc-50 p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
-                    </div>
-                  </div>
-                )}
+      <Card>
+        <CardContent className="pt-6">
+          {pagedItems.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Logo</TableHead>
+                  <TableHead>Flags</TableHead>
+                  <TableHead className="text-right">Sort</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
 
-                <div className="space-y-1 text-sm text-zinc-700">
-                  <p><span className="font-medium text-zinc-900">Slug:</span> {brand.slug}</p>
-                  <p><span className="font-medium text-zinc-900">Sort Order:</span> {brand.sortOrder}</p>
-                  <p><span className="font-medium text-zinc-900">Status:</span> {brand.isActive ? "Active" : "Inactive"}</p>
-                  <p><span className="font-medium text-zinc-900">Featured:</span> {brand.isFeatured ? "Yes" : "No"}</p>
-                  <p className="line-clamp-3">
-                    <span className="font-medium text-zinc-900">Description:</span> {brand.description ?? "No description"}
-                  </p>
-                </div>
+              <TableBody>
+                {pagedItems.map((brand) => (
+                  <TableRow key={brand.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-zinc-900">{brand.name}</p>
+                        <p className="text-xs text-zinc-500">#{brand.id} | {brand.slug}</p>
+                      </div>
+                    </TableCell>
 
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild type="button" variant="outline">
-                    <Link href={`/admin/brands/${brand.id}`}>
-                      <Edit3 className="h-3.5 w-3.5" /> Edit
-                    </Link>
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={() => deleteBrand(brand)} disabled={deletingId === brand.id}>
-                    <Trash2 className="h-3.5 w-3.5" /> Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                    <TableCell>
+                      {brand.imageUrl ? (
+                        <div className="h-14 w-24 overflow-hidden rounded border border-zinc-200 bg-zinc-50 p-1">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
+                        </div>
+                      ) : (
+                        <Badge variant="outline">No Logo</Badge>
+                      )}
+                    </TableCell>
 
-      {pagedItems.length === 0 && <p className="text-sm text-zinc-500">No brands found for current search/filter options.</p>}
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        <Badge variant={brand.isActive ? "default" : "outline"}>{brand.isActive ? "Active" : "Inactive"}</Badge>
+                        {brand.isFeatured && <Badge variant="secondary">Featured</Badge>}
+                      </div>
+                    </TableCell>
+
+                    <TableCell className="text-right font-medium text-zinc-700">{brand.sortOrder}</TableCell>
+
+                    <TableCell className="max-w-md">
+                      <p className="line-clamp-2 text-sm text-zinc-700">{brand.description ?? "No description"}</p>
+                    </TableCell>
+
+                    <TableCell>
+                      <div className="flex flex-wrap justify-end gap-1.5">
+                        <Button asChild type="button" size="sm" variant="outline">
+                          <Link href={`/admin/brands/${brand.id}`}>
+                            <Edit3 className="h-3.5 w-3.5" /> Edit
+                          </Link>
+                        </Button>
+                        <Button type="button" size="sm" variant="destructive" onClick={() => deleteBrand(brand)} disabled={deletingId === brand.id}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p className="text-sm text-zinc-500">No brands found for current search/filter options.</p>
+          )}
+        </CardContent>
+      </Card>
 
       {totalPages > 1 && (
         <Pagination className="justify-start">
