@@ -293,8 +293,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     <SidebarContent onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
 
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-4 backdrop-blur">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/55 px-4 py-4 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Button
                                 type="button"
@@ -314,7 +314,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         </div>
                     </header>
 
-                    <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">{children}</main>
+                    <main className="px-4 py-5 md:px-6 md:py-6">{children}</main>
                     <Separator />
                 </div>
             </Sheet>
