@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
@@ -6,7 +7,7 @@ import { getRegularUsers } from "@/lib/server/services/admin-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+async function GETHandler(request: NextRequest) {
   try {
     await requireRole(request, ["admin"]);
 
@@ -20,3 +21,5 @@ export async function GET(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const GET = withRouteAudit(GETHandler);

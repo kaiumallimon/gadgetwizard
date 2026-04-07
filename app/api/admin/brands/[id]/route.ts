@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { badRequest } from "@/lib/server/core/errors";
@@ -18,7 +19,7 @@ function parseBrandId(rawId: string): number {
   return id;
 }
 
-export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+async function PUTHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     await requireRole(request, ["admin"]);
     const { id: rawId } = await context.params;
@@ -32,7 +33,7 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+async function DELETEHandler(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     await requireRole(request, ["admin"]);
     const { id: rawId } = await context.params;
@@ -44,3 +45,6 @@ export async function DELETE(request: NextRequest, context: { params: Promise<{ 
     return handleRouteError(error);
   }
 }
+
+export const PUT = withRouteAudit(PUTHandler);
+export const DELETE = withRouteAudit(DELETEHandler);

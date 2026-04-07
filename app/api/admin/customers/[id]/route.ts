@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { badRequest } from "@/lib/server/core/errors";
@@ -19,7 +20,7 @@ async function getUserId(context: { params: Promise<{ id: string }> }): Promise<
   return userId;
 }
 
-export async function PUT(
+async function PUTHandler(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -38,3 +39,5 @@ export async function PUT(
     return handleRouteError(error);
   }
 }
+
+export const PUT = withRouteAudit(PUTHandler);

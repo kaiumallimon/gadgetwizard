@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { badRequest } from "@/lib/server/core/errors";
@@ -19,7 +20,7 @@ async function getFaqId(context: { params: Promise<{ id: string }> }): Promise<n
   return faqId;
 }
 
-export async function PUT(
+async function PUTHandler(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -35,7 +36,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+async function DELETEHandler(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
@@ -49,3 +50,6 @@ export async function DELETE(
     return handleRouteError(error);
   }
 }
+
+export const PUT = withRouteAudit(PUTHandler);
+export const DELETE = withRouteAudit(DELETEHandler);

@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
@@ -8,7 +9,7 @@ import { createFaqAdmin, getAdminFaqs } from "@/lib/server/services/faq-service"
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+async function GETHandler(request: NextRequest) {
   try {
     await requireRole(request, ["admin"]);
     const faqs = await getAdminFaqs();
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   try {
     await requireRole(request, ["admin"]);
     const body = await parseJsonBody(request, adminFaqSchema);
@@ -30,3 +31,6 @@ export async function POST(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const GET = withRouteAudit(GETHandler);
+export const POST = withRouteAudit(POSTHandler);

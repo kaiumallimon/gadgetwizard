@@ -1,9 +1,10 @@
 import { handleRouteError, jsonResponse } from "@/lib/server/core/http";
 import { getPublicCategoryTree } from "@/lib/server/services/category-service";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+async function GETHandler() {
   try {
     const categories = await getPublicCategoryTree();
     return jsonResponse({ items: categories });
@@ -11,3 +12,5 @@ export async function GET() {
     return handleRouteError(error);
   }
 }
+
+export const GET = withRouteAudit(GETHandler);

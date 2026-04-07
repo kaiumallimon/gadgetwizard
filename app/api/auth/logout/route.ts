@@ -1,9 +1,10 @@
 import { buildClearSessionCookie } from "@/lib/server/auth/cookie";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+async function POSTHandler() {
   try {
     return jsonResponse(
       {
@@ -19,3 +20,5 @@ export async function POST() {
     return handleRouteError(error);
   }
 }
+
+export const POST = withRouteAudit(POSTHandler);
