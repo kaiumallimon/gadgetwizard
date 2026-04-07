@@ -81,7 +81,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const product = await getPublicProductBySlug(slug);
   const specificationSections = normalizeSpecificationSections(product.specifications);
   const colorOptions = parseColorOptions(product.color);
-  const fallbackImage = "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
+  const fallbackImage = "https://blocks.astratic.com/img/general-img-square.png";
   const galleryImages = product.images.length > 0 ? product.images : [fallbackImage];
   const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
   const hasLoyalPrice = product.loyalCustomerPrice < product.originalPrice;

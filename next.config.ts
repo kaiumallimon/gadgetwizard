@@ -26,6 +26,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "cdn.gadgetwizard.com.au",
+      },
+      {
+        protocol: "https",
+        hostname: "blocks.astratic.com",
       }
     ],
   },
