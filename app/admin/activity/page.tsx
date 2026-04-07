@@ -27,7 +27,7 @@ import { getAdminActivityFeedPage, getAdminActivitySummary } from "@/lib/server/
 
 export const dynamic = "force-dynamic";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 8;
 const VALID_ACTIONS = ["create", "read", "update", "delete"] as const;
 type CrudAction = (typeof VALID_ACTIONS)[number];
 
