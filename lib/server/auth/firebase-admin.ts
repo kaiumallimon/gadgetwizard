@@ -10,6 +10,38 @@ type FirebaseServiceAccount = {
   private_key?: string;
 };
 
+function stripWrappingQuotes(value: string): string {
+  return value.trim().replace(/^['"]|['"]$/g, "");
+}
+
+function normalizePemPrivateKey(value: string): string {
+  const trimmed = stripWrappingQuotes(value)
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\\n/g, "\n")
+    .trim();
+
+  if (!trimmed.includes("-----BEGIN PRIVATE KEY-----") || !trimmed.includes("-----END PRIVATE KEY-----")) {
+    throw new Error("Decoded private key does not contain a valid PEM block");
+  }
+
+  return `${trimmed}\n`;
+}
+
+function decodePrivateKeyBase64(value: string): string {
+  const noPrefix = stripWrappingQuotes(value).replace(/^FIREBASE_PRIVATE_KEY_BASE64\s*=\s*/i, "");
+  const normalizedBase64 = noPrefix.replace(/\s+/g, "").replace(/ /g, "+");
+
+  let decoded = "";
+  try {
+    decoded = Buffer.from(normalizedBase64, "base64").toString("utf8");
+  } catch {
+    throw new Error("FIREBASE_PRIVATE_KEY_BASE64 must be valid base64");
+  }
+
+  return normalizePemPrivateKey(decoded);
+}
+
 function resolveServiceAccountFromEnv(): FirebaseServiceAccount {
   const env = getEnv();
 
@@ -22,17 +54,10 @@ function resolveServiceAccountFromEnv(): FirebaseServiceAccount {
   }
 
   if (env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY_BASE64) {
-    let decodedPrivateKey = "";
-    try {
-      decodedPrivateKey = Buffer.from(env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
-    } catch {
-      throw new Error("FIREBASE_PRIVATE_KEY_BASE64 must be valid base64");
-    }
-
     return {
       project_id: env.FIREBASE_PROJECT_ID,
       client_email: env.FIREBASE_CLIENT_EMAIL,
-      private_key: decodedPrivateKey,
+      private_key: decodePrivateKeyBase64(env.FIREBASE_PRIVATE_KEY_BASE64),
     };
   }
 
@@ -40,7 +65,7 @@ function resolveServiceAccountFromEnv(): FirebaseServiceAccount {
     return {
       project_id: env.FIREBASE_PROJECT_ID,
       client_email: env.FIREBASE_CLIENT_EMAIL,
-      private_key: env.FIREBASE_PRIVATE_KEY,
+      private_key: normalizePemPrivateKey(env.FIREBASE_PRIVATE_KEY),
     };
   }
 
@@ -71,7 +96,7 @@ function getFirebaseApp() {
     credential: cert({
       projectId,
       clientEmail: serviceAccount.client_email,
-      privateKey: serviceAccount.private_key.replace(/\\n/g, "\n"),
+      privateKey: normalizePemPrivateKey(serviceAccount.private_key),
     }),
     projectId,
   });
