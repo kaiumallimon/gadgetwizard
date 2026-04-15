@@ -4,6 +4,51 @@ import { getAuth } from "firebase-admin/auth";
 import { conflict, notFound, unauthorized } from "@/lib/server/core/errors";
 import { getEnv } from "@/lib/server/core/env";
 
+type FirebaseServiceAccount = {
+  project_id?: string;
+  client_email?: string;
+  private_key?: string;
+};
+
+function resolveServiceAccountFromEnv(): FirebaseServiceAccount {
+  const env = getEnv();
+
+  if (env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    try {
+      return JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON) as FirebaseServiceAccount;
+    } catch {
+      throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON must be valid JSON");
+    }
+  }
+
+  if (env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY_BASE64) {
+    let decodedPrivateKey = "";
+    try {
+      decodedPrivateKey = Buffer.from(env.FIREBASE_PRIVATE_KEY_BASE64, "base64").toString("utf8");
+    } catch {
+      throw new Error("FIREBASE_PRIVATE_KEY_BASE64 must be valid base64");
+    }
+
+    return {
+      project_id: env.FIREBASE_PROJECT_ID,
+      client_email: env.FIREBASE_CLIENT_EMAIL,
+      private_key: decodedPrivateKey,
+    };
+  }
+
+  if (env.FIREBASE_CLIENT_EMAIL && env.FIREBASE_PRIVATE_KEY) {
+    return {
+      project_id: env.FIREBASE_PROJECT_ID,
+      client_email: env.FIREBASE_CLIENT_EMAIL,
+      private_key: env.FIREBASE_PRIVATE_KEY,
+    };
+  }
+
+  throw new Error(
+    "Firebase admin credentials are missing. Set FIREBASE_SERVICE_ACCOUNT_JSON, or FIREBASE_CLIENT_EMAIL with FIREBASE_PRIVATE_KEY_BASE64 (recommended), or FIREBASE_CLIENT_EMAIL with FIREBASE_PRIVATE_KEY.",
+  );
+}
+
 function getFirebaseApp() {
   const existing = getApps()[0];
   if (existing) {
@@ -11,20 +56,7 @@ function getFirebaseApp() {
   }
 
   const env = getEnv();
-  if (!env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON is required for Firebase token verification");
-  }
-
-  let serviceAccount: { project_id?: string; client_email?: string; private_key?: string };
-  try {
-    serviceAccount = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON) as {
-      project_id?: string;
-      client_email?: string;
-      private_key?: string;
-    };
-  } catch {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON must be valid JSON");
-  }
+  const serviceAccount = resolveServiceAccountFromEnv();
 
   if (!serviceAccount.client_email || !serviceAccount.private_key) {
     throw new Error("Firebase service account must include client_email and private_key");
@@ -66,8 +98,13 @@ export async function verifyFirebaseIdToken(idToken: string) {
   try {
     const auth = getFirebaseAdminAuth();
     return await auth.verifyIdToken(idToken, true);
-  } catch {
-    throw unauthorized("Invalid Firebase ID token");
+  } catch (error) {
+    const firebaseError = error as { code?: string };
+    if (firebaseError?.code?.startsWith("auth/")) {
+      throw unauthorized("Invalid Firebase ID token");
+    }
+
+    throw error;
   }
 }
 
