@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
-          source: "deploy/**"
+          source: "deploy/*"
           target: "/home/gadginlm/gw_website"
 
       - name: Restart Node app
