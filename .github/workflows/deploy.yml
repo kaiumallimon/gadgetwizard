@@ -52,5 +52,6 @@ jobs:
           port: ${{ secrets.PORT }}
           script: |
             cd /home/gadginlm/gw_website
+            mkdir -p tmp
             touch tmp/restart.txt
             
