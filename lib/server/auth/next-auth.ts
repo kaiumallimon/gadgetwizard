@@ -11,6 +11,8 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  // Required behind reverse proxies/CDN and custom domains in production.
+  trustHost: true,
   session: {
     strategy: "jwt",
   },
