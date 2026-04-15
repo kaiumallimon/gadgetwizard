@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
-import { apiClient } from "@/lib/client/api";
+import { ApiError, apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,54 @@ interface AuthDialogProps {
   onModeChange: (mode: "login" | "signup") => void;
 }
 
+interface ValidationErrorDetails {
+  fieldErrors?: Record<string, string[] | undefined>;
+  formErrors?: string[];
+}
+
+function toHumanReadableValidationMessage(messages: string[]): string {
+  const cleaned = messages
+    .map((message) => message.trim().replace(/\.$/, ""))
+    .filter((message) => message.length > 0);
+
+  if (cleaned.length === 0) {
+    return "Please check your details and try again.";
+  }
+
+  if (cleaned.length === 1) {
+    return `${cleaned[0]}.`;
+  }
+
+  const last = cleaned.at(-1);
+  const firstPart = cleaned.slice(0, -1).join(", ");
+  return `${firstPart}, and ${last}.`;
+}
+
 function getAuthErrorMessage(error: unknown, mode: "login" | "signup"): string {
+  if (error instanceof ApiError && error.code === "VALIDATION_ERROR") {
+    const details = (error.details ?? null) as ValidationErrorDetails | null;
+
+    if (mode === "signup") {
+      const passwordMessages = details?.fieldErrors?.password?.filter(Boolean) ?? [];
+      if (passwordMessages.length > 0) {
+        return `Password requirements not met: ${toHumanReadableValidationMessage(passwordMessages)}`;
+      }
+    }
+
+    const fieldMessages = Object.values(details?.fieldErrors ?? {})
+      .flatMap((messages) => messages ?? [])
+      .filter((message): message is string => Boolean(message && message.trim().length > 0));
+
+    if (fieldMessages.length > 0) {
+      return toHumanReadableValidationMessage(fieldMessages);
+    }
+
+    const formMessage = details?.formErrors?.find((message) => Boolean(message && message.trim().length > 0));
+    if (formMessage) {
+      return formMessage;
+    }
+  }
+
   const authError = error as { code?: string };
   const code = authError?.code;
 
