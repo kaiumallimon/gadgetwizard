@@ -5,7 +5,7 @@ import type { AuthSession, UserRole } from "@/lib/server/types";
 
 interface SessionJwtPayload {
   sub: string;
-  uid: string;
+  authUid: string;
   email: string;
   name: string;
   role: UserRole;
@@ -28,7 +28,7 @@ export async function issueBackendJwt(session: AuthSession): Promise<string> {
   const secret = getSecret();
 
   return new SignJWT({
-    uid: session.firebaseUid,
+    authUid: session.authUid,
     email: session.email,
     name: session.name,
     role: session.role,
@@ -52,7 +52,7 @@ export async function verifyBackendJwt(token: string): Promise<AuthSession | nul
       audience: env.JWT_AUDIENCE,
     });
 
-    if (!payload.sub || !payload.uid || !payload.email || !payload.name || !payload.role) {
+    if (!payload.sub || !payload.authUid || !payload.email || !payload.name || !payload.role) {
       return null;
     }
 
@@ -62,7 +62,7 @@ export async function verifyBackendJwt(token: string): Promise<AuthSession | nul
 
     return {
       userId: Number(payload.sub),
-      firebaseUid: payload.uid,
+      authUid: payload.authUid,
       email: payload.email,
       name: payload.name,
       role: payload.role,

@@ -2,7 +2,7 @@ export type UserRole = "user" | "admin";
 
 export interface AuthSession {
   userId: number;
-  firebaseUid: string;
+  authUid: string;
   email: string;
   name: string;
   role: UserRole;
@@ -10,7 +10,7 @@ export interface AuthSession {
 
 export interface AppUser {
   id: number;
-  firebaseUid: string;
+  authUid: string;
   email: string;
   name: string;
   role: UserRole;

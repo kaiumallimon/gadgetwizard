@@ -22,6 +22,7 @@ These SQL files are ordered and should be executed sequentially.
 16. 016_enforce_unique_product_sku.sql
 17. 017_create_faqs.sql
 18. 018_create_system_activity_logs.sql
+19. 019_migrate_auth_to_nextauth_credentials.sql
 
 ## Run Migrations Manually
 
@@ -47,6 +48,7 @@ mysql -u <username> -p <database_name> < migrations/015_add_category_featured_fl
 mysql -u <username> -p <database_name> < migrations/016_enforce_unique_product_sku.sql
 mysql -u <username> -p <database_name> < migrations/017_create_faqs.sql
 mysql -u <username> -p <database_name> < migrations/018_create_system_activity_logs.sql
+mysql -u <username> -p <database_name> < migrations/019_migrate_auth_to_nextauth_credentials.sql
 ```
 
 ## Notes
@@ -68,3 +70,4 @@ mysql -u <username> -p <database_name> < migrations/018_create_system_activity_l
 - 016 enforces a unique SKU constraint for products.
 - 017 creates FAQs for public help content and admin management.
 - 018 creates system_activity_logs for production-grade CRUD monitoring across API routes.
+- 019 migrates authentication from firebase_uid to auth_uid and adds password_hash fields for NextAuth credentials.

@@ -6,7 +6,7 @@
 - /category/[slug] : Category product listing
 - /product/[slug] : Product details + add to cart
 - /cart : Auth-required cart management (quantity update/remove)
-- /login : Firebase email/password login/signup and backend token exchange
+- /login : NextAuth credentials login/signup flow
 - /dashboard : Auth-required user dashboard (profile, rewards, cart overview)
 - /admin : Admin-only dashboard with analytics + CRUD for categories, products, banners
 
@@ -27,7 +27,7 @@
 
 - `app/dashboard/layout.tsx` checks for authenticated session
 - `app/admin/layout.tsx` enforces admin role
-- `/login` handles Firebase auth and backend JWT session establishment
+- `/login` handles NextAuth credentials sign-in
 
 ## Banner Feature
 

@@ -1,19 +1,20 @@
-import { cookies } from "next/headers";
-
 import { forbidden, unauthorized } from "@/lib/server/core/errors";
-import { getEnv } from "@/lib/server/core/env";
-import { verifyBackendJwt } from "@/lib/server/auth/jwt";
+import { auth } from "@/lib/server/auth/next-auth";
 import type { AuthSession, UserRole } from "@/lib/server/types";
 
 export async function getServerSession(): Promise<AuthSession | null> {
-  const env = getEnv();
-  const cookieStore = await cookies();
-  const token = cookieStore.get(env.AUTH_COOKIE_NAME)?.value;
-  if (!token) {
+  const session = await auth();
+  if (!session?.user?.email || !session.user.name || !session.user.id || !session.user.role) {
     return null;
   }
 
-  return verifyBackendJwt(token);
+  return {
+    userId: session.user.id,
+    authUid: session.user.authUid,
+    email: session.user.email,
+    name: session.user.name,
+    role: session.user.role,
+  };
 }
 
 export async function requireServerSession(): Promise<AuthSession> {

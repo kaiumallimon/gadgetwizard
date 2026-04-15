@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
@@ -116,7 +117,7 @@ export function SiteHeader() {
 
   async function onLogout() {
     try {
-      await apiClient.logout();
+      await signOut({ redirect: false });
     } finally {
       clearAuth();
       window.location.href = "/";

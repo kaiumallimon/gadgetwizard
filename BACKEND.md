@@ -6,19 +6,18 @@ This project now includes a modular backend inside the Next.js App Router.
 
 - app/api: HTTP route handlers
 - lib/server/core: env, db, errors, HTTP helpers, request parsing
-- lib/server/auth: Firebase verification, JWT, session parsing, RBAC guards
+- lib/server/auth: NextAuth config, JWT session parsing, RBAC guards
 - lib/server/repositories: SQL data access
 - lib/server/services: business logic
 - lib/server/utils: helpers (slug, CDN URL validation)
 
 ## Auth Flow
 
-1. Client signs in with Firebase
-2. Client sends Firebase `idToken` to `POST /api/auth/session`
-3. Server verifies token with Firebase Admin SDK
-4. Server upserts user and issues backend JWT
-5. JWT is returned and also set as HttpOnly cookie
-6. Protected endpoints use `Authorization: Bearer <jwt>` or cookie session
+1. User registers via `POST /api/auth/register` (password stored as bcrypt hash in MySQL)
+2. User signs in with NextAuth Credentials provider (`/api/auth/callback/credentials`)
+3. NextAuth issues JWT session cookie
+4. Protected endpoints read the session via NextAuth and enforce role checks
+5. Password reset uses SMTP + one-time JWT reset tokens + MySQL token fingerprints
 
 ## Endpoint Summary
 
@@ -29,7 +28,7 @@ Public:
 - GET /api/banners
 
 User:
-- POST /api/auth/session
+- POST /api/auth/register
 - POST /api/auth/logout
 - GET /api/me
 - GET /api/cart

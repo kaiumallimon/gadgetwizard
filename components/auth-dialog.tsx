@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { FirebaseError } from "firebase/app";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { signIn } from "next-auth/react";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
-import { getFirebaseClientAuth } from "@/lib/client/firebase";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Button } from "@/components/ui/button";
@@ -23,31 +21,11 @@ interface AuthDialogProps {
 }
 
 function getAuthErrorMessage(error: unknown, mode: "login" | "signup"): string {
-  const firebaseError = error as FirebaseError;
-  const code = firebaseError?.code;
+  const authError = error as { code?: string };
+  const code = authError?.code;
 
-  if (code === "auth/invalid-email") {
-    return "Please enter a valid email address.";
-  }
-
-  if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+  if (code === "CredentialsSignin") {
     return "Email or password is incorrect.";
-  }
-
-  if (code === "auth/user-disabled") {
-    return "This account is currently disabled.";
-  }
-
-  if (code === "auth/email-already-in-use") {
-    return "An account with this email already exists.";
-  }
-
-  if (code === "auth/weak-password") {
-    return "Password is too weak. Use at least 8 characters.";
-  }
-
-  if (code === "auth/too-many-requests") {
-    return "Too many attempts. Please wait a moment and try again.";
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
@@ -78,25 +56,27 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange }: AuthDialo
 
     try {
       setPending(true);
-      const auth = getFirebaseClientAuth();
-
       if (mode === "signup") {
-        const credentials = await createUserWithEmailAndPassword(auth, email, password);
-        if (name.trim()) {
-          await updateProfile(credentials.user, { displayName: name.trim() });
-        }
-      } else {
-        await signInWithEmailAndPassword(auth, email, password);
+        await apiClient.registerUser({
+          email,
+          name,
+          password,
+        });
       }
 
-      const token = await auth.currentUser?.getIdToken(true);
-      if (!token) {
-        throw new Error("Unable to read Firebase ID token");
+      const signInResult = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (!signInResult?.ok) {
+        throw new Error("Email or password is incorrect.");
       }
 
-      const response = await apiClient.exchangeFirebaseToken(token);
+      const response = await apiClient.getMe();
       setAuth({
-        token: response.token,
+        token: "",
         session: response.session,
         user: response.user,
       });

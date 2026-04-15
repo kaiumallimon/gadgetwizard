@@ -1,6 +1,6 @@
-import { randomInt } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 
-import { createFirebaseUser, deleteFirebaseUser } from "@/lib/server/auth/firebase-admin";
 import { badRequest, conflict, HttpError, notFound } from "@/lib/server/core/errors";
 import { getEnv } from "@/lib/server/core/env";
 import { renderAdminWelcomeEmail } from "@/lib/server/mail/templates";
@@ -138,19 +138,16 @@ export async function createAdminAccount(input: {
   }
 
   const temporaryPassword = generateTemporaryPassword();
-  const firebaseUser = await createFirebaseUser({
-    email: normalizedEmail,
-    password: temporaryPassword,
-    name: normalizedName,
-  });
+  const passwordHash = await bcrypt.hash(temporaryPassword, 12);
 
   let createdUser: AppUser | null = null;
 
   try {
     createdUser = await createAdminUser({
-      firebaseUid: firebaseUser.uid,
+      authUid: randomUUID(),
       email: normalizedEmail,
       name: normalizedName,
+      passwordHash,
     });
 
     const loginUrl = `${resolveBaseUrl(input.origin)}/login`;
@@ -174,12 +171,6 @@ export async function createAdminAccount(input: {
       } catch {
         // Best-effort rollback if DB cleanup fails.
       }
-    }
-
-    try {
-      await deleteFirebaseUser(firebaseUser.uid);
-    } catch {
-      // Best-effort rollback if Firebase cleanup fails.
     }
 
     if (error instanceof HttpError) {

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
@@ -24,7 +25,6 @@ import {
     Plus,
 } from "lucide-react";
 
-import { apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { cn } from "@/lib/utils";
 
@@ -181,7 +181,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
     async function onLogout() {
         try {
-            await apiClient.logout();
+            await signOut({ redirect: false });
         } finally {
             clearAuth();
             window.location.href = "/";

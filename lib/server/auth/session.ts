@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server";
 
-import { getEnv } from "@/lib/server/core/env";
 import type { AuthSession } from "@/lib/server/types";
+import { auth } from "@/lib/server/auth/next-auth";
 import { verifyBackendJwt } from "@/lib/server/auth/jwt";
 
 function getTokenFromAuthorizationHeader(request: Request): string | null {
@@ -18,28 +18,25 @@ function getTokenFromAuthorizationHeader(request: Request): string | null {
   return token;
 }
 
-function getTokenFromCookieHeader(request: Request): string | null {
-  const env = getEnv();
-  const cookieHeader = request.headers.get("cookie");
-  if (!cookieHeader) {
-    return null;
-  }
-
-  const cookies = cookieHeader.split(";").map((entry) => entry.trim());
-  for (const entry of cookies) {
-    if (entry.startsWith(`${env.AUTH_COOKIE_NAME}=`)) {
-      return decodeURIComponent(entry.substring(env.AUTH_COOKIE_NAME.length + 1));
+export async function readSession(request: NextRequest | Request): Promise<AuthSession | null> {
+  const bearerToken = getTokenFromAuthorizationHeader(request);
+  if (bearerToken) {
+    const legacySession = await verifyBackendJwt(bearerToken);
+    if (legacySession) {
+      return legacySession;
     }
   }
 
-  return null;
-}
-
-export async function readSession(request: NextRequest | Request): Promise<AuthSession | null> {
-  const token = getTokenFromAuthorizationHeader(request) ?? getTokenFromCookieHeader(request);
-  if (!token) {
+  const session = await auth();
+  if (!session?.user?.email || !session.user.name || !session.user.id || !session.user.role) {
     return null;
   }
 
-  return verifyBackendJwt(token);
+  return {
+    userId: session.user.id,
+    authUid: session.user.authUid,
+    email: session.user.email,
+    name: session.user.name,
+    role: session.user.role,
+  };
 }

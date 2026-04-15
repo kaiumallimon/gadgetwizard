@@ -3,7 +3,7 @@ import type { AppUser, UserRole } from "@/lib/server/types";
 
 interface UserRow {
   id: number;
-  firebase_uid: string;
+  auth_uid: string;
   email: string;
   name: string;
   role: UserRole;
@@ -11,6 +11,10 @@ interface UserRow {
   is_active: number;
   created_at: Date | string;
   updated_at: Date | string;
+}
+
+interface UserWithPasswordRow extends UserRow {
+  password_hash: string | null;
 }
 
 interface UserCountRow {
@@ -28,7 +32,7 @@ function toIso(value: Date | string): string {
 function mapUser(row: UserRow): AppUser {
   return {
     id: row.id,
-    firebaseUid: row.firebase_uid,
+    authUid: row.auth_uid,
     email: row.email,
     name: row.name,
     role: row.role,
@@ -42,7 +46,7 @@ function mapUser(row: UserRow): AppUser {
 export async function findUserById(userId: number): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
       FROM users
       WHERE id = ?
       LIMIT 1
@@ -53,15 +57,15 @@ export async function findUserById(userId: number): Promise<AppUser | null> {
   return row ? mapUser(row) : null;
 }
 
-export async function findUserByFirebaseUid(firebaseUid: string): Promise<AppUser | null> {
+export async function findUserByAuthUid(authUid: string): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
       FROM users
-      WHERE firebase_uid = ?
+      WHERE auth_uid = ?
       LIMIT 1
     `,
-    [firebaseUid],
+    [authUid],
   );
 
   return row ? mapUser(row) : null;
@@ -70,7 +74,7 @@ export async function findUserByFirebaseUid(firebaseUid: string): Promise<AppUse
 export async function findUserByEmail(email: string): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
       FROM users
       WHERE email = ?
       LIMIT 1
@@ -81,34 +85,59 @@ export async function findUserByEmail(email: string): Promise<AppUser | null> {
   return row ? mapUser(row) : null;
 }
 
-export async function upsertUserFromFirebase(input: {
-  firebaseUid: string;
+export async function findUserWithPasswordByEmail(email: string): Promise<{ user: AppUser; passwordHash: string | null } | null> {
+  const row = await queryOne<UserWithPasswordRow>(
+    `
+      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at, password_hash
+      FROM users
+      WHERE email = ?
+      LIMIT 1
+    `,
+    [email],
+  );
+
+  if (!row) {
+    return null;
+  }
+
+  return {
+    user: mapUser(row),
+    passwordHash: row.password_hash,
+  };
+}
+
+export async function createUserWithPassword(input: {
+  authUid: string;
   email: string;
   name: string;
+  passwordHash: string;
 }): Promise<AppUser> {
   await execute(
     `
-      INSERT INTO users (firebase_uid, email, name)
-      VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        firebase_uid = VALUES(firebase_uid),
-        email = VALUES(email),
-        name = VALUES(name)
+      INSERT INTO users (auth_uid, email, name, password_hash)
+      VALUES (?, ?, ?, ?)
     `,
-    [input.firebaseUid, input.email, input.name],
+    [input.authUid, input.email, input.name, input.passwordHash],
   );
 
-  const byFirebaseUid = await findUserByFirebaseUid(input.firebaseUid);
-  if (byFirebaseUid) {
-    return byFirebaseUid;
+  const user = await findUserByAuthUid(input.authUid);
+  if (!user) {
+    throw new Error("Unable to create user");
   }
 
-  const byEmail = await findUserByEmail(input.email);
-  if (!byEmail) {
-    throw new Error("Unable to upsert user");
-  }
+  return user;
+}
 
-  return byEmail;
+export async function updateUserPasswordHash(userId: number, passwordHash: string): Promise<void> {
+  await execute(
+    `
+      UPDATE users
+      SET password_hash = ?, password_updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [passwordHash, userId],
+  );
 }
 
 export async function listUsers(input: {
@@ -136,7 +165,7 @@ export async function listUsers(input: {
 
   const rows = await queryRows<UserRow>(
     `
-      SELECT id, firebase_uid, email, name, role, reward_points, is_active, created_at, updated_at
+      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
       FROM users
       ${whereSql}
       ORDER BY created_at DESC
@@ -161,16 +190,17 @@ export async function listUsers(input: {
 }
 
 export async function createAdminUser(input: {
-  firebaseUid: string;
+  authUid: string;
   email: string;
   name: string;
+  passwordHash: string;
 }): Promise<AppUser> {
   await execute(
     `
-      INSERT INTO users (firebase_uid, email, name, role, is_active)
-      VALUES (?, ?, ?, 'admin', 1)
+      INSERT INTO users (auth_uid, email, name, password_hash, role, is_active)
+      VALUES (?, ?, ?, ?, 'admin', 1)
     `,
-    [input.firebaseUid, input.email, input.name],
+    [input.authUid, input.email, input.name, input.passwordHash],
   );
 
   const user = await findUserByEmail(input.email);

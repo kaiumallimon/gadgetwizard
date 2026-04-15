@@ -68,10 +68,10 @@ async function apiFetch<T>(path: string, init: FetchInit = {}): Promise<T> {
 }
 
 export const apiClient = {
-  async exchangeFirebaseToken(idToken: string) {
-    return apiFetch<{ token: string; expiresIn: number; session: AuthSession; user: AppUser }>("/api/auth/session", {
+  async registerUser(payload: { email: string; name: string; password: string }) {
+    return apiFetch<{ user: AppUser }>("/api/auth/register", {
       method: "POST",
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify(payload),
     });
   },
 

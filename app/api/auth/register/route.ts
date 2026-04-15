@@ -2,17 +2,22 @@ import type { NextRequest } from "next/server";
 import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
+import { parseJsonBody } from "@/lib/server/core/validation";
+import { authRegisterSchema } from "@/lib/server/schemas";
+import { registerUserWithPassword } from "@/lib/server/services/auth-service";
 
 export const dynamic = "force-dynamic";
 
-async function POSTHandler(_request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   try {
+    const body = await parseJsonBody(request, authRegisterSchema);
+    const result = await registerUserWithPassword(body);
+
     return jsonResponse(
       {
-        success: false,
-        message: "Legacy session exchange endpoint is no longer supported. Use NextAuth credentials endpoints.",
+        user: result.user,
       },
-      410,
+      201,
       noStoreHeaders(),
     );
   } catch (error) {

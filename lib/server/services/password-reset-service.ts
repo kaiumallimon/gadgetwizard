@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
+import bcrypt from "bcryptjs";
 
 import { verifyPasswordResetJwt, issuePasswordResetJwt } from "@/lib/server/auth/jwt";
-import { updateFirebaseUserPassword } from "@/lib/server/auth/firebase-admin";
 import { badRequest } from "@/lib/server/core/errors";
 import { getEnv } from "@/lib/server/core/env";
 import { renderPasswordResetEmail } from "@/lib/server/mail/templates";
@@ -12,7 +12,7 @@ import {
   invalidatePasswordResetTokensForUser,
   markPasswordResetTokenUsed,
 } from "@/lib/server/repositories/password-reset-repository";
-import { findUserByEmail, findUserById } from "@/lib/server/repositories/user-repository";
+import { findUserByEmail, findUserById, updateUserPasswordHash } from "@/lib/server/repositories/user-repository";
 
 const GENERIC_RESET_MESSAGE = "If an active account exists for this email, a password reset link has been sent.";
 
@@ -108,7 +108,8 @@ export async function confirmPasswordReset(input: { token: string; newPassword: 
     throw badRequest("Account is unavailable for password reset");
   }
 
-  await updateFirebaseUserPassword(user.firebaseUid, input.newPassword);
+  const passwordHash = await bcrypt.hash(input.newPassword, 12);
+  await updateUserPasswordHash(user.id, passwordHash);
   await markPasswordResetTokenUsed(tokenRecord.id);
   await invalidatePasswordResetTokensForUser(user.id);
 
