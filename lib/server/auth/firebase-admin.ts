@@ -29,7 +29,13 @@ function normalizePemPrivateKey(value: string): string {
 }
 
 function decodePrivateKeyBase64(value: string): string {
-  const noPrefix = stripWrappingQuotes(value).replace(/^FIREBASE_PRIVATE_KEY_BASE64\s*=\s*/i, "");
+  const noPrefix = stripWrappingQuotes(value).replace(/^FIREBASE_PRIVATE_KEY_BASE64\s*=\s*/i, "").trim();
+
+  // Some hosting panels mangle names/values; accept direct PEM text as a fallback.
+  if (noPrefix.includes("-----BEGIN PRIVATE KEY-----")) {
+    return normalizePemPrivateKey(noPrefix);
+  }
+
   const normalizedBase64 = noPrefix.replace(/\s+/g, "").replace(/ /g, "+");
 
   let decoded = "";
@@ -37,6 +43,16 @@ function decodePrivateKeyBase64(value: string): string {
     decoded = Buffer.from(normalizedBase64, "base64").toString("utf8");
   } catch {
     throw new Error("FIREBASE_PRIVATE_KEY_BASE64 must be valid base64");
+  }
+
+  const decodedTrimmed = decoded.trim();
+  if (decodedTrimmed.includes("-----BEGIN PRIVATE KEY-----")) {
+    return normalizePemPrivateKey(decodedTrimmed);
+  }
+
+  const embeddedAssignment = decodedTrimmed.match(/^\s*FIREBASE_PRIVATE_KEY\s*=\s*([\s\S]+)$/i);
+  if (embeddedAssignment?.[1]?.includes("-----BEGIN PRIVATE KEY-----")) {
+    return normalizePemPrivateKey(embeddedAssignment[1]);
   }
 
   return normalizePemPrivateKey(decoded);
