@@ -58,8 +58,8 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-zinc-200/90 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
       <Link href={`/product/${product.slug}`} className="block">
-        <div className="relative aspect-4/3 w-full overflow-hidden bg-linear-to-br from-zinc-100 via-white to-orange-50">
-          <img src={image} alt={product.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-110" />
+        <div className="relative aspect-4/3 w-full overflow-hidden bg-linear-to-br from-zinc-100 via-white to-orange-50 p-3">
+          <img src={image} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
 
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
             <div className="flex flex-wrap gap-1">
