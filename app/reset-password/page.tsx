@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { ApiError, apiClient } from "@/lib/client/api";
@@ -37,7 +37,7 @@ function getReadableResetError(error: unknown): string {
   return error instanceof Error ? error.message : "Unable to reset password";
 }
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -181,5 +181,13 @@ export default function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-8 sm:px-6">Loading reset form...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

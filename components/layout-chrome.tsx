@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
@@ -37,7 +37,9 @@ export function LayoutChrome({ children }: LayoutChromeProps) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <Suspense fallback={null}>
+        <SiteHeader />
+      </Suspense>
       <main className="flex-1">{children}</main>
       <SiteFooter />
     </div>
