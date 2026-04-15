@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireRole } from "@/lib/server/auth/guards";
 import { badRequest } from "@/lib/server/core/errors";
@@ -7,7 +8,7 @@ import { uploadImageToCdn } from "@/lib/server/services/cdn-service";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   try {
     await requireRole(request, ["admin"]);
 
@@ -25,3 +26,5 @@ export async function POST(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const POST = withRouteAudit(POSTHandler);

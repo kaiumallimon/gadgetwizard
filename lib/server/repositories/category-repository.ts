@@ -6,10 +6,10 @@ export interface CategoryRecord {
   slug: string;
   icon: string | null;
   imageUrl: string | null;
-  parentId: number | null;
   sortOrder: number;
   isActive: boolean;
   isHeaderCategory: boolean;
+  isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,10 +20,10 @@ interface CategoryRow {
   slug: string;
   icon: string | null;
   image_url: string | null;
-  parent_id: number | null;
   sort_order: number;
   is_active: number;
   is_header_category: number;
+  is_featured: number;
   created_at: Date | string;
   updated_at: Date | string;
 }
@@ -39,10 +39,10 @@ function mapCategory(row: CategoryRow): CategoryRecord {
     slug: row.slug,
     icon: row.icon,
     imageUrl: row.image_url,
-    parentId: row.parent_id,
     sortOrder: row.sort_order,
     isActive: row.is_active === 1,
     isHeaderCategory: row.is_header_category === 1,
+    isFeatured: row.is_featured === 1,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };
@@ -52,7 +52,7 @@ export async function listCategories(activeOnly = true): Promise<CategoryRecord[
   const conditions = activeOnly ? "WHERE is_active = 1" : "";
   const rows = await queryRows<CategoryRow>(
     `
-      SELECT id, name, slug, icon, image_url, parent_id, sort_order, is_active, is_header_category, created_at, updated_at
+      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured, created_at, updated_at
       FROM categories
       ${conditions}
       ORDER BY sort_order ASC, name ASC
@@ -65,7 +65,7 @@ export async function listCategories(activeOnly = true): Promise<CategoryRecord[
 export async function findCategoryById(id: number): Promise<CategoryRecord | null> {
   const row = await queryOne<CategoryRow>(
     `
-      SELECT id, name, slug, icon, image_url, parent_id, sort_order, is_active, is_header_category, created_at, updated_at
+      SELECT id, name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured, created_at, updated_at
       FROM categories
       WHERE id = ?
       LIMIT 1
@@ -81,14 +81,14 @@ export async function createCategory(input: {
   slug: string;
   icon: string | null;
   imageUrl: string | null;
-  parentId: number | null;
   sortOrder: number;
   isActive: boolean;
   isHeaderCategory: boolean;
+  isFeatured: boolean;
 }): Promise<CategoryRecord> {
   const result = await execute(
     `
-      INSERT INTO categories (name, slug, icon, image_url, parent_id, sort_order, is_active, is_header_category)
+      INSERT INTO categories (name, slug, icon, image_url, sort_order, is_active, is_header_category, is_featured)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
@@ -96,10 +96,10 @@ export async function createCategory(input: {
       input.slug,
       input.icon,
       input.imageUrl,
-      input.parentId,
       input.sortOrder,
       input.isActive ? 1 : 0,
       input.isHeaderCategory ? 1 : 0,
+      input.isFeatured ? 1 : 0,
     ],
   );
 
@@ -118,16 +118,16 @@ export async function updateCategory(
     slug: string;
     icon: string | null;
     imageUrl: string | null;
-    parentId: number | null;
     sortOrder: number;
     isActive: boolean;
     isHeaderCategory: boolean;
+    isFeatured: boolean;
   },
 ): Promise<CategoryRecord | null> {
   await execute(
     `
       UPDATE categories
-      SET name = ?, slug = ?, icon = ?, image_url = ?, parent_id = ?, sort_order = ?, is_active = ?, is_header_category = ?
+      SET name = ?, slug = ?, icon = ?, image_url = ?, sort_order = ?, is_active = ?, is_header_category = ?, is_featured = ?
       WHERE id = ?
     `,
     [
@@ -135,10 +135,10 @@ export async function updateCategory(
       input.slug,
       input.icon,
       input.imageUrl,
-      input.parentId,
       input.sortOrder,
       input.isActive ? 1 : 0,
       input.isHeaderCategory ? 1 : 0,
+      input.isFeatured ? 1 : 0,
       id,
     ],
   );
@@ -148,6 +148,15 @@ export async function updateCategory(
 
 export async function deleteCategory(id: number): Promise<void> {
   await execute("DELETE FROM categories WHERE id = ?", [id]);
+}
+
+export async function countProductsByCategoryId(categoryId: number): Promise<number> {
+  const row = await queryOne<{ total: number }>(
+    "SELECT COUNT(*) AS total FROM products WHERE category_id = ?",
+    [categoryId],
+  );
+
+  return row?.total ?? 0;
 }
 
 export async function countHeaderCategories(excludeCategoryId?: number): Promise<number> {

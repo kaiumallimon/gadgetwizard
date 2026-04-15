@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { buildSessionCookie } from "@/lib/server/auth/cookie";
 import { getEnv } from "@/lib/server/core/env";
@@ -9,7 +10,7 @@ import { exchangeFirebaseToken } from "@/lib/server/services/auth-service";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   try {
     const body = await parseJsonBody(request, authExchangeSchema);
     const sessionData = await exchangeFirebaseToken(body.idToken);
@@ -32,3 +33,5 @@ export async function POST(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const POST = withRouteAudit(POSTHandler);

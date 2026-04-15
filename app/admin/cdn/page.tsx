@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { HardDrive, Image as ImageIcon } from "lucide-react";
 
+import { AdminErrorToast } from "@/components/admin/admin-error-toast";
 import { CdnUploadButton } from "@/components/admin/cdn-upload-button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,6 +51,8 @@ export default async function AdminCdnPage() {
 
   return (
     <div className="w-full space-y-6">
+      <AdminErrorToast message={loadError} />
+
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -74,12 +77,6 @@ export default async function AdminCdnPage() {
           </Breadcrumb>
         </div>
       </header>
-
-      {loadError && (
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-4 text-sm text-red-700">{loadError}</CardContent>
-        </Card>
-      )}
 
       {stats && (
         <>

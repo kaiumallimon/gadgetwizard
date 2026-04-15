@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
+import { getAdminBrands } from "@/lib/server/services/brand-service";
 import { getAdminCategories } from "@/lib/server/services/category-service";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ export default async function AdminAddProductPage() {
     redirect("/dashboard");
   }
 
-  const categories = await getAdminCategories();
+  const [categories, brands] = await Promise.all([getAdminCategories(), getAdminBrands()]);
 
   return (
     <div className="w-full space-y-6">
@@ -63,7 +64,7 @@ export default async function AdminAddProductPage() {
         </div>
       </header>
 
-      <ProductForm mode="create" categories={categories} />
+      <ProductForm mode="create" categories={categories} brands={brands} />
     </div>
   );
 }

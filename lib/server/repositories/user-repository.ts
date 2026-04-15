@@ -17,6 +17,10 @@ interface UserCountRow {
   total: number;
 }
 
+interface ActiveAdminCountRow {
+  total: number;
+}
+
 function toIso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
@@ -89,8 +93,7 @@ export async function upsertUserFromFirebase(input: {
       ON DUPLICATE KEY UPDATE
         firebase_uid = VALUES(firebase_uid),
         email = VALUES(email),
-        name = VALUES(name),
-        is_active = 1
+        name = VALUES(name)
     `,
     [input.firebaseUid, input.email, input.name],
   );
@@ -155,4 +158,64 @@ export async function listUsers(input: {
     items: rows.map(mapUser),
     total: count?.total ?? 0,
   };
+}
+
+export async function createAdminUser(input: {
+  firebaseUid: string;
+  email: string;
+  name: string;
+}): Promise<AppUser> {
+  await execute(
+    `
+      INSERT INTO users (firebase_uid, email, name, role, is_active)
+      VALUES (?, ?, ?, 'admin', 1)
+    `,
+    [input.firebaseUid, input.email, input.name],
+  );
+
+  const user = await findUserByEmail(input.email);
+  if (!user) {
+    throw new Error("Unable to create admin user");
+  }
+
+  return user;
+}
+
+export async function updateUserActiveStatus(userId: number, isActive: boolean): Promise<AppUser | null> {
+  await execute(
+    `
+      UPDATE users
+      SET is_active = ?
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [isActive ? 1 : 0, userId],
+  );
+
+  return findUserById(userId);
+}
+
+export async function removeUserById(userId: number): Promise<boolean> {
+  const result = await execute(
+    `
+      DELETE FROM users
+      WHERE id = ?
+      LIMIT 1
+    `,
+    [userId],
+  );
+
+  return result.affectedRows > 0;
+}
+
+export async function countActiveAdmins(): Promise<number> {
+  const row = await queryOne<ActiveAdminCountRow>(
+    `
+      SELECT COUNT(*) AS total
+      FROM users
+      WHERE role = 'admin' AND is_active = 1
+    `,
+  );
+
+  return row?.total ?? 0;
 }

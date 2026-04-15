@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
+  experimental: {
+    turbopackFileSystemCacheForDev: false,
+  },
   images: {
     remotePatterns: [
       {
@@ -20,6 +24,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "cdn.example.com",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.gadgetwizard.com.au",
+      },
+      {
+        protocol: "https",
+        hostname: "blocks.astratic.com",
+      }
     ],
   },
 };

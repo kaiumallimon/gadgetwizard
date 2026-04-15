@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireAuth } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
@@ -8,7 +9,7 @@ import { removeFromCartForUser } from "@/lib/server/services/cart-service";
 
 export const dynamic = "force-dynamic";
 
-export async function DELETE(request: NextRequest) {
+async function DELETEHandler(request: NextRequest) {
   try {
     const session = await requireAuth(request);
     const body = await parseJsonBody(request, cartRemoveSchema);
@@ -23,3 +24,5 @@ export async function DELETE(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const DELETE = withRouteAudit(DELETEHandler);

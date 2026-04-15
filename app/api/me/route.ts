@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireAuth } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
@@ -6,7 +7,7 @@ import { getCurrentUser } from "@/lib/server/services/auth-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+async function GETHandler(request: NextRequest) {
   try {
     const session = await requireAuth(request);
     const user = await getCurrentUser(session.userId);
@@ -23,3 +24,5 @@ export async function GET(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const GET = withRouteAudit(GETHandler);

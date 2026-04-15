@@ -33,7 +33,7 @@ export default async function AdminAddCategoryPage() {
             
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Add Category</h1>
             <p className="mt-2 text-sm text-zinc-600">
-              Create categories from this dedicated page, then manage status and pinning from category management.
+              Create categories from this dedicated page, then manage status, pinning, and storefront featuring from category management.
             </p>
           </div>
           <Button asChild variant="outline">

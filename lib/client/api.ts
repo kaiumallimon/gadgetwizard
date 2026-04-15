@@ -3,10 +3,12 @@ import type {
   AppUser,
   AuthSession,
   Banner,
+  Brand,
   Cart,
   Category,
   CdnFileAsset,
   CdnStats,
+  Faq,
   Product,
 } from "@/lib/client/types";
 
@@ -73,6 +75,27 @@ export const apiClient = {
     });
   },
 
+  async requestPasswordReset(email: string) {
+    return apiFetch<{ success: boolean; message: string }>("/api/auth/password-reset/request", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  },
+
+  async verifyPasswordResetToken(token: string) {
+    return apiFetch<{ valid: boolean; email: string; expiresAt: string }>("/api/auth/password-reset/verify", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+  },
+
+  async confirmPasswordReset(token: string, newPassword: string) {
+    return apiFetch<{ success: boolean }>("/api/auth/password-reset/confirm", {
+      method: "POST",
+      body: JSON.stringify({ token, newPassword }),
+    });
+  },
+
   async logout() {
     return apiFetch<{ success: boolean }>("/api/auth/logout", { method: "POST" });
   },
@@ -89,11 +112,20 @@ export const apiClient = {
     return apiFetch<{ items: Category[] }>("/api/categories");
   },
 
-  async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; search?: string }) {
+  async getBrands() {
+    return apiFetch<{ items: Brand[] }>("/api/brands");
+  },
+
+  async getFaqs() {
+    return apiFetch<{ items: Faq[] }>("/api/faqs");
+  },
+
+  async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string }) {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.pageSize) query.set("pageSize", String(params.pageSize));
     if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.brandSlug) query.set("brandSlug", params.brandSlug);
     if (params.search) query.set("search", params.search);
 
     return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
@@ -137,8 +169,94 @@ export const apiClient = {
     return apiFetch<{ analytics: unknown }>("/api/admin/analytics", { token });
   },
 
+  async adminGetUsers(token?: string) {
+    return apiFetch<{ items: AppUser[]; total: number }>("/api/admin/users", { token });
+  },
+
+  async adminGetRegularUsers(token?: string) {
+    return apiFetch<{ items: AppUser[]; total: number }>("/api/admin/customers", { token });
+  },
+
+  async adminCreateAdminUser(payload: { email: string; name: string }, token?: string) {
+    return apiFetch<{ item: AppUser }>("/api/admin/users", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateAdminUserStatus(id: number, payload: { isActive: boolean }, token?: string) {
+    return apiFetch<{ item: AppUser }>(`/api/admin/users/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteAdminUser(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/users/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  async adminUpdateRegularUserStatus(id: number, payload: { isActive: boolean }, token?: string) {
+    return apiFetch<{ item: AppUser }>(`/api/admin/customers/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
   async adminGetCategories(token?: string) {
     return apiFetch<{ items: Category[] }>("/api/admin/categories", { token });
+  },
+
+  async adminGetBrands(token?: string) {
+    return apiFetch<{ items: Brand[] }>("/api/admin/brands", { token });
+  },
+
+  async adminCreateBrand(payload: {
+    name: string;
+    slug?: string;
+    imageUrl?: string | null;
+    description?: string | null;
+    sortOrder?: number;
+    isActive?: boolean;
+    isFeatured?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Brand }>("/api/admin/brands", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateBrand(
+    id: number,
+    payload: {
+      name: string;
+      slug?: string;
+      imageUrl?: string | null;
+      description?: string | null;
+      sortOrder?: number;
+      isActive?: boolean;
+      isFeatured?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Brand }>(`/api/admin/brands/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteBrand(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/brands/${id}`, {
+      method: "DELETE",
+      token,
+    });
   },
 
   async adminCreateCategory(payload: {
@@ -147,7 +265,7 @@ export const apiClient = {
     icon?: string | null;
     imageUrl?: string | null;
     isHeaderCategory?: boolean;
-    parentId?: number | null;
+    isFeatured?: boolean;
     sortOrder?: number;
     isActive?: boolean;
   }, token?: string) {
@@ -166,7 +284,7 @@ export const apiClient = {
       icon?: string | null;
       imageUrl?: string | null;
       isHeaderCategory?: boolean;
-      parentId?: number | null;
+      isFeatured?: boolean;
       sortOrder?: number;
       isActive?: boolean;
     },
@@ -186,14 +304,56 @@ export const apiClient = {
     });
   },
 
+  async adminGetFaqs(token?: string) {
+    return apiFetch<{ items: Faq[] }>("/api/admin/faqs", { token });
+  },
+
+  async adminCreateFaq(payload: {
+    question: string;
+    answer: string;
+    sortOrder?: number;
+    isActive?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: Faq }>("/api/admin/faqs", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminUpdateFaq(
+    id: number,
+    payload: {
+      question: string;
+      answer: string;
+      sortOrder?: number;
+      isActive?: boolean;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Faq }>(`/api/admin/faqs/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminDeleteFaq(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/faqs/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
   async adminGetProducts(
-    params: { page?: number; pageSize?: number; categorySlug?: string; search?: string },
+    params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string },
     token?: string,
   ) {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.pageSize) query.set("pageSize", String(params.pageSize));
     if (params.categorySlug) query.set("categorySlug", params.categorySlug);
+    if (params.brandSlug) query.set("brandSlug", params.brandSlug);
     if (params.search) query.set("search", params.search);
 
     return apiFetch<{ items: Product[]; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
@@ -205,11 +365,39 @@ export const apiClient = {
   async adminCreateProduct(payload: {
     name: string;
     slug?: string;
+    shortDescription?: string | null;
     description?: string | null;
-    price: number;
+    price?: number;
+    originalPrice?: number;
     discountedPrice?: number | null;
+    loyalCustomerPrice?: number | null;
     stock: number;
     categoryId: number;
+    brandId?: number | null;
+    sku?: string | null;
+    modelNumber?: string | null;
+    color?: string | null;
+    warrantyMonths?: number | null;
+    returnWindowDays?: number | null;
+    weightGrams?: number | null;
+    tags?: string[] | null;
+    highlightPoints?: string[] | null;
+    metaTitle?: string | null;
+    metaDescription?: string | null;
+    ratingAvg?: number;
+    ratingCount?: number;
+    isFeatured?: boolean;
+    isNewArrival?: boolean;
+    isBestSeller?: boolean;
+    isTopRated?: boolean;
+    isTrending?: boolean;
+    isLimitedStock?: boolean;
+    isFreeDelivery?: boolean;
+    isCashOnDelivery?: boolean;
+    isEmiAvailable?: boolean;
+    isOfficialWarranty?: boolean;
+    isExchangeAvailable?: boolean;
+    isPreorder?: boolean;
     images: string[];
     specifications?: Record<string, unknown> | null;
     isActive?: boolean;
@@ -226,11 +414,39 @@ export const apiClient = {
     payload: {
       name: string;
       slug?: string;
+      shortDescription?: string | null;
       description?: string | null;
-      price: number;
+      price?: number;
+      originalPrice?: number;
       discountedPrice?: number | null;
+      loyalCustomerPrice?: number | null;
       stock: number;
       categoryId: number;
+      brandId?: number | null;
+      sku?: string | null;
+      modelNumber?: string | null;
+      color?: string | null;
+      warrantyMonths?: number | null;
+      returnWindowDays?: number | null;
+      weightGrams?: number | null;
+      tags?: string[] | null;
+      highlightPoints?: string[] | null;
+      metaTitle?: string | null;
+      metaDescription?: string | null;
+      ratingAvg?: number;
+      ratingCount?: number;
+      isFeatured?: boolean;
+      isNewArrival?: boolean;
+      isBestSeller?: boolean;
+      isTopRated?: boolean;
+      isTrending?: boolean;
+      isLimitedStock?: boolean;
+      isFreeDelivery?: boolean;
+      isCashOnDelivery?: boolean;
+      isEmiAvailable?: boolean;
+      isOfficialWarranty?: boolean;
+      isExchangeAvailable?: boolean;
+      isPreorder?: boolean;
       images: string[];
       specifications?: Record<string, unknown> | null;
       isActive?: boolean;

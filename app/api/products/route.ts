@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { handleRouteError, jsonResponse } from "@/lib/server/core/http";
 import { parseSearchParams } from "@/lib/server/core/validation";
@@ -7,7 +8,7 @@ import { getPublicProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+async function GETHandler(request: NextRequest) {
   try {
     const query = parseSearchParams(new URL(request.url), paginationQuerySchema);
 
@@ -15,6 +16,7 @@ export async function GET(request: NextRequest) {
       page: query.page,
       pageSize: query.pageSize,
       categorySlug: query.categorySlug,
+      brandSlug: query.brandSlug,
       search: query.search,
     });
 
@@ -31,3 +33,5 @@ export async function GET(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const GET = withRouteAudit(GETHandler);

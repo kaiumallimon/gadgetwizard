@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { requireAuth } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
@@ -8,7 +9,7 @@ import { addToCartForUser } from "@/lib/server/services/cart-service";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest) {
+async function POSTHandler(request: NextRequest) {
   try {
     const session = await requireAuth(request);
     const body = await parseJsonBody(request, cartAddSchema);
@@ -24,3 +25,5 @@ export async function POST(request: NextRequest) {
     return handleRouteError(error);
   }
 }
+
+export const POST = withRouteAudit(POSTHandler);

@@ -6,8 +6,11 @@
   --surface: #ffffff;
   --surface-glass: rgba(255, 255, 255, 0.88);
   --muted: #6b7280;
-  --accent: #f37021;
+  --accent: #f36523;
   --border: #e4e4e7;
+  --border-soft-light: rgba(148, 163, 184, 0.32);
+  --border-soft-dark: rgba(148, 163, 184, 0.28);
+  --border-soft-accent: rgba(243, 101, 35, 0.28);
 }
 
 @theme inline {
@@ -182,4 +185,39 @@ button {
 
 .tiptap-content .selectedCell {
   background: color-mix(in srgb, var(--accent) 15%, white);
+}
+
+.gw-soft-border-light {
+  border-color: var(--border-soft-light) !important;
+}
+
+.gw-soft-border-dark {
+  border-color: var(--border-soft-dark) !important;
+}
+
+.gw-soft-ring-accent {
+  box-shadow: inset 0 0 0 1px var(--border-soft-accent);
+}
+
+.dashboard-sidebar-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--accent) transparent;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border-radius: 9999px;
+  background-color: var(--accent);
+}
+
+.dashboard-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--accent) 85%, black);
 }

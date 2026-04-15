@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Trash2, Upload } from "lucide-react";
+import { Activity, BarChart3, Boxes, Image as ImageIcon, Megaphone, Pin, PinOff, Star, StarOff, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
@@ -12,6 +12,15 @@ import { useAuthStore } from "@/lib/stores/auth-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -35,6 +44,37 @@ function safeErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+function normalizeBannerClickUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/") && typeof window !== "undefined") {
+    return new URL(trimmed, window.location.origin).toString();
+  }
+
+  throw new Error("Click URL must be a full URL or start with /");
+}
+
+function parseBannerSortOrder(raw: string): number {
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return 0;
+  }
+
+  const parsed = Number(trimmed);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error("Sort order must be a non-negative whole number");
+  }
+
+  return parsed;
+}
+
 export function AdminConsole({
   initialAnalytics,
   initialCategories,
@@ -50,6 +90,9 @@ export function AdminConsole({
   const [banners, setBanners] = useState(initialBanners);
   const [notice, setNotice] = useState<string>("");
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null);
+  const [isBannerDialogOpen, setIsBannerDialogOpen] = useState(false);
+  const [isBannerEditDialogOpen, setIsBannerEditDialogOpen] = useState(false);
+  const [editingBannerId, setEditingBannerId] = useState<number | null>(null);
 
   const [bannerForm, setBannerForm] = useState({
     title: "",
@@ -57,9 +100,18 @@ export function AdminConsole({
     clickUrl: "",
     sortOrder: "0",
   });
+  const [bannerEditForm, setBannerEditForm] = useState({
+    title: "",
+    clickUrl: "",
+    sortOrder: "0",
+  });
 
   const headerCategoryCount = useMemo(
     () => categories.filter((category) => category.isHeaderCategory).length,
+    [categories],
+  );
+  const featuredCategoryCount = useMemo(
+    () => categories.filter((category) => category.isFeatured).length,
     [categories],
   );
   const activeTab = lockedTab ?? tab;
@@ -127,7 +179,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -155,7 +207,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: url,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -192,7 +244,7 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: !category.isHeaderCategory,
-          parentId: category.parentId,
+          isFeatured: category.isFeatured,
           sortOrder: category.sortOrder,
           isActive: category.isActive,
         },
@@ -209,6 +261,33 @@ export function AdminConsole({
     }
   }
 
+  async function handleToggleFeaturedCategory(category: Category) {
+    try {
+      await apiClient.adminUpdateCategory(
+        category.id,
+        {
+          name: category.name,
+          slug: category.slug,
+          icon: category.icon,
+          imageUrl: category.imageUrl,
+          isHeaderCategory: category.isHeaderCategory,
+          isFeatured: !category.isFeatured,
+          sortOrder: category.sortOrder,
+          isActive: category.isActive,
+        },
+        token ?? undefined,
+      );
+      await refreshCategories();
+      setNotice(
+        !category.isFeatured
+          ? "Category marked as featured for storefront."
+          : "Category removed from featured storefront list.",
+      );
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Featured category update failed"));
+    }
+  }
+
   async function handleToggleCategoryActive(category: Category) {
     try {
       await apiClient.adminUpdateCategory(
@@ -219,7 +298,6 @@ export function AdminConsole({
           icon: category.icon,
           imageUrl: category.imageUrl,
           isHeaderCategory: category.isHeaderCategory,
-          parentId: category.parentId,
           sortOrder: category.sortOrder,
           isActive: !category.isActive,
         },
@@ -306,23 +384,40 @@ export function AdminConsole({
   }
 
   async function handleCreateBanner() {
-    if (!bannerForm.title.trim() || !bannerForm.desktopImageUrl) {
-      setNotice("Banner title and banner image are required.");
+    const title = bannerForm.title.trim();
+    if (title.length < 2) {
+      setNotice("Banner title must be at least 2 characters.");
+      return;
+    }
+
+    if (!bannerForm.desktopImageUrl) {
+      setNotice("Banner image is required.");
+      return;
+    }
+
+    let clickUrl: string | null;
+    let sortOrder: number;
+    try {
+      clickUrl = normalizeBannerClickUrl(bannerForm.clickUrl);
+      sortOrder = parseBannerSortOrder(bannerForm.sortOrder);
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner input is invalid"));
       return;
     }
 
     try {
       await apiClient.adminCreateBanner(
         {
-          title: bannerForm.title.trim(),
+          title,
           desktopImageUrl: bannerForm.desktopImageUrl,
-          clickUrl: bannerForm.clickUrl || null,
-          sortOrder: Number(bannerForm.sortOrder || 0),
+          clickUrl,
+          sortOrder,
           isActive: true,
         },
         token ?? undefined,
       );
       setBannerForm({ title: "", desktopImageUrl: "", clickUrl: "", sortOrder: "0" });
+      setIsBannerDialogOpen(false);
       await refreshBanners();
       setNotice("Banner created.");
     } catch (error) {
@@ -372,11 +467,41 @@ export function AdminConsole({
   }
 
   async function handleQuickEditBanner(banner: Banner) {
-    const title = window.prompt("Banner title", banner.title);
-    if (!title) return;
+    setEditingBannerId(banner.id);
+    setBannerEditForm({
+      title: banner.title,
+      clickUrl: banner.clickUrl ?? "",
+      sortOrder: String(banner.sortOrder),
+    });
+    setIsBannerEditDialogOpen(true);
+  }
 
-    const sortOrderInput = window.prompt("Sort order", String(banner.sortOrder));
-    if (!sortOrderInput) return;
+  async function handleSaveBannerEdit() {
+    if (editingBannerId === null) {
+      return;
+    }
+
+    const banner = banners.find((item) => item.id === editingBannerId);
+    if (!banner) {
+      setNotice("Unable to find banner for editing.");
+      return;
+    }
+
+    const title = bannerEditForm.title.trim();
+    if (title.length < 2) {
+      setNotice("Banner title must be at least 2 characters.");
+      return;
+    }
+
+    let clickUrl: string | null;
+    let sortOrder: number;
+    try {
+      clickUrl = normalizeBannerClickUrl(bannerEditForm.clickUrl);
+      sortOrder = parseBannerSortOrder(bannerEditForm.sortOrder);
+    } catch (error) {
+      setNotice(safeErrorMessage(error, "Banner input is invalid"));
+      return;
+    }
 
     try {
       await apiClient.adminUpdateBanner(
@@ -384,14 +509,16 @@ export function AdminConsole({
         {
           title,
           desktopImageUrl: banner.desktopImageUrl,
-          clickUrl: banner.clickUrl,
-          sortOrder: Number(sortOrderInput),
+          clickUrl,
+          sortOrder,
           isActive: banner.isActive,
           startsAt: banner.startsAt,
           endsAt: banner.endsAt,
         },
         token ?? undefined,
       );
+      setIsBannerEditDialogOpen(false);
+      setEditingBannerId(null);
       await refreshBanners();
       setNotice("Banner updated.");
     } catch (error) {
@@ -537,7 +664,7 @@ export function AdminConsole({
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Total Categories</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-900">{categories.length}</p>
@@ -551,6 +678,10 @@ export function AdminConsole({
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Header Pinned</p>
                 <p className="mt-1 text-2xl font-semibold text-zinc-900">{headerCategoryCount}/8</p>
+              </div>
+              <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">Featured</p>
+                <p className="mt-1 text-2xl font-semibold text-zinc-900">{featuredCategoryCount}</p>
               </div>
               <div className="rounded-lg border border-zinc-200 bg-white px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-zinc-500">With Image</p>
@@ -584,7 +715,15 @@ export function AdminConsole({
                         <PinOff className="h-3 w-3" /> Not Pinned
                       </Badge>
                     )}
-                    {category.parentId !== null && <Badge variant="outline">Parent: {category.parentId}</Badge>}
+                    {category.isFeatured ? (
+                      <Badge variant="secondary" className="gap-1 border-amber-200 bg-amber-50 text-amber-700">
+                        <Star className="h-3 w-3" /> Featured
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="gap-1">
+                        <StarOff className="h-3 w-3" /> Not Featured
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="overflow-hidden rounded-md border border-zinc-200">
@@ -607,6 +746,9 @@ export function AdminConsole({
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleHeaderCategory(category)}>
                       {category.isHeaderCategory ? "Unpin" : "Pin"}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleToggleFeaturedCategory(category)}>
+                      {category.isFeatured ? "Unfeature" : "Feature"}
                     </Button>
                     <Button variant="outline" size="sm" onClick={() => handleToggleCategoryActive(category)}>
                       {category.isActive ? "Deactivate" : "Activate"}
@@ -670,7 +812,7 @@ export function AdminConsole({
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <p className="text-sm text-zinc-600">
-                    Price: ৳ {product.price.toLocaleString()} | Stock: {product.stock}
+                    Price: ${product.price.toLocaleString()} | Stock: {product.stock}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleToggleProductActive(product)}>
@@ -690,100 +832,191 @@ export function AdminConsole({
         </TabsContent>
 
         <TabsContent value="banners" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Megaphone className="h-4 w-4" /> Create Banner
-              </CardTitle>
-              <CardDescription>Upload one banner image. The storefront uses responsive optimization for all screens.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-              <Input value={bannerForm.title} onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))} placeholder="Banner title" />
-              <label className="flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50">
-                <Upload className="h-4 w-4" />
-                {uploadingTarget === "banner-create" ? "Uploading image..." : "Upload Banner Image"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  disabled={uploadingTarget === "banner-create"}
-                  onChange={async (event) => {
-                    const input = event.currentTarget;
-                    const file = input.files?.[0] ?? null;
-                    input.value = "";
-                    await handleBannerImageUpload(file);
-                  }}
-                />
-              </label>
-              <Input value={bannerForm.clickUrl} onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))} placeholder="Click URL" />
-              <Input value={bannerForm.sortOrder} onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))} placeholder="Sort order" />
-              <Button onClick={handleCreateBanner} className="md:col-span-2 xl:col-span-2">
-                <ImageIcon className="h-4 w-4" /> Create Banner
-              </Button>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-zinc-900">All Banners</h2>
+              <p className="text-sm text-zinc-600">One row per banner for quick scanning and actions.</p>
+            </div>
+            <Dialog open={isBannerDialogOpen} onOpenChange={setIsBannerDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <ImageIcon className="h-4 w-4" /> Create Banner
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" /> Create Banner
+                  </DialogTitle>
+                  <DialogDescription>
+                    Upload one banner image. The storefront uses responsive optimization for all screens.
+                  </DialogDescription>
+                </DialogHeader>
 
-              {bannerForm.desktopImageUrl && (
-                <div className="col-span-full">
-                  <div className="overflow-hidden rounded-md border border-zinc-200">
-                    <div className="h-28 bg-zinc-50 p-2">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={bannerForm.desktopImageUrl} alt="Banner preview" className="h-full w-full object-contain" />
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Input
+                    value={bannerForm.title}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, title: event.target.value }))}
+                    placeholder="Banner title"
+                  />
+                  <label className="flex h-10 cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 text-sm text-zinc-700 hover:bg-zinc-50">
+                    <Upload className="h-4 w-4" />
+                    {uploadingTarget === "banner-create" ? "Uploading image..." : "Upload Banner Image"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingTarget === "banner-create"}
+                      onChange={async (event) => {
+                        const input = event.currentTarget;
+                        const file = input.files?.[0] ?? null;
+                        input.value = "";
+                        await handleBannerImageUpload(file);
+                      }}
+                    />
+                  </label>
+                  <Input
+                    value={bannerForm.clickUrl}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, clickUrl: event.target.value }))}
+                    placeholder="Click URL (optional: https://... or /path)"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={bannerForm.sortOrder}
+                    onChange={(event) => setBannerForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
+                    placeholder="Sort order"
+                  />
+
+                  {bannerForm.desktopImageUrl && (
+                    <div className="md:col-span-2">
+                      <div className="overflow-hidden rounded-md border border-zinc-200">
+                        <div className="h-36 bg-zinc-50 p-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={bannerForm.desktopImageUrl} alt="Banner preview" className="h-full w-full object-contain" />
+                        </div>
+                        <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Responsive preview source</p>
+                      </div>
                     </div>
-                    <p className="border-t border-zinc-200 px-3 py-2 text-xs text-zinc-500">Responsive preview source</p>
-                  </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                <DialogFooter>
+                  <Button onClick={handleCreateBanner}>
+                    <ImageIcon className="h-4 w-4" /> Create Banner
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={isBannerEditDialogOpen}
+              onOpenChange={(open) => {
+                setIsBannerEditDialogOpen(open);
+                if (!open) {
+                  setEditingBannerId(null);
+                }
+              }}
+            >
+              <DialogContent className="max-w-xl">
+                <DialogHeader>
+                  <DialogTitle>Edit Banner</DialogTitle>
+                  <DialogDescription>
+                    Update banner title, optional click URL, and sort order.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-3">
+                  <Input
+                    value={bannerEditForm.title}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, title: event.target.value }))}
+                    placeholder="Banner title"
+                  />
+                  <Input
+                    value={bannerEditForm.clickUrl}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, clickUrl: event.target.value }))}
+                    placeholder="Click URL (optional: https://... or /path)"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={bannerEditForm.sortOrder}
+                    onChange={(event) => setBannerEditForm((prev) => ({ ...prev, sortOrder: event.target.value }))}
+                    placeholder="Sort order"
+                  />
+                </div>
+
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsBannerEditDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleSaveBannerEdit}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="space-y-3">
+            {banners.length === 0 && (
+              <Card>
+                <CardContent className="py-8 text-center text-sm text-zinc-500">
+                  No banners found. Create one from the dialog.
+                </CardContent>
+              </Card>
+            )}
+
             {banners.map((banner) => (
               <Card key={banner.id}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base">{banner.title}</CardTitle>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <CardTitle className="text-base">{banner.title}</CardTitle>
+                      <CardDescription>#{banner.id} | Sort: {banner.sortOrder}</CardDescription>
+                    </div>
                     <Badge variant={banner.isActive ? "default" : "outline"}>
                       {banner.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
-                  <CardDescription>#{banner.id} | Sort: {banner.sortOrder}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-sm text-zinc-600">
-                    <p className="truncate">Image: {banner.desktopImageUrl}</p>
-                  </div>
-                  <div className="grid gap-2">
+                  <div className="grid gap-3 md:grid-cols-[260px_1fr]">
                     <div className="overflow-hidden rounded-md border border-zinc-200">
-                      <div className="h-24 bg-zinc-50 p-2">
+                      <div className="h-28 bg-zinc-50 p-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={banner.desktopImageUrl} alt={`${banner.title} banner`} className="h-full w-full object-contain" />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
-                      {banner.isActive ? "Deactivate" : "Activate"}
-                    </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleQuickEditBanner(banner)}>
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
-                      <Trash2 className="h-3.5 w-3.5" /> Delete
-                    </Button>
-                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
-                      <Upload className="h-3.5 w-3.5" /> Replace Image
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={uploadingTarget === `banner-${banner.id}`}
-                        onChange={async (event) => {
-                          const input = event.currentTarget;
-                          const file = input.files?.[0] ?? null;
-                          input.value = "";
-                          await handleReplaceBannerImage(banner, file);
-                        }}
-                      />
-                    </label>
+                    <div className="space-y-3">
+                      <p className="truncate text-sm text-zinc-600">Image URL: {banner.desktopImageUrl}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleToggleBannerActive(banner)}>
+                          {banner.isActive ? "Deactivate" : "Activate"}
+                        </Button>
+                        <Button variant="secondary" size="sm" onClick={() => handleQuickEditBanner(banner)}>
+                          Edit
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
+                          <Trash2 className="h-3.5 w-3.5" /> Delete
+                        </Button>
+                        <label className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-50">
+                          <Upload className="h-3.5 w-3.5" /> Replace Image
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingTarget === `banner-${banner.id}`}
+                            onChange={async (event) => {
+                              const input = event.currentTarget;
+                              const file = input.files?.[0] ?? null;
+                              input.value = "";
+                              await handleReplaceBannerImage(banner, file);
+                            }}
+                          />
+                        </label>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

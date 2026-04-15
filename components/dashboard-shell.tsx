@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -13,11 +14,13 @@ import {
     LogOut,
     Menu,
     Megaphone,
+    CircleHelp,
     Package,
-    Shield,
     ShoppingBag,
     ShoppingCart,
+    Tag,
     UserRound,
+    Users,
     Plus,
 } from "lucide-react";
 
@@ -65,46 +68,47 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                 groups: [
                     {
                         label: "Overview",
-                        items: [{ href: "/admin", label: "Dashboard", icon: Home, exact: true }],
+                        items: [
+                            { href: "/admin", label: "Dashboard", icon: Home, exact: true },
+                            { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
+                        ],
                     },
                     {
-                        label: "Product",
+                        label: "Catalog",
                         items: [
                             { href: "/admin/products", label: "Products", icon: Package, exact: true },
-                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
+                            { href: "/admin/inventory", label: "Inventory", icon: Boxes, exact: true },
+                            { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
+                            { href: "/admin/brands", label: "Brands", icon: Tag, exact: true },
                         ]
                     },
                     {
-                        label: "Categories & Banners",
+                        label: "Merchandising",
                         items: [
-                            { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
-                            { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
+                            { href: "/admin/faqs", label: "FAQs", icon: CircleHelp, exact: true },
                         ],
                     },
                     {
-                        label: "Infrastructure",
+                        label: "Create New",
+                        items: [
+                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
+                            { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
+                            { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
+                        ],
+                    },
+                    {
+                        label: "Users",
+                        items: [
+                            { href: "/admin/users", label: "Admins", icon: UserRound },
+                            { href: "/admin/customers", label: "Users", icon: Users },
+                        ],
+                    },
+                    {
+                        label: "Platform",
                         items: [
                             { href: "/admin/cdn", label: "CDN Management", icon: HardDrive },
-                        ],
-                    },
-                    {
-                        label: "User Management",
-                        items: [
-                            { href: "/admin/users", label: "Users", icon: UserRound },
-                        ],
-                    },
-                    {
-                        label: "Operations",
-                        items: [
                             { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
-                        ],
-                    },
-                    {
-                        label: "System",
-                        items: [
-                            { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
-
                         ],
                     },
                 ],
@@ -130,6 +134,39 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         };
     }, [variant]);
 
+    const navItems = useMemo(() => nav.groups.flatMap((group) => group.items), [nav]);
+
+    const normalizedPath = useMemo(() => {
+        if (pathname !== "/" && pathname.endsWith("/")) {
+            return pathname.slice(0, -1);
+        }
+
+        return pathname;
+    }, [pathname]);
+
+    const activeHref = useMemo(() => {
+        let bestHref: string | null = null;
+        let bestScore = -1;
+
+        for (const item of navItems) {
+            const candidate = item.href !== "/" && item.href.endsWith("/") ? item.href.slice(0, -1) : item.href;
+
+            let score = -1;
+            if (normalizedPath === candidate) {
+                score = candidate.length + 1000;
+            } else if (normalizedPath.startsWith(`${candidate}/`)) {
+                score = candidate.length;
+            }
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestHref = item.href;
+            }
+        }
+
+        return bestHref;
+    }, [navItems, normalizedPath]);
+
     const currentNavLabel = (() => {
         for (const group of nav.groups) {
             for (const item of group.items) {
@@ -152,20 +189,29 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     function isActive(item: NavItem) {
-        if (item.exact) {
-            return pathname === item.href;
-        }
-        return pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return activeHref === item.href;
     }
 
     function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         return (
-            <div className="flex h-full flex-col overflow-hidden">
-                <div className="border-b border-zinc-200 p-4">
-                    <div className="flex items-center gap-3">
-                        <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-sm">
-                            <Shield className="h-4 w-4" />
-                        </div>
+            <div className="flex h-full w-full flex-col overflow-hidden">
+                <div className="w-full border-b border-zinc-200">
+                    <div className="flex items-center gap-3 px-4 py-4">
+                        {variant === "admin" ? (
+                            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
+                                <Image
+                                    src="/nameless-logo.svg"
+                                    alt="Admin"
+                                    width={36}
+                                    height={36}
+                                    className="h-8 w-8 object-contain"
+                                />
+                            </div>
+                        ) : (
+                            <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-[#f36523] to-red-500 text-white shadow-sm">
+                                <LayoutGrid className="h-4 w-4" />
+                            </div>
+                        )}
                         <div>
                             <p className="text-sm font-semibold text-zinc-900">{nav.title}</p>
                             <p className="text-xs text-zinc-500">{nav.subtitle}</p>
@@ -173,7 +219,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     </div>
                 </div>
 
-                <div className="flex-1 space-y-4 overflow-y-auto p-3">
+                <div className="dashboard-sidebar-scroll flex-1 space-y-4 overflow-y-auto p-3">
                     {nav.groups.map((group) => (
                         <section key={group.label} className="space-y-2">
                             <h3 className="px-2 text-xs uppercase tracking-[0.18em] text-zinc-500">{group.label}</h3>
@@ -188,7 +234,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                             className={cn(
                                                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
                                                 isActive(item)
-                                                    ? "bg-[var(--accent)] text-white"
+                                                    ? "bg-(--accent) text-white"
                                                     : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
                                             )}
                                         >
@@ -202,10 +248,10 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     ))}
                 </div>
 
-                <div className="border-t border-zinc-200 p-3">
+                <div className="w-full border-t border-zinc-200">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-auto w-full justify-start gap-3 rounded-lg p-2">
+                            <Button variant="ghost" className="h-auto w-full justify-start gap-3 rounded-none px-4 py-3">
                                 <Avatar className="h-8 w-8">
                                     <AvatarFallback>
                                         {(user?.name?.charAt(0) ?? user?.email?.charAt(0) ?? "U").toUpperCase()}
@@ -233,8 +279,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     }
 
     return (
-        <div className="flex h-screen overflow-hidden bg-zinc-50">
-            <aside className="hidden h-screen w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex">
+        <div className="flex h-full overflow-hidden bg-zinc-50">
+            <aside className="hidden h-full w-64 overflow-hidden border-r border-zinc-200 bg-white md:flex md:flex-col">
                 <SidebarContent />
             </aside>
 
@@ -247,8 +293,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     <SidebarContent onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
 
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 px-4 py-3 backdrop-blur">
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+                    <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/55 px-4 py-4 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Button
                                 type="button"
@@ -268,7 +314,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         </div>
                     </header>
 
-                    <main className="flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">{children}</main>
+                    <main className="px-4 py-5 md:px-6 md:py-6">{children}</main>
                     <Separator />
                 </div>
             </Sheet>
