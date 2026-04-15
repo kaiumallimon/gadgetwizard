@@ -26,12 +26,12 @@ jobs:
 
       - name: Prepare standalone build
         run: |
-          mkdir deploy
-          cp -r .next/standalone/* deploy/
-          mkdir -p deploy/.next
-          cp -r .next/static deploy/.next/
-          cp -r public deploy/
-          cp package.json deploy/
+          rm -rf standalone
+          mkdir -p standalone
+          cp -r .next/standalone/. standalone/
+          cp -r public standalone/
+          mkdir -p standalone/.next
+          cp -r .next/static standalone/.next/
 
       - name: Upload files (SCP)
         uses: appleboy/scp-action@v0.1.7
@@ -40,7 +40,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.PORT }}
-          source: "deploy/**"
+          source: "standalone/**"
           strip_components: 1
           target: "/home/gadginlm/gw_website"
 
