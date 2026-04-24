@@ -5,6 +5,14 @@ export interface WishlistProductIdRow {
   addedAt: string;
 }
 
+export type WishlistUserSortOption =
+  | "recent"
+  | "oldest"
+  | "name_az"
+  | "name_za"
+  | "price_low"
+  | "price_high";
+
 interface WishlistProductIdDbRow {
   product_id: number;
   created_at: Date | string;
@@ -25,6 +33,15 @@ interface WishlistEntryDbRow {
 interface WishlistCountRow {
   total: number;
 }
+
+const WISHLIST_USER_SORT_SQL: Record<WishlistUserSortOption, string> = {
+  recent: "w.created_at DESC, w.id DESC",
+  oldest: "w.created_at ASC, w.id ASC",
+  name_az: "p.name ASC, w.created_at DESC",
+  name_za: "p.name DESC, w.created_at DESC",
+  price_low: "COALESCE(p.discounted_price, p.original_price) ASC, w.created_at DESC",
+  price_high: "COALESCE(p.discounted_price, p.original_price) DESC, w.created_at DESC",
+};
 
 export interface AdminWishlistEntryRecord {
   id: number;
@@ -94,6 +111,57 @@ export async function listWishlistProductIdsByUser(userId: number): Promise<Wish
     productId: row.product_id,
     addedAt: toIso(row.created_at),
   }));
+}
+
+export async function listWishlistProductIdsByUserPage(input: {
+  userId: number;
+  page: number;
+  pageSize: number;
+  search?: string;
+  sort?: WishlistUserSortOption;
+}): Promise<{ items: WishlistProductIdRow[]; total: number }> {
+  const whereParts: string[] = ["w.user_id = ?", "p.is_active = 1"];
+  const whereParams: unknown[] = [input.userId];
+
+  if (input.search) {
+    whereParts.push("(p.name LIKE ? OR p.slug LIKE ? OR p.short_description LIKE ?)");
+    const term = `%${input.search}%`;
+    whereParams.push(term, term, term);
+  }
+
+  const whereSql = `WHERE ${whereParts.join(" AND ")}`;
+  const offset = (input.page - 1) * input.pageSize;
+  const orderBy = WISHLIST_USER_SORT_SQL[input.sort ?? "recent"];
+
+  const rows = await queryRows<WishlistProductIdDbRow>(
+    `
+      SELECT w.product_id, w.created_at
+      FROM wishlist_items w
+      INNER JOIN products p ON p.id = w.product_id
+      ${whereSql}
+      ORDER BY ${orderBy}
+      LIMIT ? OFFSET ?
+    `,
+    [...whereParams, input.pageSize, offset],
+  );
+
+  const count = await queryOne<WishlistCountRow>(
+    `
+      SELECT COUNT(*) AS total
+      FROM wishlist_items w
+      INNER JOIN products p ON p.id = w.product_id
+      ${whereSql}
+    `,
+    whereParams,
+  );
+
+  return {
+    items: rows.map((row) => ({
+      productId: row.product_id,
+      addedAt: toIso(row.created_at),
+    })),
+    total: count?.total ?? 0,
+  };
 }
 
 export async function listAdminWishlistEntries(input: {

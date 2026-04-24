@@ -5,8 +5,10 @@ import {
   addWishlistItem,
   isWishlisted,
   listAdminWishlistEntries,
+  listWishlistProductIdsByUserPage,
   listWishlistProductIdsByUser,
   removeWishlistItem,
+  type WishlistUserSortOption,
 } from "@/lib/server/repositories/wishlist-repository";
 
 export async function getWishlistForUser(userId: number) {
@@ -27,6 +29,46 @@ export async function getWishlistForUser(userId: number) {
   return {
     items,
     productIds: items.map((item) => item.id),
+  };
+}
+
+export async function getWishlistPageForUser(input: {
+  userId: number;
+  page: number;
+  pageSize: number;
+  search?: string;
+  sort?: WishlistUserSortOption;
+}) {
+  const user = await findUserById(input.userId);
+  if (!user) {
+    throw notFound("User not found");
+  }
+
+  const result = await listWishlistProductIdsByUserPage({
+    userId: input.userId,
+    page: input.page,
+    pageSize: input.pageSize,
+    search: input.search,
+    sort: input.sort,
+  });
+
+  const products = await Promise.all(
+    result.items.map(async (row) => {
+      const product = await findProductById(row.productId, true);
+      return product;
+    }),
+  );
+
+  const items = products.filter((product) => product !== null);
+  const totalPages = Math.max(1, Math.ceil(result.total / input.pageSize));
+
+  return {
+    items,
+    productIds: items.map((item) => item.id),
+    total: result.total,
+    page: input.page,
+    pageSize: input.pageSize,
+    totalPages,
   };
 }
 
