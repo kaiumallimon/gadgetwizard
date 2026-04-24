@@ -142,6 +142,97 @@ export interface Cart {
   items: CartItem[];
 }
 
+export type OrderStatus =
+  | "pending_payment"
+  | "paid"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "refunded";
+
+export interface OrderItem {
+  id: number;
+  orderId: number;
+  productId: number;
+  productName: string;
+  productSku: string | null;
+  productImageUrl: string | null;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  createdAt: string;
+}
+
+export interface AddressSnapshot {
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+  label: string | null;
+}
+
+export interface Order {
+  id: number;
+  userId: number;
+  status: OrderStatus;
+  totalAmount: number;
+  subtotal: number;
+  shippingAmount: number;
+  stripePaymentIntentId: string | null;
+  stripePaymentStatus: string | null;
+  shippingAddressSnapshot: AddressSnapshot;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+  // populated for admin view
+  userName?: string;
+  userEmail?: string;
+}
+
+export interface UserAddress {
+  id: number;
+  userId: number;
+  label: string | null;
+  fullName: string;
+  phone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReviewStatus = "pending" | "approved" | "rejected";
+
+export interface ProductReview {
+  id: number;
+  productId: number;
+  userId: number;
+  orderId: number;
+  rating: number;
+  comment: string;
+  images: string[];
+  status: ReviewStatus;
+  adminNote: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // populated joins
+  userName?: string;
+  userEmail?: string;
+  productName?: string;
+  productSlug?: string;
+}
+
 export interface ApiErrorPayload {
   error: {
     code: string;

@@ -9,7 +9,10 @@ import type {
   CdnFileAsset,
   CdnStats,
   Faq,
+  Order,
   Product,
+  ProductReview,
+  UserAddress,
 } from "@/lib/client/types";
 
 class ApiError extends Error {

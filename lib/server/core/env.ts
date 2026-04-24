@@ -27,6 +27,9 @@ const envSchema = z.object({
   CDN_BASE_URL: z.string().url(),
   CDN_API_BASE_URL: z.string().url().optional(),
   CDN_API_KEY: z.string().min(1).optional(),
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;
