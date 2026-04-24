@@ -7,8 +7,6 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   FiChevronDown,
-  FiChevronRight,
-  FiGrid,
   FiHeadphones,
   FiLogOut,
   FiMenu,
@@ -16,11 +14,8 @@ import {
   FiShield,
   FiSearch,
   FiShoppingCart,
-  FiStar,
-  FiTag,
   FiTruck,
   FiUser,
-  FiHeart,
 } from "react-icons/fi";
 
 import { apiClient } from "@/lib/client/api";
@@ -306,214 +301,64 @@ export function SiteHeader() {
 
               <SheetContent
                 side="right"
-                className="gw-soft-border-dark w-[90vw] max-w-sm border-l border-zinc-700/70 bg-zinc-950/95 p-0 text-zinc-100 backdrop-blur-2xl"
+                className="w-[90vw] max-w-sm bg-black p-0 text-zinc-100"
               >
-                <SheetHeader className="gw-soft-border-dark border-b border-zinc-700/70 bg-linear-to-br from-zinc-900 via-zinc-900 to-zinc-950 px-5 py-4">
+                <SheetHeader className="border-b border-zinc-800/70 bg-black px-5 py-4">
                   <SheetTitle className="text-base text-zinc-100">Browse GadgetWizard</SheetTitle>
-                  <SheetDescription className="text-xs text-zinc-400">
-                    Navigate quickly across products, brands, and your account.
-                  </SheetDescription>
+                  <SheetDescription className="text-xs text-zinc-500">Quick links</SheetDescription>
                 </SheetHeader>
 
-                <div className="max-h-[calc(100vh-84px)] space-y-6 overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(245,158,11,0.16),transparent_45%)] px-5 py-5">
-                  <section className="gw-soft-border-dark rounded-2xl border border-zinc-700/80 bg-zinc-900/75 p-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-400">Shop Shortcuts</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <SheetClose asChild>
+                <div className="max-h-[calc(100vh-84px)] overflow-y-auto px-5 py-2">
+                  <nav className="divide-y divide-zinc-800/70">
+                    <SheetClose asChild>
+                      <Link href="/categories" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        Categories
+                      </Link>
+                    </SheetClose>
+
+                    {headerCategories.map((entry) => (
+                      <SheetClose asChild key={entry.label}>
                         <Link
-                          href="/offers"
-                          className="gw-soft-border-dark inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
+                          href={entry.href}
+                          className={`block py-3 text-sm font-medium transition ${
+                            pathname === entry.href ? "text-orange-300" : "text-zinc-100 hover:text-orange-300"
+                          }`}
                         >
-                          <FiTag className="h-4 w-4 text-orange-400" /> Offers
+                          {entry.label}
                         </Link>
                       </SheetClose>
-                      <SheetClose asChild>
-                        <Link
-                          href="/new-arrivals"
-                          className="gw-soft-border-dark inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
-                        >
-                          <FiStar className="h-4 w-4 text-orange-400" /> New
-                        </Link>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Link
-                          href="/best-sellers"
-                          className="gw-soft-border-dark inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
-                        >
-                          <FiStar className="h-4 w-4 text-orange-400" /> Best Sellers
-                        </Link>
-                      </SheetClose>
-                      <SheetClose asChild>
-                        <Link
-                          href="/brands"
-                          className="gw-soft-border-dark inline-flex items-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm font-medium text-zinc-100 transition hover:border-zinc-500 hover:bg-zinc-800"
-                        >
-                          <FiGrid className="h-4 w-4 text-orange-400" /> Brands
-                        </Link>
-                      </SheetClose>
-                    </div>
-                  </section>
+                    ))}
 
-                  <section className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Quick Actions</p>
+                    <SheetClose asChild>
+                      <Link href="/brands" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        Brands
+                      </Link>
+                    </SheetClose>
 
-                    <div className="grid gap-2">
-                      {renderSession?.role !== "admin" && (
-                      <SheetClose asChild>
-                        <Button
-                          asChild
-                          variant="outline"
-                          className="gw-soft-border-dark justify-start rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <Link href="/cart">
-                            <FiShoppingCart className="h-4 w-4" />
-                            Cart
-                            {cartItemCount > 0 && (
-                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                                {cartItemCount > 99 ? "99+" : cartItemCount}
-                              </span>
-                            )}
-                          </Link>
-                        </Button>
-                      </SheetClose>
-                    )}
+                    <SheetClose asChild>
+                      <Link href="/offers" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        Hot Offers
+                      </Link>
+                    </SheetClose>
 
-                      {renderSession && (
-                        <SheetClose asChild>
-                          <Button
-                            asChild
-                            variant="outline"
-                            className="gw-soft-border-dark justify-start rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800"
-                          >
-                            <Link href={dashboardHref}>
-                              <FiUser className="h-4 w-4" /> Dashboard
-                            </Link>
-                          </Button>
-                        </SheetClose>
-                      )}
+                    <SheetClose asChild>
+                      <Link href="/wishlist" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        Wishlist
+                      </Link>
+                    </SheetClose>
 
-                      {!loading && !renderUser && (
-                        <SheetClose asChild>
-                          <Button
-                            type="button"
-                            className="justify-start rounded-xl"
-                            onClick={() => {
-                              setAuthDialogMode("login");
-                              setAuthDialogOpen(true);
-                            }}
-                          >
-                            <FiUser className="h-4 w-4" /> Login
-                          </Button>
-                        </SheetClose>
-                      )}
+                    <SheetClose asChild>
+                      <Link href="/new-arrivals" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        New Arrivals
+                      </Link>
+                    </SheetClose>
 
-                      {!loading && renderUser && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="gw-soft-border-dark justify-start rounded-xl border border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800"
-                          onClick={onLogout}
-                        >
-                          <FiLogOut className="h-4 w-4" /> Logout
-                        </Button>
-                      )}
-                    </div>
-                  </section>
-
-                  <section className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Categories</p>
-
-                    <div className="grid gap-2">
-                      <SheetClose asChild>
-                        <Link
-                          href="/categories"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span className="inline-flex items-center gap-2"><FiGrid className="h-4 w-4" /> All Categories</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <Link
-                          href="/brands"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span>Brands</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <Link
-                          href="/offers"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span className="inline-flex items-center gap-2"><FiTag className="h-4 w-4" /> Offers</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <Link
-                          href="/wishlist"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span className="inline-flex items-center gap-2"><FiHeart className="h-4 w-4" /> Wishlist</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <Link
-                          href="/new-arrivals"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span>New Arrivals</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-
-                      <SheetClose asChild>
-                        <Link
-                          href="/best-sellers"
-                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm font-medium text-zinc-100 transition hover:border-zinc-600 hover:bg-zinc-800"
-                        >
-                          <span className="inline-flex items-center gap-2"><FiStar className="h-4 w-4" /> Best Sellers</span>
-                          <FiChevronRight className="h-4 w-4 opacity-70" />
-                        </Link>
-                      </SheetClose>
-                    </div>
-
-                    {headerCategories.length > 0 ? (
-                      <div className="grid gap-2">
-                        {headerCategories.map((entry) => (
-                          <SheetClose asChild key={entry.label}>
-                            <Link
-                              href={entry.href}
-                              className={`gw-soft-border-dark flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
-                                pathname === entry.href
-                                    ? "gw-soft-ring-accent border-zinc-600 bg-zinc-800 text-orange-300"
-                                    : "border-zinc-700 bg-zinc-900 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800"
-                              }`}
-                            >
-                              <span>{entry.label}</span>
-                              <FiChevronRight className="h-4 w-4 opacity-70" />
-                            </Link>
-                          </SheetClose>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-zinc-400">No header categories selected yet.</p>
-                    )}
-                  </section>
-
-                  <div className="gw-soft-border-dark rounded-xl border border-zinc-700 bg-zinc-900/80 px-3 py-2.5">
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">Support</p>
-                    <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-100">
-                      <FiHeadphones className="h-4 w-4 text-accent" /> +880 1712-345678
-                    </p>
-                  </div>
+                    <SheetClose asChild>
+                      <Link href="/best-sellers" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                        Best Sellers
+                      </Link>
+                    </SheetClose>
+                  </nav>
                 </div>
               </SheetContent>
             </Sheet>

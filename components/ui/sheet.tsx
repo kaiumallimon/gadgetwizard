@@ -30,11 +30,12 @@ type SheetCloseProps = SheetPrimitive.Close.Props & {
   asChild?: boolean
 }
 
-function SheetClose({ asChild = false, render, ...props }: SheetCloseProps) {
+function SheetClose({ asChild = false, render, nativeButton, ...props }: SheetCloseProps) {
   return (
     <SheetPrimitive.Close
       data-slot="sheet-close"
       render={asChild ? <Slot /> : render}
+      nativeButton={asChild ? false : nativeButton}
       {...props}
     />
   )
