@@ -58,7 +58,7 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-zinc-200/90 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
       <Link href={`/product/${product.slug}`} className="block">
-        <div className="relative aspect-4/3 w-full overflow-hidden bg-linear-to-br from-zinc-100 via-white to-orange-50 p-3">
+        <div className="relative aspect-4/3 w-full overflow-hidden bg-white p-3">
           <img src={image} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
 
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-2 p-3">
@@ -86,7 +86,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardContent className="space-y-3 p-4">
         <div className="space-y-1">
           <p className="line-clamp-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500">{metaLabel}</p>
-          <Link href={`/product/${product.slug}`} className="line-clamp-2 min-h-11 text-[15px] font-semibold leading-6 text-zinc-900 transition-colors hover:text-(--accent)">
+          <Link href={`/product/${product.slug}`} className="line-clamp-2 min-h-11 text-[15px] font-semibold leading-6 text-zinc-900 transition-colors hover:text-accent">
             {product.name}
           </Link>
         </div>
