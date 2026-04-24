@@ -118,6 +118,32 @@ export async function getOrdersByUserId(userId: number): Promise<OrderRecord[]> 
   );
 }
 
+export async function listOrdersByUserId(input: {
+  userId: number;
+  page: number;
+  pageSize: number;
+}): Promise<{ rows: OrderRecord[]; total: number }> {
+  const countResult = await queryOne<{ total: number }>(
+    `SELECT COUNT(*) AS total FROM orders WHERE user_id = ?`,
+    [input.userId],
+  );
+
+  const total = countResult?.total ?? 0;
+  const offset = (input.page - 1) * input.pageSize;
+
+  const rows = await queryRows<OrderRecord>(
+    `SELECT o.*, u.name AS user_name, u.email AS user_email
+     FROM orders o
+     JOIN users u ON u.id = o.user_id
+     WHERE o.user_id = ?
+     ORDER BY o.created_at DESC
+     LIMIT ? OFFSET ?`,
+    [input.userId, input.pageSize, offset],
+  );
+
+  return { rows, total };
+}
+
 export async function getOrderItemsByOrderId(orderId: number): Promise<OrderItemRecord[]> {
   return queryRows<OrderItemRecord>(
     `SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC`,

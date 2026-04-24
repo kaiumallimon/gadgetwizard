@@ -17,6 +17,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderReviewPanel } from "@/components/order-review-panel";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +77,7 @@ export default async function OrderDetailPage({ params }: Props) {
           <div>
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Order #{order.id}</h1>
             <p className="mt-2 text-sm text-zinc-600">Placed on {formattedDate}</p>
+            <p className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-400">Reference #{order.id.toString().padStart(6, "0")}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -108,44 +117,56 @@ export default async function OrderDetailPage({ params }: Props) {
         </div>
       </header>
 
-      {/* Items */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <FiPackage className="h-4 w-4" /> Items
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center gap-3">
-              {item.productImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.productImageUrl}
-                  alt={item.productName}
-                  className="h-14 w-14 rounded-xl object-cover border border-zinc-100"
-                />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-zinc-100">
-                  <FiPackage className="h-6 w-6 text-zinc-400" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-zinc-900 truncate">{item.productName}</p>
-                {item.productSku && (
-                  <p className="text-xs text-zinc-400">SKU: {item.productSku}</p>
-                )}
-                <p className="text-sm text-zinc-500">
-                  ${item.unitPrice.toLocaleString()} × {item.quantity}
-                </p>
-              </div>
-              <p className="shrink-0 font-semibold text-zinc-900">
-                ${item.totalPrice.toLocaleString()}
-              </p>
-            </div>
-          ))}
+        <CardContent className="space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-zinc-200">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                  <TableHead>Product</TableHead>
+                  <TableHead>Unit Price</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead className="text-right">Line Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {order.items.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        {item.productImageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={item.productImageUrl}
+                            alt={item.productName}
+                            className="h-12 w-12 rounded-lg border border-zinc-200 object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-12 w-12 items-center justify-center rounded-lg border border-zinc-200 bg-zinc-100">
+                            <FiPackage className="h-5 w-5 text-zinc-400" />
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium text-zinc-900">{item.productName}</p>
+                          {item.productSku && <p className="text-xs text-zinc-500">SKU: {item.productSku}</p>}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-zinc-700">${item.unitPrice.toLocaleString()}</TableCell>
+                    <TableCell className="text-zinc-700">{item.quantity}</TableCell>
+                    <TableCell className="text-right font-semibold text-zinc-900">${item.totalPrice.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
-          <div className="border-t border-zinc-100 pt-3 space-y-1 text-sm">
+          <div className="ml-auto w-full max-w-sm space-y-1 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm">
             <div className="flex justify-between text-zinc-600">
               <span>Subtotal</span>
               <span>${order.subtotal.toLocaleString()}</span>
@@ -156,6 +177,7 @@ export default async function OrderDetailPage({ params }: Props) {
                 <span>${order.shippingAmount.toLocaleString()}</span>
               </div>
             )}
+            <div className="border-t border-zinc-200 pt-2" />
             <div className="flex justify-between font-semibold text-zinc-900">
               <span>Total</span>
               <span className="text-emerald-700">${order.totalAmount.toLocaleString()}</span>
@@ -164,27 +186,51 @@ export default async function OrderDetailPage({ params }: Props) {
         </CardContent>
       </Card>
 
-      {/* Shipping Address */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <FiMapPin className="h-4 w-4" /> Shipping Address
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-zinc-700 space-y-0.5">
-            {addr.label && <p className="font-semibold text-zinc-800">{addr.label}</p>}
-            <p className="font-medium">{addr.fullName}</p>
-            <p>{addr.addressLine1}</p>
-            {addr.addressLine2 && <p>{addr.addressLine2}</p>}
-            <p>{[addr.city, addr.state, addr.postalCode].filter(Boolean).join(", ")}</p>
-            <p>{addr.country}</p>
-            <p className="text-zinc-500">{addr.phone}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <FiMapPin className="h-4 w-4" /> Shipping Address
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700 space-y-0.5">
+              {addr.label && <p className="font-semibold text-zinc-800">{addr.label}</p>}
+              <p className="font-medium">{addr.fullName}</p>
+              <p>{addr.addressLine1}</p>
+              {addr.addressLine2 && <p>{addr.addressLine2}</p>}
+              <p>{[addr.city, addr.state, addr.postalCode].filter(Boolean).join(", ")}</p>
+              <p>{addr.country}</p>
+              <p className="text-zinc-500">{addr.phone}</p>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Write Review (if delivered) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Order Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Order ID</span>
+              <span className="font-semibold text-zinc-900">#{order.id}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Payment</span>
+              <span className="font-medium text-zinc-800">{order.stripePaymentStatus ?? "N/A"}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Items</span>
+              <span className="font-medium text-zinc-800">{order.items.reduce((sum, item) => sum + item.quantity, 0)}</span>
+            </div>
+            <div className="flex items-center justify-between border-t border-zinc-200 pt-3">
+              <span className="text-zinc-500">Status</span>
+              <Badge className={`border text-xs ${config.className}`}>{config.label}</Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <OrderReviewPanel
         orderId={order.id}
         orderStatus={order.status}

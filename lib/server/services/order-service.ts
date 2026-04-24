@@ -7,6 +7,7 @@ import {
   createOrder as createOrderRepo,
   getOrderById,
   getOrdersByUserId,
+  listOrdersByUserId,
   getOrderItemsByOrderId,
   listOrders,
   updateOrderStatus,
@@ -223,6 +224,39 @@ export async function getUserOrders(userId: number): Promise<Order[]> {
     orders.push(mapOrderRecord(row, items));
   }
   return orders;
+}
+
+export async function getUserOrdersPaginated(input: {
+  userId: number;
+  page: number;
+  pageSize: number;
+}): Promise<{
+  items: Order[];
+  total: number;
+  pagination: { page: number; pageSize: number; total: number; totalPages: number };
+}> {
+  const { rows, total } = await listOrdersByUserId({
+    userId: input.userId,
+    page: input.page,
+    pageSize: input.pageSize,
+  });
+
+  const items: Order[] = [];
+  for (const row of rows) {
+    const orderItems = await getOrderItemsByOrderId(row.id);
+    items.push(mapOrderRecord(row, orderItems));
+  }
+
+  return {
+    items,
+    total,
+    pagination: {
+      page: input.page,
+      pageSize: input.pageSize,
+      total,
+      totalPages: Math.ceil(total / input.pageSize),
+    },
+  };
 }
 
 export async function getAdminOrders(filter: ListOrdersFilter): Promise<{
