@@ -98,5 +98,7 @@ API surface rule:
 - Reuse existing schema/validation patterns before introducing new ones.
 - Keep migration names zero-padded incremental SQL files.
 - Keep security policies and risk notes in security.md (not here).
+- Respect .claudeignore for context efficiency: do not scan .next/ or node_modules/ during normal work.
+- Exception: when changing Next.js behavior, read node_modules/next/dist/docs/ as required.
 - Update this file only when architecture/workflow rules change.
 
