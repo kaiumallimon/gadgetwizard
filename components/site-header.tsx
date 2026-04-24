@@ -7,11 +7,21 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   FiChevronDown,
+  FiChevronRight,
+  FiFacebook,
+  FiGrid,
+  FiHeart,
   FiHeadphones,
+  FiInstagram,
   FiLogOut,
+  FiMail,
   FiMenu,
   FiPackage,
+  FiPhone,
   FiShield,
+  FiStar,
+  FiTag,
+  FiTwitter,
   FiSearch,
   FiShoppingCart,
   FiTruck,
@@ -287,117 +297,178 @@ export function SiteHeader() {
               </form>
             </div>
 
-            {renderSession?.role !== "admin" && (
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="gw-soft-border-dark relative inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
-              >
-                <Link href="/cart" aria-label="Cart">
-                  <FiShoppingCart className="h-4 w-4" />
-                  {cartItemCount > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
-                      {cartItemCount > 99 ? "99+" : cartItemCount}
-                    </span>
-                  )}
-                </Link>
-              </Button>
-            )}
-
-            <Sheet>
-              <SheetTrigger asChild>
+            <div className="ml-auto flex items-center gap-2 md:hidden">
+              {renderSession?.role !== "admin" && (
                 <Button
-                  type="button"
+                  asChild
                   variant="outline"
                   size="sm"
-                  className="gw-soft-border-dark inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
+                  className="gw-soft-border-dark relative inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100"
                 >
-                  <FiMenu className="h-4 w-4" /> Menu
+                  <Link href="/cart" aria-label="Cart">
+                    <FiShoppingCart className="h-4 w-4" />
+                    {cartItemCount > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
+                        {cartItemCount > 99 ? "99+" : cartItemCount}
+                      </span>
+                    )}
+                  </Link>
                 </Button>
-              </SheetTrigger>
+              )}
 
-              <SheetContent
-                side="right"
-                className="w-[90vw] max-w-sm bg-black p-0 text-zinc-100"
-              >
-                <SheetHeader className="border-b border-zinc-800/70 bg-black px-5 py-4">
-                  <SheetTitle className="text-base text-zinc-100">Browse GadgetWizard</SheetTitle>
-                  <SheetDescription className="text-xs text-zinc-500">Quick links</SheetDescription>
-                </SheetHeader>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gw-soft-border-dark inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100"
+                  >
+                    <FiMenu className="h-4 w-4" /> Menu
+                  </Button>
+                </SheetTrigger>
 
-                <div className="max-h-[calc(100vh-84px)] overflow-y-auto px-5 py-2">
-                  <nav className="divide-y divide-zinc-800/70">
-                    <SheetClose asChild>
-                      <Link href="/categories" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        Categories
-                      </Link>
-                    </SheetClose>
+                <SheetContent
+                  side="right"
+                  className="gw-soft-border-dark border-zinc-800/50 bg-black p-0 text-zinc-100"
+                >
+                  <SheetHeader className="gw-soft-border-dark border-b border-muted-foreground bg-black px-5 py-4">
+                    <Link href="/" className="inline-flex w-fit items-center">
+                      <Image
+                        src="/logo-black-surfacce.svg"
+                        alt="GadgetWizard"
+                        width={308}
+                        height={60}
+                        style={{ width: "auto" }}
+                        className="h-13 w-auto -translate-x-5"
+                      />
+                    </Link>
+                    <SheetDescription className="text-sm text-zinc-500">Quick links</SheetDescription>
+                  </SheetHeader>
 
-                    <SheetClose asChild>
-                      <Link href="/brands" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        Brands
-                      </Link>
-                    </SheetClose>
-
-                    <SheetClose asChild>
-                      <Link href="/offers" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        Hot Offers
-                      </Link>
-                    </SheetClose>
-
-                    <SheetClose asChild>
-                      <Link href="/wishlist" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        Wishlist
-                      </Link>
-                    </SheetClose>
-
-                    <SheetClose asChild>
-                      <Link href="/new-arrivals" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        New Arrivals
-                      </Link>
-                    </SheetClose>
-
-                    <SheetClose asChild>
-                      <Link href="/best-sellers" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                        Best Sellers
-                      </Link>
-                    </SheetClose>
-
-                    {renderSession && (
-                      <SheetClose asChild>
-                        <Link href={dashboardHref} className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
-                          Dashboard
+                  <div className="flex h-[calc(100vh-84px)] flex-col px-5 py-2">
+                    <nav className="min-h-0 flex-1 overflow-y-auto">
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/categories" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiGrid className="h-4 w-4 text-zinc-400" />
+                          <span>Categories</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
                         </Link>
                       </SheetClose>
-                    )}
 
-                    {!loading && !renderUser && (
-                      <button
-                        type="button"
-                        className="block w-full py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
-                        onClick={() => {
-                          setAuthDialogMode("login");
-                          setAuthDialogOpen(true);
-                        }}
-                      >
-                        Login
-                      </button>
-                    )}
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/brands" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiPackage className="h-4 w-4 text-zinc-400" />
+                          <span>Brands</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </Link>
+                      </SheetClose>
 
-                    {!loading && renderUser && (
-                      <button
-                        type="button"
-                        className="block w-full py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
-                        onClick={onLogout}
-                      >
-                        Logout
-                      </button>
-                    )}
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/offers" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiTag className="h-4 w-4 text-zinc-400" />
+                          <span>Hot Offers</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/wishlist" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiHeart className="h-4 w-4 text-zinc-400" />
+                          <span>Wishlist</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/new-arrivals" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiPackage className="h-4 w-4 text-zinc-400" />
+                          <span>New Arrivals</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
+                        <Link href="/best-sellers" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          <FiStar className="h-4 w-4 text-zinc-400" />
+                          <span>Best Sellers</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </Link>
+                      </SheetClose>
+
+                      {!loading && !renderUser && (
+                        <SheetClose
+                          className="flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
+                          onClick={() => {
+                            setAuthDialogMode("login");
+                            setAuthDialogOpen(true);
+                          }}
+                        >
+                          <FiUser className="h-4 w-4 text-zinc-400" />
+                          <span>Login</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </SheetClose>
+                      )}
+
+                      {!loading && renderUser && (
+                        <SheetClose
+                          className="border-b gw-soft-border-dark pb-3  flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
+                          onClick={onLogout}
+                        >
+                          <FiLogOut className="h-4 w-4 text-zinc-400" />
+                          <span>Logout</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </SheetClose>
+                      )}
+
+                      {renderSession && ( 
+                        <SheetClose
+                          className="flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
+                          onClick={() => {
+                            router.push(dashboardHref);
+                          }}
+                        >
+                          <FiUser className="h-4 w-4 text-zinc-400" />
+                          <span>{renderSession.role === "admin" ? "Admin Dashboard" : "Dashboard"}</span>
+                          <FiChevronRight className="ml-auto h-4 w-4 text-zinc-500" />
+                        </SheetClose>
+                      )}
+                    </nav>
+
+                    <div className="mt-3 border-t gw-soft-border-dark pt-4">
+                      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Support</p>
+                      <div className="mt-2 space-y-2 text-sm text-zinc-300">
+                        <p className="inline-flex items-center gap-2">
+                          <FiPhone className="h-4 w-4 text-zinc-500" />
+                          +880 1712-345678
+                        </p>
+                        <p className="inline-flex items-center gap-2">
+                          <FiMail className="h-4 w-4 text-zinc-500" />
+                          support@gadgetwizard.shop
+                        </p>
+                        <p className="inline-flex items-center gap-2">
+                          <FiHeadphones className="h-4 w-4 text-zinc-500" />
+                          Sat - Thu, 10:00 AM - 8:00 PM
+                        </p>
+                      </div>
+
+                      <p className="mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Social</p>
+                      <div className="mt-2 flex items-center gap-3">
+                        <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Facebook">
+                          <FiFacebook className="h-4 w-4" />
+                        </a>
+                        <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Instagram">
+                          <FiInstagram className="h-4 w-4" />
+                        </a>
+                        <a href="https://www.twitter.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Twitter">
+                          <FiTwitter className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
 
             <nav className="ml-auto hidden items-center gap-2 text-sm sm:gap-3 md:flex">
               {renderSession?.role !== "admin" && (
