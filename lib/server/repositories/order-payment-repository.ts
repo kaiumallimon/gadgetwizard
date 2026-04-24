@@ -10,7 +10,7 @@ export interface OrderPaymentRecord {
   amount: number;
   amount_received: number;
   status: string;
-  payment_method_types: string | null;
+  payment_method_types: string | string[] | null;
   paid_at: Date | null;
   created_at: Date;
   updated_at: Date;

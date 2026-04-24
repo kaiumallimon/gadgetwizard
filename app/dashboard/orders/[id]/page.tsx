@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { FiArrowLeft, FiMapPin, FiPackage } from "react-icons/fi";
+import { FiArrowLeft, FiDownload, FiMapPin, FiPackage } from "react-icons/fi";
 
 import {
   Breadcrumb,
@@ -81,6 +81,11 @@ export default async function OrderDetailPage({ params }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href={`/api/orders/${order.id}/invoice`} target="_blank" rel="noopener noreferrer">
+                <FiDownload className="h-4 w-4" /> Invoice
+              </Link>
+            </Button>
             <Button asChild variant="outline" size="sm" className="rounded-full">
               <Link href="/dashboard/orders"><FiArrowLeft className="h-4 w-4" /> Back</Link>
             </Button>

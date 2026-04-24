@@ -408,13 +408,17 @@ function mapOrderItem(row: OrderItemRecord): OrderItem {
 function mapOrderPaymentRecord(row: OrderPaymentRecord): OrderPayment {
   let paymentMethodTypes: string[] = [];
   if (row.payment_method_types) {
-    try {
-      const parsed = JSON.parse(row.payment_method_types) as unknown;
-      if (Array.isArray(parsed)) {
-        paymentMethodTypes = parsed.filter((value): value is string => typeof value === "string");
+    if (Array.isArray(row.payment_method_types)) {
+      paymentMethodTypes = row.payment_method_types.filter((value): value is string => typeof value === "string");
+    } else {
+      try {
+        const parsed = JSON.parse(row.payment_method_types) as unknown;
+        if (Array.isArray(parsed)) {
+          paymentMethodTypes = parsed.filter((value): value is string => typeof value === "string");
+        }
+      } catch {
+        paymentMethodTypes = [];
       }
-    } catch {
-      paymentMethodTypes = [];
     }
   }
 
