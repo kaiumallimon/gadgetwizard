@@ -2,6 +2,14 @@ import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { FiArrowLeft, FiMapPin, FiPackage } from "react-icons/fi";
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getOrderForUser } from "@/lib/server/services/order-service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,16 +60,49 @@ export default async function OrderDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Button asChild variant="outline" size="sm" className="rounded-full">
-          <Link href="/dashboard/orders"><FiArrowLeft className="h-4 w-4" /> Back</Link>
-        </Button>
-        <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">Order #{order.id}</h1>
-          <p className="text-sm text-zinc-500">{formattedDate}</p>
+      <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Order #{order.id}</h1>
+            <p className="mt-2 text-sm text-zinc-600">Placed on {formattedDate}</p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" size="sm" className="rounded-full">
+              <Link href="/dashboard/orders"><FiArrowLeft className="h-4 w-4" /> Back</Link>
+            </Button>
+            <Badge className={`border text-sm ${config.className}`}>{config.label}</Badge>
+          </div>
         </div>
-        <Badge className={`ml-auto border text-sm ${config.className}`}>{config.label}</Badge>
-      </div>
+
+        <div className="mt-3 border-t border-zinc-200 pt-2">
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/">Home</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard/orders">Orders</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Order #{order.id}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+      </header>
 
       {/* Items */}
       <Card>
