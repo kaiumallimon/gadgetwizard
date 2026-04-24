@@ -531,6 +531,178 @@ export const apiClient = {
   async adminGetCdnStats(token?: string) {
     return apiFetch<{ stats: CdnStats }>("/api/admin/cdn/stats", { token });
   },
+
+  // Checkout
+  async createPaymentIntent(payload: {
+    addressId?: number;
+    newAddress?: {
+      label?: string;
+      fullName: string;
+      phone: string;
+      addressLine1: string;
+      addressLine2?: string;
+      city: string;
+      state?: string;
+      postalCode?: string;
+      country: string;
+      saveAddress?: boolean;
+    };
+  }, token?: string) {
+    return apiFetch<{ clientSecret: string; paymentIntentId: string; amount: number }>(
+      "/api/checkout",
+      { method: "POST", token, body: JSON.stringify(payload) },
+    );
+  },
+
+  // Orders (user)
+  async createOrder(payload: {
+    paymentIntentId: string;
+    addressId?: number;
+    newAddress?: {
+      label?: string;
+      fullName: string;
+      phone: string;
+      addressLine1: string;
+      addressLine2?: string;
+      city: string;
+      state?: string;
+      postalCode?: string;
+      country: string;
+      saveAddress?: boolean;
+    };
+  }, token?: string) {
+    return apiFetch<{ order: Order }>("/api/orders", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getOrders(token?: string) {
+    return apiFetch<{ items: Order[] }>("/api/orders", { token });
+  },
+
+  async getOrder(id: number, token?: string) {
+    return apiFetch<{ item: Order }>(`/api/orders/${id}`, { token });
+  },
+
+  // Addresses (user)
+  async getAddresses(token?: string) {
+    return apiFetch<{ items: UserAddress[] }>("/api/me/addresses", { token });
+  },
+
+  async createAddress(payload: {
+    label?: string;
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    isDefault?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: UserAddress }>("/api/me/addresses", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async updateAddress(id: number, payload: {
+    label?: string;
+    fullName: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state?: string;
+    postalCode?: string;
+    country?: string;
+    isDefault?: boolean;
+  }, token?: string) {
+    return apiFetch<{ item: UserAddress }>(`/api/me/addresses/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async deleteAddress(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/me/addresses/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
+  // Reviews (user)
+  async getProductReviews(slug: string) {
+    return apiFetch<{ items: ProductReview[] }>(`/api/products/${slug}/reviews`);
+  },
+
+  async submitReview(slug: string, payload: {
+    orderId: number;
+    rating: number;
+    comment: string;
+    images?: string[];
+  }, token?: string) {
+    return apiFetch<{ item: ProductReview }>(`/api/products/${slug}/reviews`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Admin orders
+  async adminGetOrders(params: {
+    page?: number;
+    pageSize?: number;
+    status?: string;
+    search?: string;
+  }, token?: string) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.status) query.set("status", params.status);
+    if (params.search) query.set("search", params.search);
+    return apiFetch<{ items: Order[]; total: number; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
+      `/api/admin/orders?${query.toString()}`,
+      { token },
+    );
+  },
+
+  async adminGetOrder(id: number, token?: string) {
+    return apiFetch<{ item: Order }>(`/api/admin/orders/${id}`, { token });
+  },
+
+  async adminUpdateOrderStatus(id: number, payload: { status: string; notes?: string }, token?: string) {
+    return apiFetch<{ item: Order }>(`/api/admin/orders/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  // Admin reviews
+  async adminGetReviews(params: { page?: number; pageSize?: number; status?: string }, token?: string) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.status) query.set("status", params.status);
+    return apiFetch<{ items: ProductReview[]; total: number }>(
+      `/api/admin/reviews?${query.toString()}`,
+      { token },
+    );
+  },
+
+  async adminUpdateReviewStatus(id: number, payload: { status: "approved" | "rejected"; adminNote?: string }, token?: string) {
+    return apiFetch<{ item: ProductReview }>(`/api/admin/reviews/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
 };
 
 export { ApiError };
