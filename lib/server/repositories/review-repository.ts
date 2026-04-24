@@ -138,3 +138,25 @@ export async function updateReviewStatus(
     [status, adminNote ?? null, id],
   );
 }
+
+export async function recomputeProductRating(productId: number): Promise<void> {
+  const stats = await queryOne<{ avg_rating: number | null; rating_count: number }>(
+    `SELECT
+       AVG(rating) AS avg_rating,
+       COUNT(*) AS rating_count
+     FROM product_reviews
+     WHERE product_id = ?
+       AND status = 'approved'`,
+    [productId],
+  );
+
+  const avgRating = stats?.avg_rating ? Number(stats.avg_rating.toFixed(2)) : 0;
+  const ratingCount = stats?.rating_count ?? 0;
+
+  await execute(
+    `UPDATE products
+     SET rating_avg = ?, rating_count = ?, updated_at = NOW()
+     WHERE id = ?`,
+    [avgRating, ratingCount, productId],
+  );
+}

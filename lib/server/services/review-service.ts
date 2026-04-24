@@ -6,12 +6,13 @@ import {
   getApprovedReviewsByProductId,
   findUserReviewForProductOrder,
   listReviews,
+  recomputeProductRating,
   updateReviewStatus,
   type ReviewRecord,
   type ListReviewsFilter,
 } from "@/lib/server/repositories/review-repository";
 import { findProductById } from "@/lib/server/repositories/product-repository";
-import { hasUserDeliveredOrderForProduct } from "@/lib/server/repositories/order-repository";
+import { hasUserDeliveredOrderForProductInOrder } from "@/lib/server/repositories/order-repository";
 
 function toIso(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
@@ -61,22 +62,14 @@ export async function submitProductReview(
     images?: string[];
   },
 ): Promise<ProductReview> {
-  // Validate product exists
   const product = await findProductById(productId);
   if (!product) throw notFound("Product not found");
 
-  // Ensure user has a delivered order containing this product
-  const deliveredOrderId = await hasUserDeliveredOrderForProduct(userId, productId);
-  if (!deliveredOrderId) {
-    throw badRequest("You can only review products from delivered orders.");
-  }
-
-  // Ensure the provided orderId matches a delivered order for this user/product
-  if (deliveredOrderId !== input.orderId) {
+  const isEligibleOrder = await hasUserDeliveredOrderForProductInOrder(userId, productId, input.orderId);
+  if (!isEligibleOrder) {
     throw badRequest("Invalid order for this review.");
   }
 
-  // Prevent duplicate reviews
   const existing = await findUserReviewForProductOrder(userId, productId, input.orderId);
   if (existing) {
     throw conflict("You have already submitted a review for this product.");
@@ -115,6 +108,7 @@ export async function adminUpdateReviewStatus(
   if (!existing) throw notFound("Review not found");
 
   await updateReviewStatus(reviewId, status, adminNote);
+  await recomputeProductRating(existing.product_id);
 
   const updated = await getReviewById(reviewId);
   if (!updated) throw new Error("Failed to retrieve updated review");

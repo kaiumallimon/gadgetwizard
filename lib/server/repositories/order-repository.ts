@@ -214,3 +214,23 @@ export async function hasUserDeliveredOrderForProduct(
   );
   return row?.order_id ?? null;
 }
+
+export async function hasUserDeliveredOrderForProductInOrder(
+  userId: number,
+  productId: number,
+  orderId: number,
+): Promise<boolean> {
+  const row = await queryOne<{ matched: number }>(
+    `SELECT 1 AS matched
+     FROM orders o
+     JOIN order_items oi ON oi.order_id = o.id
+     WHERE o.id = ?
+       AND o.user_id = ?
+       AND oi.product_id = ?
+       AND o.status = 'delivered'
+     LIMIT 1`,
+    [orderId, userId, productId],
+  );
+
+  return Boolean(row?.matched);
+}

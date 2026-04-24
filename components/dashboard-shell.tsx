@@ -9,16 +9,19 @@ import {
     BarChart3,
     Boxes,
     ChevronDown,
+    ClipboardList,
     HardDrive,
     Home,
     LayoutGrid,
     LogOut,
+    MapPin,
     Menu,
     Megaphone,
     CircleHelp,
     Package,
     ShoppingBag,
     ShoppingCart,
+    Star,
     Tag,
     UserRound,
     Users,
@@ -83,6 +86,13 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         ]
                     },
                     {
+                        label: "Orders",
+                        items: [
+                            { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+                            { href: "/admin/reviews", label: "Reviews", icon: Star },
+                        ],
+                    },
+                    {
                         label: "Merchandising",
                         items: [
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
@@ -128,6 +138,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     items: [
                         { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
                         { href: "/cart", label: "My Cart", icon: ShoppingCart },
+                        { href: "/dashboard/orders", label: "My Orders", icon: ClipboardList },
+                        { href: "/dashboard/addresses", label: "Addresses", icon: MapPin },
                     ],
                 },
             ],

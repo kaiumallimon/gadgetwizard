@@ -2,9 +2,11 @@ import Link from "next/link";
 import { ArrowLeft, CircleCheck, ShieldCheck, Truck } from "lucide-react";
 
 import { AddToCartInline } from "@/components/add-to-cart-inline";
+import { ProductReviewsSection } from "@/components/product-reviews-section";
 import { ProductGallery } from "@/components/product-gallery";
 import { Badge } from "@/components/ui/badge";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
+import { getApprovedProductReviews } from "@/lib/server/services/review-service";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +81,7 @@ function parseColorOptions(colorValue: string | null): string[] {
 export default async function ProductDetailsPage(context: { params: Promise<{ slug: string }> }) {
   const { slug } = await context.params;
   const product = await getPublicProductBySlug(slug);
+  const approvedReviews = await getApprovedProductReviews(product.id);
   const specificationSections = normalizeSpecificationSections(product.specifications);
   const colorOptions = parseColorOptions(product.color);
   const fallbackImage = "https://blocks.astratic.com/img/general-img-square.png";
@@ -254,6 +257,12 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               No detailed description provided.
             </article>
           )}
+
+          <ProductReviewsSection
+            productId={product.id}
+            productSlug={product.slug}
+            initialReviews={approvedReviews}
+          />
         </div>
       </div>
     </div>

@@ -56,7 +56,7 @@ export function SiteHeader() {
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
-  const { cart } = useCartStore();
+  const { cart, setCart, clearCart } = useCartStore();
   const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
 
   const cartItemCount = session?.role === "user"
@@ -78,11 +78,28 @@ export function SiteHeader() {
           session: response.session,
           user: response.user,
         });
+
+        if (response.session.role === "user") {
+          try {
+            const cartResponse = await apiClient.getCart(token ?? undefined);
+            if (!active) {
+              return;
+            }
+            setCart(cartResponse.cart);
+          } catch {
+            if (active) {
+              clearCart();
+            }
+          }
+        } else {
+          clearCart();
+        }
       } catch {
         if (!active) {
           return;
         }
         clearAuth();
+        clearCart();
       } finally {
         if (active) {
           setLoading(false);
@@ -119,7 +136,7 @@ export function SiteHeader() {
     return () => {
       active = false;
     };
-  }, [token, setAuth, clearAuth]);
+  }, [token, setAuth, clearAuth, setCart, clearCart]);
 
   async function onLogout() {
     try {
@@ -154,7 +171,7 @@ export function SiteHeader() {
 
   return (
     <header className="gw-soft-border-light sticky top-0 z-50 border-b">
-      <div className="bg-(--accent) text-zinc-950">
+      <div className="bg-accent text-zinc-950">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs sm:px-6 sm:py-2">
           <div className="flex w-full items-center justify-center gap-2 md:w-auto md:justify-start">
             <span className="inline-flex items-center gap-1.5 whitespace-nowrap leading-none text-zinc-950/90">
@@ -255,6 +272,7 @@ export function SiteHeader() {
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Quick Actions</p>
 
                     <div className="grid gap-2">
+                      {session?.role !== "admin" && (
                       <SheetClose asChild>
                         <Button
                           asChild
@@ -262,10 +280,17 @@ export function SiteHeader() {
                           className="gw-soft-border-dark justify-start rounded-xl border bg-white/70 text-zinc-800 hover:bg-zinc-50"
                         >
                           <Link href="/cart">
-                            <FiShoppingCart className="h-4 w-4" /> Cart
+                            <FiShoppingCart className="h-4 w-4" />
+                            Cart
+                            {cartItemCount > 0 && (
+                              <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                                {cartItemCount > 99 ? "99+" : cartItemCount}
+                              </span>
+                            )}
                           </Link>
                         </Button>
                       </SheetClose>
+                    )}
 
                       {session && (
                         <SheetClose asChild>
@@ -320,7 +345,7 @@ export function SiteHeader() {
                               href={entry.href}
                               className={`gw-soft-border-dark flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm font-medium transition ${
                                 pathname === entry.href
-                                  ? "gw-soft-ring-accent bg-zinc-100 text-(--accent)"
+                                  ? "gw-soft-ring-accent bg-zinc-100 text-accent"
                                   : "bg-white/70 text-zinc-700 hover:bg-zinc-50 hover:text-zinc-900"
                               }`}
                             >
@@ -338,7 +363,7 @@ export function SiteHeader() {
                   <div className="gw-soft-border-dark rounded-xl border bg-white/70 px-3 py-2.5">
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Support</p>
                     <p className="mt-1 inline-flex items-center gap-1.5 text-sm font-medium text-zinc-800">
-                      <FiHeadphones className="h-4 w-4 text-(--accent)" /> +880 1712-345678
+                      <FiHeadphones className="h-4 w-4 text-accent" /> +880 1712-345678
                     </p>
                   </div>
                 </div>
@@ -403,7 +428,7 @@ export function SiteHeader() {
               href={entry.href}
               className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 font-medium transition ${
                 pathname === entry.href
-                  ? "gw-soft-ring-accent bg-orange-50 text-(--accent)"
+                  ? "gw-soft-ring-accent bg-orange-50 text-accent"
                   : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
               }`}
             >

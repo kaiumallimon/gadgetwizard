@@ -116,9 +116,14 @@ export function CartClient({ initialCart }: CartClientProps) {
       ))}
 
       <Card className="border-emerald-200 bg-emerald-50">
-        <CardContent className="p-4 text-right">
-          <p className="text-sm text-emerald-700">Cart Total</p>
-          <p className="text-2xl font-semibold text-emerald-900">${total.toLocaleString()}</p>
+        <CardContent className="flex items-center justify-between p-4">
+          <div>
+            <p className="text-sm text-emerald-700">Cart Total</p>
+            <p className="text-2xl font-semibold text-emerald-900">${total.toLocaleString()}</p>
+          </div>
+          <Button asChild size="lg" className="rounded-full bg-orange-500 px-6 text-white hover:bg-orange-600">
+            <Link href="/checkout">Proceed to Checkout</Link>
+          </Button>
         </CardContent>
       </Card>
     </section>

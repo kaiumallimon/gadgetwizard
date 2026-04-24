@@ -11,6 +11,8 @@ import {
   listOrders,
   updateOrderStatus,
   findOrderByPaymentIntent,
+  type OrderItemRecord,
+  type OrderRecord,
   type ListOrdersFilter,
 } from "@/lib/server/repositories/order-repository";
 import {
@@ -26,7 +28,7 @@ function getStripe(): Stripe {
   if (!env.STRIPE_SECRET_KEY) {
     throw badRequest("Payment processing is not configured on this server.");
   }
-  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: "2025-03-31.basil" });
+  return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
 }
 
 export interface CheckoutAddressInput {
@@ -109,7 +111,7 @@ async function resolveShippingAddress(
 
 export async function createPaymentIntent(
   userId: number,
-  addressInput: CheckoutAddressInput,
+  _addressInput?: CheckoutAddressInput,
 ): Promise<{ clientSecret: string; paymentIntentId: string; amount: number }> {
   const stripe = getStripe();
   const cart = await getCartByUserId(userId);
@@ -117,9 +119,6 @@ export async function createPaymentIntent(
   if (!cart || cart.items.length === 0) {
     throw badRequest("Your cart is empty.");
   }
-
-  // Validate address exists/is valid
-  await resolveShippingAddress(userId, addressInput);
 
   const subtotal = cart.items.reduce((sum, item) => {
     const price = item.appliedDiscountedPrice ?? item.unitPrice;
@@ -272,33 +271,33 @@ function toIso(value: Date | string): string {
 }
 
 function mapOrderRecord(
-  row: Awaited<ReturnType<typeof getOrderById>> & object,
-  itemRows: Awaited<ReturnType<typeof getOrderItemsByOrderId>>,
+  row: OrderRecord,
+  itemRows: OrderItemRecord[],
 ): Order {
-  const snapshot = typeof row!.shipping_address_snapshot === "string"
-    ? (JSON.parse(row!.shipping_address_snapshot) as AddressSnapshot)
-    : row!.shipping_address_snapshot as AddressSnapshot;
+  const snapshot = typeof row.shipping_address_snapshot === "string"
+    ? (JSON.parse(row.shipping_address_snapshot) as AddressSnapshot)
+    : row.shipping_address_snapshot as AddressSnapshot;
 
   return {
-    id: row!.id,
-    userId: row!.user_id,
-    status: row!.status,
-    totalAmount: Number(row!.total_amount),
-    subtotal: Number(row!.subtotal),
-    shippingAmount: Number(row!.shipping_amount),
-    stripePaymentIntentId: row!.stripe_payment_intent_id,
-    stripePaymentStatus: row!.stripe_payment_status,
+    id: row.id,
+    userId: row.user_id,
+    status: row.status,
+    totalAmount: Number(row.total_amount),
+    subtotal: Number(row.subtotal),
+    shippingAmount: Number(row.shipping_amount),
+    stripePaymentIntentId: row.stripe_payment_intent_id,
+    stripePaymentStatus: row.stripe_payment_status,
     shippingAddressSnapshot: snapshot,
-    notes: row!.notes,
-    createdAt: toIso(row!.created_at),
-    updatedAt: toIso(row!.updated_at),
-    userName: row!.user_name,
-    userEmail: row!.user_email,
+    notes: row.notes,
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
+    userName: row.user_name,
+    userEmail: row.user_email,
     items: itemRows.map(mapOrderItem),
   };
 }
 
-function mapOrderItem(row: Awaited<ReturnType<typeof getOrderItemsByOrderId>>[number]): OrderItem {
+function mapOrderItem(row: OrderItemRecord): OrderItem {
   return {
     id: row.id,
     orderId: row.order_id,

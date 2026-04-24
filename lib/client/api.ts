@@ -547,7 +547,7 @@ export const apiClient = {
       country: string;
       saveAddress?: boolean;
     };
-  }, token?: string) {
+  } = {}, token?: string) {
     return apiFetch<{ clientSecret: string; paymentIntentId: string; amount: number }>(
       "/api/checkout",
       { method: "POST", token, body: JSON.stringify(payload) },

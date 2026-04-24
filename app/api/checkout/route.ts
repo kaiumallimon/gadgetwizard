@@ -25,8 +25,6 @@ const newAddressSchema = z.object({
 const checkoutSchema = z.object({
   addressId: z.number().int().positive().optional(),
   newAddress: newAddressSchema.optional(),
-}).refine((data) => data.addressId !== undefined || data.newAddress !== undefined, {
-  message: "Either addressId or newAddress is required",
 });
 
 async function POSTHandler(request: NextRequest) {

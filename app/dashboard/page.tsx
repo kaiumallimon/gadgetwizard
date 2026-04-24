@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getCartForUser } from "@/lib/server/services/cart-service";
+import { getUserOrders } from "@/lib/server/services/order-service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,11 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const [user, cart] = await Promise.all([getCurrentUser(session.userId), getCartForUser(session.userId)]);
+  const [user, cart, orders] = await Promise.all([
+    getCurrentUser(session.userId),
+    getCartForUser(session.userId),
+    getUserOrders(session.userId),
+  ]);
 
   const cartItemCount = cart.items.reduce((count, item) => count + item.quantity, 0);
 
@@ -90,7 +95,7 @@ export default async function DashboardPage() {
               <Sparkles className="h-4 w-4" /> Purchase History
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 text-sm font-medium text-zinc-600">Coming soon</CardContent>
+          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">{orders.length}</CardContent>
         </Card>
       </section>
 
@@ -104,7 +109,13 @@ export default async function DashboardPage() {
             <Link href="/cart">Manage Cart</Link>
           </Button>
           <Button asChild variant="outline">
+            <Link href="/dashboard/orders">My Orders</Link>
+          </Button>
+          <Button asChild variant="outline">
             <Link href="/">Browse Storefront</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/addresses">Saved Addresses</Link>
           </Button>
           {user.role === "admin" && (
             <Button asChild variant="secondary">

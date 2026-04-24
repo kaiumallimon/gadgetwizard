@@ -68,7 +68,10 @@ export function AddToCartInline({ productId, stock, colorOptions = [] }: AddToCa
       router.push("/login");
       return;
     }
-
+    if (session.role === "admin") {
+      window.alert("Admin accounts cannot add items to cart.");
+      return;
+    }
     try {
       setPending(true);
       const response = await apiClient.addToCart({ productId, quantity }, token ?? undefined);

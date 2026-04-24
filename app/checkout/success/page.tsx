@@ -1,0 +1,65 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { FiCheckCircle, FiPackage } from "react-icons/fi";
+
+import { getServerSession } from "@/lib/server/auth/server-session";
+import { getOrderById } from "@/lib/server/repositories/order-repository";
+import { Button } from "@/components/ui/button";
+
+export const dynamic = "force-dynamic";
+
+interface SuccessPageProps {
+  searchParams: Promise<{ orderId?: string }>;
+}
+
+export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
+  const session = await getServerSession();
+  if (!session) redirect("/login");
+
+  const { orderId: orderIdStr } = await searchParams;
+  const orderId = orderIdStr ? Number(orderIdStr) : null;
+
+  let order = null;
+  if (orderId && Number.isInteger(orderId)) {
+    const found = await getOrderById(orderId);
+    if (found?.user_id === session.userId) {
+      order = found;
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-lg px-4 py-16 text-center sm:px-6">
+      <div className="flex flex-col items-center gap-4">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+          <FiCheckCircle className="h-10 w-10 text-emerald-600" />
+        </div>
+
+        <h1 className="text-3xl font-bold text-zinc-900">Order Placed!</h1>
+        <p className="text-zinc-500">
+          Thank you for your purchase. Your order has been confirmed and is being processed.
+        </p>
+
+        {order && (
+          <div className="mt-2 w-full rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-left">
+            <div className="flex items-center gap-2 text-sm font-medium text-zinc-700">
+              <FiPackage className="h-4 w-4" />
+              Order #{order.id}
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">
+              Status: <span className="font-medium capitalize text-zinc-700">{order.status.replace("_", " ")}</span>
+            </p>
+          </div>
+        )}
+
+        <div className="mt-4 flex flex-wrap justify-center gap-3">
+          <Button asChild className="rounded-full bg-orange-500 hover:bg-orange-600">
+            <Link href="/dashboard/orders">View My Orders</Link>
+          </Button>
+          <Button asChild variant="outline" className="rounded-full">
+            <Link href="/">Continue Shopping</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
