@@ -12,9 +12,11 @@ import {
 } from "@/components/ui/breadcrumb";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getOrderForUser } from "@/lib/server/services/order-service";
+import { getUserReviewsForOrder } from "@/lib/server/services/review-service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { OrderReviewPanel } from "@/components/order-review-panel";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,8 @@ export default async function OrderDetailPage({ params }: Props) {
   } catch {
     notFound();
   }
+
+  const existingReviews = await getUserReviewsForOrder(session.userId, order.id);
 
   const config = STATUS_CONFIG[order.status] ?? { label: order.status, className: "bg-zinc-100 text-zinc-700 border-zinc-200" };
   const addr = order.shippingAddressSnapshot;
@@ -181,16 +185,12 @@ export default async function OrderDetailPage({ params }: Props) {
       </Card>
 
       {/* Write Review (if delivered) */}
-      {order.status === "delivered" && (
-        <Card className="border-emerald-200 bg-emerald-50">
-          <CardContent className="p-4 text-sm text-emerald-800">
-            <p className="font-medium">Your order has been delivered!</p>
-            <p className="mt-0.5 text-emerald-600">
-              You can now leave a review for products in this order from each product&apos;s page.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      <OrderReviewPanel
+        orderId={order.id}
+        orderStatus={order.status}
+        items={order.items}
+        initialReviews={existingReviews}
+      />
     </div>
   );
 }

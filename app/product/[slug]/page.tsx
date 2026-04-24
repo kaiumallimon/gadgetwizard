@@ -93,6 +93,10 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const savingsPercent = hasDiscount && product.originalPrice > 0
     ? Math.max(0, Math.round((savingsAmount / product.originalPrice) * 100))
     : 0;
+  const approvedReviewCount = approvedReviews.length;
+  const approvedReviewAverage = approvedReviewCount > 0
+    ? approvedReviews.reduce((sum, review) => sum + review.rating, 0) / approvedReviewCount
+    : 0;
 
   return (
     <div className="w-full px-a4 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
@@ -139,6 +143,11 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
               <div className="space-y-4">
                 <h1 className="text-xl font-semibold tracking-tight text-zinc-900 md:text-3xl">{product.name}</h1>
                 {product.shortDescription && <p className="max-w-2xl text-sm leading-relaxed text-zinc-600">{product.shortDescription}</p>}
+                {approvedReviewCount > 0 && (
+                  <p className="text-sm font-medium text-zinc-700">
+                    {approvedReviewAverage.toFixed(1)} / 5 from {approvedReviewCount} review{approvedReviewCount !== 1 ? "s" : ""}
+                  </p>
+                )}
               </div>
 
               {(product.modelNumber || product.sku) && (
@@ -258,11 +267,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
             </article>
           )}
 
-          <ProductReviewsSection
-            productId={product.id}
-            productSlug={product.slug}
-            initialReviews={approvedReviews}
-          />
+          {approvedReviewCount > 0 && <ProductReviewsSection initialReviews={approvedReviews} />}
         </div>
       </div>
     </div>

@@ -20,7 +20,6 @@ export default async function AdminReviewsPage() {
   const result = await getAdminReviews({
     page: 1,
     pageSize: 100,
-    status: "pending",
   });
 
   return (

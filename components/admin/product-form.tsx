@@ -281,8 +281,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const [highlightPointsInput, setHighlightPointsInput] = useState(initialProduct?.highlightPoints?.join("\n") ?? "");
   const [metaTitle, setMetaTitle] = useState(initialProduct?.metaTitle ?? "");
   const [metaDescription, setMetaDescription] = useState(initialProduct?.metaDescription ?? "");
-  const [ratingAvg, setRatingAvg] = useState(initialProduct ? String(initialProduct.ratingAvg) : "0");
-  const [ratingCount, setRatingCount] = useState(initialProduct ? String(initialProduct.ratingCount) : "0");
   const [isFeatured, setIsFeatured] = useState(initialProduct?.isFeatured ?? false);
   const [isNewArrival, setIsNewArrival] = useState(initialProduct?.isNewArrival ?? false);
   const [isBestSeller, setIsBestSeller] = useState(initialProduct?.isBestSeller ?? false);
@@ -427,8 +425,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     const parsedWarrantyMonths = warrantyMonths.trim() ? Number(warrantyMonths) : null;
     const parsedReturnWindowDays = returnWindowDays.trim() ? Number(returnWindowDays) : null;
     const parsedWeightGrams = weightGrams.trim() ? Number(weightGrams) : null;
-    const parsedRatingAvg = Number(ratingAvg);
-    const parsedRatingCount = Number(ratingCount);
 
     if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
       toast.error("Name, price, stock, category, and at least one uploaded image are required.");
@@ -486,10 +482,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     if ((parsedBrandId !== null && !Number.isInteger(parsedBrandId)) ||
       (parsedWarrantyMonths !== null && !Number.isInteger(parsedWarrantyMonths)) ||
       (parsedReturnWindowDays !== null && !Number.isInteger(parsedReturnWindowDays)) ||
-      (parsedWeightGrams !== null && !Number.isInteger(parsedWeightGrams)) ||
-      !Number.isFinite(parsedRatingAvg) ||
-      !Number.isInteger(parsedRatingCount)) {
-      toast.error("Please check numeric fields like brand, warranty, return window, weight, and ratings.");
+      (parsedWeightGrams !== null && !Number.isInteger(parsedWeightGrams))) {
+      toast.error("Please check numeric fields like brand, warranty, return window, and weight.");
       return;
     }
 
@@ -499,11 +493,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       (parsedWeightGrams !== null && (parsedWeightGrams < 0 || parsedWeightGrams > 100000))
     ) {
       toast.error("Warranty, return window, or weight is outside allowed range.");
-      return;
-    }
-
-    if (parsedRatingAvg < 0 || parsedRatingAvg > 5 || parsedRatingCount < 0) {
-      toast.error("Rating average must be between 0 and 5, and rating count must be non-negative.");
       return;
     }
 
@@ -551,8 +540,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         highlightPoints,
         metaTitle: metaTitle.trim() || null,
         metaDescription: metaDescription.trim() || null,
-        ratingAvg: parsedRatingAvg,
-        ratingCount: parsedRatingCount,
         isFeatured,
         isNewArrival,
         isBestSeller,
@@ -754,26 +741,6 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               maxLength={PRODUCT_FIELD_LIMITS.metaTitle}
               onChange={(event) => setMetaTitle(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaTitle))}
               placeholder="SEO title (optional)"
-            />
-          </Field>
-          <Field label="Rating Average">
-            <Input
-              type="number"
-              min={0}
-              max={5}
-              step="0.1"
-              value={ratingAvg}
-              onChange={(event) => setRatingAvg(event.target.value)}
-              placeholder="Rating average (0-5)"
-            />
-          </Field>
-          <Field label="Rating Count">
-            <Input
-              type="number"
-              min={0}
-              value={ratingCount}
-              onChange={(event) => setRatingCount(event.target.value)}
-              placeholder="Rating count"
             />
           </Field>
           <Field
