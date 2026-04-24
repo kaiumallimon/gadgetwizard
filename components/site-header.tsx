@@ -287,13 +287,31 @@ export function SiteHeader() {
               </form>
             </div>
 
+            {renderSession?.role !== "admin" && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="gw-soft-border-dark relative inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
+              >
+                <Link href="/cart" aria-label="Cart">
+                  <FiShoppingCart className="h-4 w-4" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
+                      {cartItemCount > 99 ? "99+" : cartItemCount}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
+
             <Sheet>
               <SheetTrigger asChild>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="gw-soft-border-dark ml-auto inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
+                  className="gw-soft-border-dark inline-flex rounded-full border border-zinc-700/80 bg-zinc-900/90 text-zinc-100 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 md:hidden"
                 >
                   <FiMenu className="h-4 w-4" /> Menu
                 </Button>
@@ -315,19 +333,6 @@ export function SiteHeader() {
                         Categories
                       </Link>
                     </SheetClose>
-
-                    {headerCategories.map((entry) => (
-                      <SheetClose asChild key={entry.label}>
-                        <Link
-                          href={entry.href}
-                          className={`block py-3 text-sm font-medium transition ${
-                            pathname === entry.href ? "text-orange-300" : "text-zinc-100 hover:text-orange-300"
-                          }`}
-                        >
-                          {entry.label}
-                        </Link>
-                      </SheetClose>
-                    ))}
 
                     <SheetClose asChild>
                       <Link href="/brands" className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
@@ -358,6 +363,37 @@ export function SiteHeader() {
                         Best Sellers
                       </Link>
                     </SheetClose>
+
+                    {renderSession && (
+                      <SheetClose asChild>
+                        <Link href={dashboardHref} className="block py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
+                          Dashboard
+                        </Link>
+                      </SheetClose>
+                    )}
+
+                    {!loading && !renderUser && (
+                      <button
+                        type="button"
+                        className="block w-full py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
+                        onClick={() => {
+                          setAuthDialogMode("login");
+                          setAuthDialogOpen(true);
+                        }}
+                      >
+                        Login
+                      </button>
+                    )}
+
+                    {!loading && renderUser && (
+                      <button
+                        type="button"
+                        className="block w-full py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
+                        onClick={onLogout}
+                      >
+                        Logout
+                      </button>
+                    )}
                   </nav>
                 </div>
               </SheetContent>
