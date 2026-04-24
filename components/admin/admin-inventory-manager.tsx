@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface AdminInventoryManagerProps {
@@ -233,16 +234,17 @@ export function AdminInventoryManager({ initialProducts }: AdminInventoryManager
               />
             </div>
 
-            <select
-              value={stockFilter}
-              onChange={(event) => setStockFilter(event.target.value as StockFilter)}
-              className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
-            >
-              <option value="all">All statuses</option>
-              <option value="in">In stock</option>
-              <option value="low">Low stock</option>
-              <option value="out">Out of stock</option>
-            </select>
+            <Select value={stockFilter} onValueChange={(value) => setStockFilter(value as StockFilter)}>
+              <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="in">In stock</SelectItem>
+                <SelectItem value="low">Low stock</SelectItem>
+                <SelectItem value="out">Out of stock</SelectItem>
+              </SelectContent>
+            </Select>
 
             <Input
               type="number"

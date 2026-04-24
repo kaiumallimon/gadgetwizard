@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
@@ -197,36 +198,44 @@ export function BrandListManager({ initialBrands }: BrandListManagerProps) {
               />
             </div>
 
-            <select
+            <Select
               value={sort}
-              onChange={(event) => {
-                setSort(event.target.value as BrandSortOption);
+              onValueChange={(value) => {
+                setSort(value as BrandSortOption);
                 setPage(1);
               }}
-              className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
             >
-              <option value="sort_order">Sort: Order (default)</option>
-              <option value="name_az">Sort: Name A-Z</option>
-              <option value="name_za">Sort: Name Z-A</option>
-              <option value="newest">Sort: Newest</option>
-              <option value="oldest">Sort: Oldest</option>
-              <option value="featured_first">Sort: Featured First</option>
-              <option value="active_first">Sort: Active First</option>
-            </select>
+              <SelectTrigger className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sort_order">Sort: Order (default)</SelectItem>
+                <SelectItem value="name_az">Sort: Name A-Z</SelectItem>
+                <SelectItem value="name_za">Sort: Name Z-A</SelectItem>
+                <SelectItem value="newest">Sort: Newest</SelectItem>
+                <SelectItem value="oldest">Sort: Oldest</SelectItem>
+                <SelectItem value="featured_first">Sort: Featured First</SelectItem>
+                <SelectItem value="active_first">Sort: Active First</SelectItem>
+              </SelectContent>
+            </Select>
 
-            <select
+            <Select
               value={String(pageSize)}
-              onChange={(event) => {
-                const next = Number(event.target.value) as (typeof PAGE_SIZE_OPTIONS)[number];
+              onValueChange={(value) => {
+                const next = Number(value) as (typeof PAGE_SIZE_OPTIONS)[number];
                 setPageSize(next);
                 setPage(1);
               }}
-              className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)"
             >
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>{size} per page</option>
-              ))}
-            </select>
+              <SelectTrigger className="flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>{size} per page</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
       </Card>

@@ -7,6 +7,7 @@ import { useRef, useState, type RefObject } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 interface CategoryBrandFacet {
@@ -262,48 +263,49 @@ export function CategoryFilters({
 
         <div className="space-y-2">
           <label htmlFor={`${idPrefix}-sortPrimary`} className="text-sm font-medium text-zinc-800">Primary sort</label>
-          <select
-            id={`${idPrefix}-sortPrimary`}
-            name="sortPrimary"
-            defaultValue={sortPrimary}
-            onChange={submitCurrentForm}
-            className={FIELD_CLASSNAME}
-          >
-            {sortOptions.map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+          <Select name="sortPrimary" defaultValue={sortPrimary} onValueChange={() => submitCurrentForm()}>
+            <SelectTrigger id={`${idPrefix}-sortPrimary`} className={FIELD_CLASSNAME}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <label htmlFor={`${idPrefix}-sortSecondary`} className="text-sm font-medium text-zinc-800">Secondary sort</label>
-          <select
-            id={`${idPrefix}-sortSecondary`}
+          <Select
             name="sortSecondary"
-            defaultValue={sortSecondary ?? ""}
-            onChange={submitCurrentForm}
-            className={FIELD_CLASSNAME}
+            defaultValue={sortSecondary ?? "none"}
+            onValueChange={() => submitCurrentForm()}
           >
-            <option value="">None</option>
-            {sortOptions.filter((option) => option.value !== sortPrimary).map((option) => (
-              <option key={option.value} value={option.value}>{option.label}</option>
-            ))}
-          </select>
+            <SelectTrigger id={`${idPrefix}-sortSecondary`} className={FIELD_CLASSNAME}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">None</SelectItem>
+              {sortOptions.filter((option) => option.value !== sortPrimary).map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="space-y-2">
           <label htmlFor={`${idPrefix}-pageSize`} className="text-sm font-medium text-zinc-800">Products per page</label>
-          <select
-            id={`${idPrefix}-pageSize`}
-            name="pageSize"
-            defaultValue={String(pageSize)}
-            onChange={submitCurrentForm}
-            className={FIELD_CLASSNAME}
-          >
-            {pageSizeOptions.map((size) => (
-              <option key={size} value={String(size)}>{size} per page</option>
-            ))}
-          </select>
+          <Select name="pageSize" defaultValue={String(pageSize)} onValueChange={() => submitCurrentForm()}>
+            <SelectTrigger id={`${idPrefix}-pageSize`} className={FIELD_CLASSNAME}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {pageSizeOptions.map((size) => (
+                <SelectItem key={size} value={String(size)}>{size} per page</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

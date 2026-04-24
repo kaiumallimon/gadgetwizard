@@ -14,6 +14,7 @@ import { getAdminWishlist } from "@/lib/server/services/wishlist-service";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -175,18 +176,21 @@ export default async function AdminWishlistPage(context: {
               >
                 Per Page
               </label>
-              <select
-                id="admin-wishlist-page-size"
-                name="pageSize"
-                defaultValue={String(pageSize)}
-                className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              <Select name="pageSize" defaultValue={String(pageSize)}>
+                <SelectTrigger
+                  id="admin-wishlist-page-size"
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <input type="hidden" name="page" value="1" />

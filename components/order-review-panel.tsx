@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 interface OrderReviewPanelProps {
@@ -213,17 +214,21 @@ export function OrderReviewPanel({ orderId, orderStatus, items, initialReviews }
                 <div className="mt-3 space-y-3">
                   <div>
                     <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">Rating</label>
-                    <select
+                    <Select
                       value={String(draft.rating)}
-                      onChange={(event) => updateDraft(item.productId, { rating: Number(event.target.value) })}
-                      className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                      onValueChange={(value) => updateDraft(item.productId, { rating: Number(value) })}
                     >
-                      <option value="5">5 - Excellent</option>
-                      <option value="4">4 - Good</option>
-                      <option value="3">3 - Average</option>
-                      <option value="2">2 - Poor</option>
-                      <option value="1">1 - Bad</option>
-                    </select>
+                      <SelectTrigger className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="5">5 - Excellent</SelectItem>
+                        <SelectItem value="4">4 - Good</SelectItem>
+                        <SelectItem value="3">3 - Average</SelectItem>
+                        <SelectItem value="2">2 - Poor</SelectItem>
+                        <SelectItem value="1">1 - Bad</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div>

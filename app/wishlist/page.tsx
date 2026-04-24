@@ -5,6 +5,7 @@ import { ArrowLeft, Heart } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
@@ -179,36 +180,42 @@ export default async function WishlistPage(context: {
             <label htmlFor="wishlist-sort" className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
               Sort
             </label>
-            <select
-              id="wishlist-sort"
-              name="sort"
-              defaultValue={sort}
-              className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              {SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <Select name="sort" defaultValue={sort}>
+              <SelectTrigger
+                id="wishlist-sort"
+                className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div>
             <label htmlFor="wishlist-page-size" className="mb-1 block text-xs font-medium uppercase tracking-wide text-zinc-500">
               Per Page
             </label>
-            <select
-              id="wishlist-page-size"
-              name="pageSize"
-              defaultValue={String(pageSize)}
-              className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              {PAGE_SIZE_OPTIONS.map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
+            <Select name="pageSize" defaultValue={String(pageSize)}>
+              <SelectTrigger
+                id="wishlist-page-size"
+                className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PAGE_SIZE_OPTIONS.map((size) => (
+                  <SelectItem key={size} value={String(size)}>
+                    {size}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <input type="hidden" name="page" value="1" />

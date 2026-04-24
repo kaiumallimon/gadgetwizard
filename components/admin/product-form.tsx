@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ProductFormProps {
@@ -638,31 +639,33 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
           </Field>
           <Field label="Category">
-            <select
-              value={categoryId}
-              onChange={(event) => setCategoryId(event.target.value)}
-              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
-            >
-              {categoryOptions.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
+            <Select value={categoryId} onValueChange={setCategoryId}>
+              <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <Field label="Brand">
-            <select
-              value={brandId}
-              onChange={(event) => setBrandId(event.target.value)}
-              className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
-            >
-              <option value="">No brand</option>
-              {brands.map((brand) => (
-                <option key={brand.id} value={brand.id}>
-                  {brand.name}
-                </option>
-              ))}
-            </select>
+            <Select value={brandId || "none"} onValueChange={(value) => setBrandId(value === "none" ? "" : value)}>
+              <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No brand</SelectItem>
+                {brands.map((brand) => (
+                  <SelectItem key={brand.id} value={String(brand.id)}>
+                    {brand.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
           <Field label="SKU">
             <Input value={generatedSku} placeholder="Auto-generated unique SKU (GWIZ)" readOnly disabled />

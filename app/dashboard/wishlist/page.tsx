@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
@@ -213,18 +214,21 @@ export default async function DashboardWishlistPage(context: {
               >
                 Sort
               </label>
-              <select
-                id="dashboard-wishlist-sort"
-                name="sort"
-                defaultValue={sort}
-                className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {SORT_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <Select name="sort" defaultValue={sort}>
+                <SelectTrigger
+                  id="dashboard-wishlist-sort"
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SORT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -234,18 +238,21 @@ export default async function DashboardWishlistPage(context: {
               >
                 Per Page
               </label>
-              <select
-                id="dashboard-wishlist-page-size"
-                name="pageSize"
-                defaultValue={String(pageSize)}
-                className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
+              <Select name="pageSize" defaultValue={String(pageSize)}>
+                <SelectTrigger
+                  id="dashboard-wishlist-page-size"
+                  className="h-10 rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAGE_SIZE_OPTIONS.map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <input type="hidden" name="page" value="1" />
