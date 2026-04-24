@@ -344,7 +344,7 @@ export default async function AdminActivityPage({
           </p>
 
           <div className="text-xs text-zinc-500">
-            <Link href="/admin" className="text-(--accent) hover:underline">
+            <Link href="/admin" className="text-accent hover:underline">
               Return to Dashboard
             </Link>
           </div>
