@@ -65,13 +65,20 @@ export function SiteHeader() {
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const [searchText, setSearchText] = useState("");
+  const [isClientMounted, setIsClientMounted] = useState(false);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
   const { cart, setCart, clearCart } = useCartStore();
-  const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
+  const renderSession = isClientMounted ? session : null;
+  const renderUser = isClientMounted ? user : null;
+  const dashboardHref = renderSession?.role === "admin" ? "/admin" : "/dashboard";
 
-  const cartItemCount = session?.role === "user"
+  const cartItemCount = renderSession?.role === "user"
     ? (cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0)
     : 0;
+
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -159,11 +166,11 @@ export function SiteHeader() {
 
   useEffect(() => {
     const authParam = searchParams.get("auth");
-    if (!user && (authParam === "login" || authParam === "signup")) {
+    if (!renderUser && (authParam === "login" || authParam === "signup")) {
       setAuthDialogMode(authParam);
       setAuthDialogOpen(true);
     }
-  }, [searchParams, user]);
+  }, [searchParams, renderUser]);
 
   useEffect(() => {
     setSearchText(searchParams.get("search") ?? "");
@@ -309,7 +316,7 @@ export function SiteHeader() {
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Quick Actions</p>
 
                     <div className="grid gap-2">
-                      {session?.role !== "admin" && (
+                      {renderSession?.role !== "admin" && (
                       <SheetClose asChild>
                         <Button
                           asChild
@@ -329,7 +336,7 @@ export function SiteHeader() {
                       </SheetClose>
                     )}
 
-                      {session && (
+                      {renderSession && (
                         <SheetClose asChild>
                           <Button
                             asChild
@@ -343,7 +350,7 @@ export function SiteHeader() {
                         </SheetClose>
                       )}
 
-                      {!loading && !user && (
+                      {!loading && !renderUser && (
                         <SheetClose asChild>
                           <Button
                             type="button"
@@ -358,7 +365,7 @@ export function SiteHeader() {
                         </SheetClose>
                       )}
 
-                      {!loading && user && (
+                      {!loading && renderUser && (
                         <Button
                           type="button"
                           variant="outline"
@@ -440,7 +447,7 @@ export function SiteHeader() {
             </Sheet>
 
             <nav className="ml-auto hidden items-center gap-2 text-sm sm:gap-3 md:flex">
-              {session?.role !== "admin" && (
+              {renderSession?.role !== "admin" && (
                 <Button asChild variant="outline" size="sm" className="gw-soft-border-dark relative rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
                   <Link href="/cart">
                     <FiShoppingCart className="h-4 w-4" />
@@ -454,7 +461,7 @@ export function SiteHeader() {
                 </Button>
               )}
 
-              {session && (
+              {renderSession && (
                 <Button asChild variant="outline" size="sm" className="gw-soft-border-dark rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
                   <Link href={dashboardHref}>
                     <FiUser className="h-4 w-4" />
@@ -463,7 +470,7 @@ export function SiteHeader() {
                 </Button>
               )}
 
-              {!loading && !user && (
+              {!loading && !renderUser && (
                 <Button
                   type="button"
                   size="sm"
@@ -478,7 +485,7 @@ export function SiteHeader() {
                 </Button>
               )}
 
-              {!loading && user && (
+              {!loading && renderUser && (
                 <Button type="button" onClick={onLogout} variant="outline" size="sm" className="gw-soft-border-dark rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
                   <FiLogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">Logout</span>
