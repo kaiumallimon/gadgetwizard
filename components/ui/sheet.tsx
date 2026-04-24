@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+import { Slot } from "@radix-ui/react-slot"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -11,12 +12,32 @@ function Sheet({ ...props }: SheetPrimitive.Root.Props) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />
 }
 
-function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
-  return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />
+type SheetTriggerProps = SheetPrimitive.Trigger.Props & {
+  asChild?: boolean
 }
 
-function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
-  return <SheetPrimitive.Close data-slot="sheet-close" {...props} />
+function SheetTrigger({ asChild = false, render, ...props }: SheetTriggerProps) {
+  return (
+    <SheetPrimitive.Trigger
+      data-slot="sheet-trigger"
+      render={asChild ? <Slot /> : render}
+      {...props}
+    />
+  )
+}
+
+type SheetCloseProps = SheetPrimitive.Close.Props & {
+  asChild?: boolean
+}
+
+function SheetClose({ asChild = false, render, ...props }: SheetCloseProps) {
+  return (
+    <SheetPrimitive.Close
+      data-slot="sheet-close"
+      render={asChild ? <Slot /> : render}
+      {...props}
+    />
+  )
 }
 
 function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
