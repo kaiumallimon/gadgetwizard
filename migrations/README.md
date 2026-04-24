@@ -27,6 +27,7 @@ These SQL files are ordered and should be executed sequentially.
 21. 021_create_addresses.sql
 22. 022_create_product_reviews.sql
 23. 023_create_wishlist_items.sql
+24. 024_create_order_payments.sql
 
 ## Run Migrations Manually
 
@@ -53,6 +54,11 @@ mysql -u <username> -p <database_name> < migrations/016_enforce_unique_product_s
 mysql -u <username> -p <database_name> < migrations/017_create_faqs.sql
 mysql -u <username> -p <database_name> < migrations/018_create_system_activity_logs.sql
 mysql -u <username> -p <database_name> < migrations/019_migrate_auth_to_nextauth_credentials.sql
+mysql -u <username> -p <database_name> < migrations/020_create_orders.sql
+mysql -u <username> -p <database_name> < migrations/021_create_addresses.sql
+mysql -u <username> -p <database_name> < migrations/022_create_product_reviews.sql
+mysql -u <username> -p <database_name> < migrations/023_create_wishlist_items.sql
+mysql -u <username> -p <database_name> < migrations/024_create_order_payments.sql
 ```
 
 ## Notes
