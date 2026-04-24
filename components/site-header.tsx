@@ -21,6 +21,7 @@ import {
 import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useCartStore } from "@/lib/stores/cart-store";
 import { AuthDialog } from "@/components/auth-dialog";
 
 import { Button } from "@/components/ui/button";
@@ -55,7 +56,12 @@ export function SiteHeader() {
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
+  const { cart } = useCartStore();
   const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
+
+  const cartItemCount = session?.role === "user"
+    ? (cart?.items.reduce((sum, item) => sum + item.quantity, 0) ?? 0)
+    : 0;
 
   useEffect(() => {
     let active = true;
@@ -340,12 +346,19 @@ export function SiteHeader() {
             </Sheet>
 
             <nav className="ml-auto hidden items-center gap-2 text-sm sm:gap-3 md:flex">
-              <Button asChild variant="outline" size="sm" className="gw-soft-border-dark rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
-                <Link href="/cart">
-                  <FiShoppingCart className="h-4 w-4" />
-                  <span className="hidden sm:inline">Cart</span>
-                </Link>
-              </Button>
+              {session?.role !== "admin" && (
+                <Button asChild variant="outline" size="sm" className="gw-soft-border-dark relative rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
+                  <Link href="/cart">
+                    <FiShoppingCart className="h-4 w-4" />
+                    <span className="hidden sm:inline">Cart</span>
+                    {cartItemCount > 0 && (
+                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
+                        {cartItemCount > 99 ? "99+" : cartItemCount}
+                      </span>
+                    )}
+                  </Link>
+                </Button>
+              )}
 
               {session && (
                 <Button asChild variant="outline" size="sm" className="gw-soft-border-dark rounded-full border bg-zinc-900/90 text-zinc-100 hover:bg-zinc-800 hover:text-zinc-100">
