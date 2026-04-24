@@ -260,7 +260,7 @@ export function SiteHeader() {
       </div>
 
       <div className="bg-black text-zinc-100">
-        <div className="mx-auto w-full max-w-7xl px-4 py-3 sm:px-6">
+        <div className="mx-auto w-full max-w-7xl px-4 pt-3 pb-5 md:pb-3 sm:px-6">
           <div className="flex flex-wrap items-center gap-3">
             <Link href="/" className="group flex shrink-0 items-center">
               <Image
@@ -557,7 +557,7 @@ export function SiteHeader() {
             className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
           >
             <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-700">Hot</span>
-            Hot Offers
+            Offers
           </Link>
 
           <Link
