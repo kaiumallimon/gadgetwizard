@@ -330,9 +330,9 @@ export function SiteHeader() {
 
                 <SheetContent
                   side="right"
-                  className="gw-soft-border-dark border-zinc-800/50 bg-black p-0 text-zinc-100"
+                  className="gw-soft-border-dark h-dvh max-h-dvh overflow-hidden border-zinc-800/50 bg-black p-0 text-zinc-100"
                 >
-                  <SheetHeader className="gw-soft-border-dark border-b border-muted-foreground bg-black px-5 py-4">
+                  <SheetHeader className="gw-soft-border-dark shrink-0 border-b border-muted-foreground bg-black px-5 py-4">
                     <Link href="/" className="inline-flex w-fit items-center">
                       <Image
                         src="/logo-black-surfacce.svg"
@@ -346,7 +346,7 @@ export function SiteHeader() {
                     <SheetDescription className="text-sm text-zinc-500">Quick links</SheetDescription>
                   </SheetHeader>
 
-                  <div className="flex h-[calc(100vh-84px)] flex-col px-5 py-2">
+                  <div className="flex min-h-0 flex-1 flex-col px-5 py-2">
                     <nav className="min-h-0 flex-1 overflow-y-auto">
                       <SheetClose asChild className="border-b gw-soft-border-dark pb-3">
                         <Link href="/categories" className="flex items-center gap-3 py-3 text-sm font-medium text-zinc-100 transition hover:text-orange-300">
