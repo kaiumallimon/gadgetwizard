@@ -98,18 +98,6 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-zinc-200/90 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
-      <Button
-        type="button"
-        variant="outline"
-        size="icon"
-        disabled={wishlistPending || !wishlistReady}
-        onClick={onToggleWishlist}
-        className={`absolute right-3 top-3 z-10 h-8 w-8 rounded-full border bg-white/90 backdrop-blur ${isWishlisted ? "text-red-500" : "text-zinc-500"}`}
-        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-      >
-        <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
-      </Button>
-
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-4/3 w-full overflow-hidden bg-white p-3">
           <img src={image} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />
@@ -137,11 +125,25 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <CardContent className="space-y-3 p-4">
-        <div className="space-y-1">
-          <p className="line-clamp-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500">{metaLabel}</p>
-          <Link href={`/product/${product.slug}`} className="line-clamp-2 min-h-11 text-[15px] font-semibold leading-6 text-zinc-900 transition-colors hover:text-accent">
-            {product.name}
-          </Link>
+        <div className="flex items-start justify-between gap-3">
+          <div className="space-y-1 min-w-0">
+            <p className="line-clamp-1 text-xs font-medium uppercase tracking-[0.08em] text-zinc-500">{metaLabel}</p>
+            <Link href={`/product/${product.slug}`} className="line-clamp-2 min-h-11 text-[15px] font-semibold leading-6 text-zinc-900 transition-colors hover:text-accent">
+              {product.name}
+            </Link>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            disabled={wishlistPending || !wishlistReady}
+            onClick={onToggleWishlist}
+            className={`h-8 w-8 shrink-0 rounded-full border bg-white ${isWishlisted ? "text-red-500" : "text-zinc-500"}`}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
+          </Button>
         </div>
 
         <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/65 p-3">
