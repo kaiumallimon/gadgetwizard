@@ -128,7 +128,7 @@ export function AdminOrdersManager({ initialOrders }: AdminOrdersManagerProps) {
 
           <div className="space-y-1">
             <Label className="text-xs">Status</Label>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value ?? "all")}>
               <SelectTrigger>
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
@@ -196,7 +196,13 @@ export function AdminOrdersManager({ initialOrders }: AdminOrdersManagerProps) {
                       <Label className="text-xs">Update status</Label>
                       <Select
                         value={status}
-                        onValueChange={(value) => setLocalStatus((prev) => ({ ...prev, [order.id]: value as OrderStatus }))}
+                        onValueChange={(value) => {
+                          if (!value) {
+                            return;
+                          }
+
+                          setLocalStatus((prev) => ({ ...prev, [order.id]: value as OrderStatus }));
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />

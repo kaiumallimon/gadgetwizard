@@ -639,7 +639,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
           </Field>
           <Field label="Category">
-            <Select value={categoryId} onValueChange={setCategoryId}>
+            <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
               <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
                 <SelectValue />
               </SelectTrigger>
@@ -653,7 +653,10 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             </Select>
           </Field>
           <Field label="Brand">
-            <Select value={brandId || "none"} onValueChange={(value) => setBrandId(value === "none" ? "" : value)}>
+            <Select
+              value={brandId || "none"}
+              onValueChange={(value) => setBrandId(!value || value === "none" ? "" : value)}
+            >
               <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
                 <SelectValue />
               </SelectTrigger>
