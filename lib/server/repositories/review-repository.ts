@@ -86,6 +86,22 @@ export async function findUserReviewForProductOrder(
   );
 }
 
+export async function listUserReviewsByOrder(
+  userId: number,
+  orderId: number,
+): Promise<ReviewRecord[]> {
+  return queryRows<ReviewRecord>(
+    `SELECT r.*, u.name AS user_name, u.email AS user_email,
+            p.name AS product_name, p.slug AS product_slug
+     FROM product_reviews r
+     JOIN users u ON u.id = r.user_id
+     JOIN products p ON p.id = r.product_id
+     WHERE r.user_id = ? AND r.order_id = ?
+     ORDER BY r.created_at DESC`,
+    [userId, orderId],
+  );
+}
+
 export interface ListReviewsFilter {
   status?: ReviewStatus;
   page: number;

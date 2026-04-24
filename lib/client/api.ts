@@ -688,6 +688,34 @@ export const apiClient = {
     });
   },
 
+  async uploadReviewImage(file: File, token?: string) {
+    const formData = new FormData();
+    formData.set("file", file);
+
+    return apiFetch<{ item: CdnFileAsset }>("/api/me/reviews/upload", {
+      method: "POST",
+      token,
+      body: formData,
+    });
+  },
+
+  async submitOrderReview(
+    orderId: number,
+    payload: {
+      productId: number;
+      rating: number;
+      comment: string;
+      images?: string[];
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: ProductReview }>(`/api/orders/${orderId}/reviews`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
   // Admin orders
   async adminGetOrders(params: {
     page?: number;

@@ -5,6 +5,7 @@ import {
   getReviewById,
   getApprovedReviewsByProductId,
   findUserReviewForProductOrder,
+  listUserReviewsByOrder,
   listReviews,
   recomputeProductRating,
   updateReviewStatus,
@@ -83,6 +84,50 @@ export async function submitProductReview(
     productId,
     userId,
     orderId: input.orderId,
+    rating: input.rating,
+    comment: input.comment,
+    images: input.images,
+  });
+
+  return mapReview(row);
+}
+
+export async function getUserReviewsForOrder(userId: number, orderId: number): Promise<ProductReview[]> {
+  const rows = await listUserReviewsByOrder(userId, orderId);
+  return rows.map(mapReview);
+}
+
+export async function submitOrderProductReview(
+  userId: number,
+  orderId: number,
+  input: {
+    productId: number;
+    rating: number;
+    comment: string;
+    images?: string[];
+  },
+): Promise<ProductReview> {
+  const product = await findProductById(input.productId);
+  if (!product) throw notFound("Product not found");
+
+  const isEligibleOrder = await hasUserDeliveredOrderForProductInOrder(userId, input.productId, orderId);
+  if (!isEligibleOrder) {
+    throw badRequest("You can only review delivered products from this order.");
+  }
+
+  const existing = await findUserReviewForProductOrder(userId, input.productId, orderId);
+  if (existing) {
+    throw conflict("You have already submitted a review for this product in this order.");
+  }
+
+  if (input.rating < 1 || input.rating > 5) {
+    throw badRequest("Rating must be between 1 and 5.");
+  }
+
+  const row = await createReview({
+    productId: input.productId,
+    userId,
+    orderId,
     rating: input.rating,
     comment: input.comment,
     images: input.images,
