@@ -365,7 +365,7 @@ async function GETHandler(
     });
 
     const pdfBytes = await doc.save();
-    return new Response(pdfBytes, {
+    return new Response(Buffer.from(pdfBytes), {
       status: 200,
       headers: noStoreHeaders({
         "Content-Type": "application/pdf",
