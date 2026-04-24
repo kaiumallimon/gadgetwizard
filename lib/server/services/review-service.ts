@@ -2,6 +2,7 @@ import { badRequest, conflict, notFound } from "@/lib/server/core/errors";
 import type { ProductReview, ReviewStatus } from "@/lib/client/types";
 import {
   createReview,
+  deleteReview,
   getReviewById,
   getApprovedReviewsByProductId,
   findUserReviewForProductOrder,
@@ -158,4 +159,12 @@ export async function adminUpdateReviewStatus(
   const updated = await getReviewById(reviewId);
   if (!updated) throw new Error("Failed to retrieve updated review");
   return mapReview(updated);
+}
+
+export async function adminDeleteReview(reviewId: number): Promise<void> {
+  const existing = await getReviewById(reviewId);
+  if (!existing) throw notFound("Review not found");
+
+  await deleteReview(reviewId);
+  await recomputeProductRating(existing.product_id);
 }

@@ -155,6 +155,13 @@ export async function updateReviewStatus(
   );
 }
 
+export async function deleteReview(id: number): Promise<void> {
+  await execute(
+    `DELETE FROM product_reviews WHERE id = ?`,
+    [id],
+  );
+}
+
 export async function recomputeProductRating(productId: number): Promise<void> {
   const stats = await queryOne<{ avg_rating: number | null; rating_count: number }>(
     `SELECT

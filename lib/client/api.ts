@@ -765,6 +765,13 @@ export const apiClient = {
       body: JSON.stringify(payload),
     });
   },
+
+  async adminDeleteReview(id: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/admin/reviews/${id}`, {
+      method: "DELETE",
+      token,
+    });
+  },
 };
 
 export { ApiError };

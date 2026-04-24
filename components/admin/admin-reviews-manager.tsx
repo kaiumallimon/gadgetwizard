@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiCheck, FiRefreshCw, FiX } from "react-icons/fi";
+import { FiCheck, FiRefreshCw, FiTrash2, FiX } from "react-icons/fi";
 
 import type { ProductReview, ReviewStatus } from "@/lib/client/types";
 import { apiClient } from "@/lib/client/api";
@@ -25,7 +25,7 @@ const STATUS_META: Record<ReviewStatus, { label: string; className: string }> = 
 export function AdminReviewsManager({ initialReviews }: AdminReviewsManagerProps) {
   const { token } = useAuthStore();
   const [reviews, setReviews] = useState<ProductReview[]>(initialReviews);
-  const [statusFilter, setStatusFilter] = useState<"all" | ReviewStatus>("pending");
+  const [statusFilter, setStatusFilter] = useState<"all" | ReviewStatus>("all");
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [notes, setNotes] = useState<Record<number, string>>({});
@@ -79,6 +79,23 @@ export function AdminReviewsManager({ initialReviews }: AdminReviewsManagerProps
     }
   }
 
+  async function deleteReview(reviewId: number) {
+    const confirmed = window.confirm("Delete this review permanently?");
+    if (!confirmed) {
+      return;
+    }
+
+    setBusyId(reviewId);
+    try {
+      await apiClient.adminDeleteReview(reviewId, token ?? undefined);
+      setReviews((previous) => previous.filter((review) => review.id !== reviewId));
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Failed to delete review");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
@@ -125,6 +142,16 @@ export function AdminReviewsManager({ initialReviews }: AdminReviewsManagerProps
                     </div>
                     <div className="text-right">
                       <p className="text-lg font-semibold text-zinc-900">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 border-red-300 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => void deleteReview(review.id)}
+                        disabled={busyId === review.id}
+                      >
+                        <FiTrash2 className="h-4 w-4" /> Delete
+                      </Button>
                     </div>
                   </div>
 
