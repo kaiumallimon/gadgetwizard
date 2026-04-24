@@ -20,7 +20,7 @@ export default async function AdminWishlistPage() {
     <div className="space-y-6">
       <div>
         <h1 className="flex items-center gap-2 text-2xl font-semibold text-zinc-900">
-          <Heart className="h-6 w-6" /> Wishlist Activity
+          Wishlist Activity
         </h1>
         <p className="text-sm text-zinc-500">Track which products users are saving for later.</p>
       </div>
