@@ -142,6 +142,23 @@ export interface Cart {
   items: CartItem[];
 }
 
+export interface Wishlist {
+  items: Product[];
+  productIds: number[];
+}
+
+export interface AdminWishlistEntry {
+  id: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  productId: number;
+  productName: string;
+  productSlug: string;
+  productImageUrl: string | null;
+  createdAt: string;
+}
+
 export type OrderStatus =
   | "pending_payment"
   | "paid"

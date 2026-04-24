@@ -22,6 +22,7 @@ import {
     ShoppingBag,
     ShoppingCart,
     Star,
+    Heart,
     Tag,
     UserRound,
     Users,
@@ -89,6 +90,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Orders",
                         items: [
                             { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+                            { href: "/admin/wishlist", label: "Wishlist", icon: Heart },
                             { href: "/admin/reviews", label: "Reviews", icon: Star },
                         ],
                     },
@@ -138,6 +140,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     items: [
                         { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
                         { href: "/cart", label: "My Cart", icon: ShoppingCart },
+                        { href: "/dashboard/wishlist", label: "Wishlist", icon: Heart },
                         { href: "/dashboard/orders", label: "My Orders", icon: ClipboardList },
                         { href: "/dashboard/addresses", label: "Addresses", icon: MapPin },
                     ],
@@ -246,7 +249,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                             className={cn(
                                                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition",
                                                 isActive(item)
-                                                    ? "bg-(--accent) text-white"
+                                                    ? "bg-accent text-white"
                                                     : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900",
                                             )}
                                         >

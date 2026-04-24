@@ -188,3 +188,13 @@ export const cartUpdateSchema = z.object({
 export const cartRemoveSchema = z.object({
   productId: z.number().int().positive(),
 });
+
+export const wishlistItemSchema = z.object({
+  productId: z.number().int().positive(),
+});
+
+export const adminWishlistQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(25),
+  search: z.string().trim().min(1).optional(),
+});

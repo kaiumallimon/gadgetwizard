@@ -2,14 +2,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Heart, Plus } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { Product } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { useWishlistStore } from "@/lib/stores/wishlist-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -25,8 +26,18 @@ function format$(value: number): string {
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [wishlistPending, setWishlistPending] = useState(false);
   const { session, token } = useAuthStore();
   const { setCart } = useCartStore();
+  const { loadedForUserId, productIds, ensureLoaded, setWishlist } = useWishlistStore();
+
+  useEffect(() => {
+    if (!session || session.role !== "user") {
+      return;
+    }
+
+    void ensureLoaded({ userId: session.userId, token: token ?? undefined });
+  }, [session, token, ensureLoaded]);
 
   async function onAddToCart() {
     if (!session) {
@@ -47,6 +58,33 @@ export function ProductCard({ product }: ProductCardProps) {
     }
   }
 
+  async function onToggleWishlist() {
+    if (!session || session.role !== "user") {
+      router.push("/login");
+      return;
+    }
+
+    const isWishlisted = productIds.includes(product.id);
+
+    try {
+      setWishlistPending(true);
+      const response = isWishlisted
+        ? await apiClient.removeFromWishlist(product.id, token ?? undefined)
+        : await apiClient.addToWishlist(product.id, token ?? undefined);
+
+      setWishlist({
+        userId: session.userId,
+        productIds: response.wishlist.productIds,
+        items: response.wishlist.items,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to update wishlist";
+      window.alert(message);
+    } finally {
+      setWishlistPending(false);
+    }
+  }
+
   const image = product.images[0] ?? "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
   const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
   const hasLoyal = product.loyalCustomerPrice < product.originalPrice;
@@ -54,9 +92,24 @@ export function ProductCard({ product }: ProductCardProps) {
   const discountAmount = hasDiscount ? Math.max(0, product.originalPrice - displayPrice) : 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
   const metaLabel = product.brandName ? `${product.brandName} | ${product.categoryName}` : product.categoryName;
+  const isWishlisted = productIds.includes(product.id);
+  const canUseWishlist = Boolean(session && session.role === "user");
+  const wishlistReady = !canUseWishlist || loadedForUserId === session?.userId;
 
   return (
     <Card className="group relative overflow-hidden rounded-2xl border-zinc-200/90 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl">
+      <Button
+        type="button"
+        variant="outline"
+        size="icon"
+        disabled={wishlistPending || !wishlistReady}
+        onClick={onToggleWishlist}
+        className={`absolute right-3 top-3 z-10 h-8 w-8 rounded-full border bg-white/90 backdrop-blur ${isWishlisted ? "text-red-500" : "text-zinc-500"}`}
+        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+      >
+        <Heart className={`h-4 w-4 ${isWishlisted ? "fill-current" : ""}`} />
+      </Button>
+
       <Link href={`/product/${product.slug}`} className="block">
         <div className="relative aspect-4/3 w-full overflow-hidden bg-white p-3">
           <img src={image} alt={product.name} className="h-full w-full object-contain transition duration-500 group-hover:scale-105" />

@@ -23,6 +23,10 @@ These SQL files are ordered and should be executed sequentially.
 17. 017_create_faqs.sql
 18. 018_create_system_activity_logs.sql
 19. 019_migrate_auth_to_nextauth_credentials.sql
+20. 020_create_orders.sql
+21. 021_create_addresses.sql
+22. 022_create_product_reviews.sql
+23. 023_create_wishlist_items.sql
 
 ## Run Migrations Manually
 

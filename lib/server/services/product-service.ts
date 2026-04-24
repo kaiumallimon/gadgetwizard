@@ -114,6 +114,8 @@ export async function getPublicProducts(input: {
   availability?: ProductAvailabilityFilter;
   sort?: ProductSortOption[];
   discountedOnly?: boolean;
+  newArrivalsOnly?: boolean;
+  bestSellersOnly?: boolean;
 }) {
   return listProducts({
     page: input.page,
@@ -128,6 +130,8 @@ export async function getPublicProducts(input: {
     availability: input.availability,
     sort: input.sort,
     discountedOnly: input.discountedOnly,
+    newArrivalsOnly: input.newArrivalsOnly,
+    bestSellersOnly: input.bestSellersOnly,
     activeOnly: true,
   });
 }
@@ -136,11 +140,15 @@ export async function getPublicProductFilterFacets(input: {
   categorySlug?: string;
   search?: string;
   discountedOnly?: boolean;
+  newArrivalsOnly?: boolean;
+  bestSellersOnly?: boolean;
 }) {
   return getProductFilterFacets({
     categorySlug: input.categorySlug,
     search: input.search,
     discountedOnly: input.discountedOnly,
+    newArrivalsOnly: input.newArrivalsOnly,
+    bestSellersOnly: input.bestSellersOnly,
     activeOnly: true,
   });
 }

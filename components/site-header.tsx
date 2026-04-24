@@ -16,9 +16,11 @@ import {
   FiShield,
   FiSearch,
   FiShoppingCart,
+  FiStar,
   FiTag,
   FiTruck,
   FiUser,
+  FiHeart,
 } from "react-icons/fi";
 
 import { apiClient } from "@/lib/client/api";
@@ -278,13 +280,15 @@ export function SiteHeader() {
                   placeholder="Search phones, tablets, accessories..."
                   className="gw-soft-border-dark h-10 rounded-full border bg-zinc-900 pl-9 pr-22 text-zinc-100 placeholder:text-zinc-500 focus-visible:bg-zinc-950"
                 />
-                <Button
-                  type="submit"
-                  size="sm"
-                  className="absolute right-1 top-1/2 h-8 -translate-y-1/2 rounded-full px-3"
-                >
-                  Search
-                </Button>
+                {searchText.trim().length > 0 && (
+                  <Button
+                    type="submit"
+                    size="sm"
+                    className="absolute right-1 top-1/2 h-8 -translate-y-1/2 rounded-full px-3"
+                  >
+                    Search
+                  </Button>
+                )}
               </form>
             </div>
 
@@ -411,6 +415,36 @@ export function SiteHeader() {
                           <FiChevronRight className="h-4 w-4 opacity-70" />
                         </Link>
                       </SheetClose>
+
+                      <SheetClose asChild>
+                        <Link
+                          href="/wishlist"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span className="inline-flex items-center gap-2"><FiHeart className="h-4 w-4" /> Wishlist</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild>
+                        <Link
+                          href="/new-arrivals"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span>New Arrivals</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild>
+                        <Link
+                          href="/best-sellers"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span className="inline-flex items-center gap-2"><FiStar className="h-4 w-4" /> Best Sellers</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
                     </div>
 
                     {headerCategories.length > 0 ? (
@@ -533,7 +567,28 @@ export function SiteHeader() {
             className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
           >
             <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-700">Hot</span>
-            Offers
+            Hot Offers
+          </Link>
+
+          <Link
+            href="/wishlist"
+            className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
+          >
+            Wishlist
+          </Link>
+
+          <Link
+            href="/new-arrivals"
+            className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
+          >
+            New Arrivals
+          </Link>
+
+          <Link
+            href="/best-sellers"
+            className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
+          >
+            Best Sellers
           </Link>
         </div>
       </div>

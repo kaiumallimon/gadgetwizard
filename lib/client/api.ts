@@ -12,6 +12,8 @@ import type {
   Order,
   Product,
   ProductReview,
+  Wishlist,
+  AdminWishlistEntry,
   UserAddress,
 } from "@/lib/client/types";
 
@@ -166,6 +168,38 @@ export const apiClient = {
       token,
       body: JSON.stringify({ productId }),
     });
+  },
+
+  async getWishlist(token?: string) {
+    return apiFetch<{ wishlist: Wishlist }>("/api/wishlist", { token });
+  },
+
+  async addToWishlist(productId: number, token?: string) {
+    return apiFetch<{ wishlist: Wishlist }>("/api/wishlist", {
+      method: "POST",
+      token,
+      body: JSON.stringify({ productId }),
+    });
+  },
+
+  async removeFromWishlist(productId: number, token?: string) {
+    return apiFetch<{ wishlist: Wishlist }>("/api/wishlist/remove", {
+      method: "DELETE",
+      token,
+      body: JSON.stringify({ productId }),
+    });
+  },
+
+  async adminGetWishlist(params: { page?: number; pageSize?: number; search?: string }, token?: string) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.search) query.set("search", params.search);
+
+    return apiFetch<{ items: AdminWishlistEntry[]; total: number; page: number; pageSize: number; totalPages: number }>(
+      `/api/admin/wishlist?${query.toString()}`,
+      { token },
+    );
   },
 
   async adminGetAnalytics(token?: string) {
