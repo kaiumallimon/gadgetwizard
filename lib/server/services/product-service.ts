@@ -113,6 +113,7 @@ export async function getPublicProducts(input: {
   maxPrice?: number;
   availability?: ProductAvailabilityFilter;
   sort?: ProductSortOption[];
+  discountedOnly?: boolean;
 }) {
   return listProducts({
     page: input.page,
@@ -126,6 +127,7 @@ export async function getPublicProducts(input: {
     maxPrice: input.maxPrice,
     availability: input.availability,
     sort: input.sort,
+    discountedOnly: input.discountedOnly,
     activeOnly: true,
   });
 }
@@ -133,10 +135,12 @@ export async function getPublicProducts(input: {
 export async function getPublicProductFilterFacets(input: {
   categorySlug?: string;
   search?: string;
+  discountedOnly?: boolean;
 }) {
   return getProductFilterFacets({
     categorySlug: input.categorySlug,
     search: input.search,
+    discountedOnly: input.discountedOnly,
     activeOnly: true,
   });
 }

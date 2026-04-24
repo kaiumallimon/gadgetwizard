@@ -27,7 +27,7 @@ interface SortOption {
 }
 
 interface CategoryFiltersProps {
-  slug: string;
+  actionPath: string;
   search?: string;
   priceMin: number;
   priceMax: number;
@@ -49,7 +49,7 @@ const FIELD_CLASSNAME =
   "flex h-10 w-full rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-(--accent)";
 
 export function CategoryFilters({
-  slug,
+  actionPath,
   search,
   priceMin,
   priceMax,
@@ -94,7 +94,7 @@ export function CategoryFilters({
     const submitCurrentForm = () => submitForm(formRef);
 
     return (
-      <form ref={formRef} method="GET" action={`/category/${slug}`} className="space-y-6">
+      <form ref={formRef} method="GET" action={actionPath} className="space-y-6">
         <input type="hidden" name="page" value="1" />
 
         <div className="space-y-2">
@@ -197,7 +197,7 @@ export function CategoryFilters({
                       value={brand.slug}
                       defaultChecked={selectedBrandSlugs.includes(brand.slug)}
                       onChange={submitCurrentForm}
-                      className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
+                      className="h-4 w-4 rounded border-zinc-300 accent-accent"
                     />
                     {brand.name}
                   </span>
@@ -222,7 +222,7 @@ export function CategoryFilters({
                       value={color.value}
                       defaultChecked={selectedColors.includes(color.value)}
                       onChange={submitCurrentForm}
-                      className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
+                      className="h-4 w-4 rounded border-zinc-300 accent-accent"
                     />
                     {color.label}
                   </span>
@@ -242,7 +242,7 @@ export function CategoryFilters({
                 value="in"
                 defaultChecked={availabilitySelections.includes("in")}
                 onChange={submitCurrentForm}
-                className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
+                className="h-4 w-4 rounded border-zinc-300 accent-accent"
               />
               In stock
             </label>
@@ -253,7 +253,7 @@ export function CategoryFilters({
                 value="out"
                 defaultChecked={availabilitySelections.includes("out")}
                 onChange={submitCurrentForm}
-                className="h-4 w-4 rounded border-zinc-300 accent-(--accent)"
+                className="h-4 w-4 rounded border-zinc-300 accent-accent"
               />
               Out of stock
             </label>
@@ -307,7 +307,7 @@ export function CategoryFilters({
         </div>
 
         <div>
-          <Link href={`/category/${slug}`} className="text-sm font-medium text-(--accent) hover:underline">
+          <Link href={actionPath} className="text-sm font-medium text-accent hover:underline">
             Clear all filters
           </Link>
         </div>

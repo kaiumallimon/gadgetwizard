@@ -255,6 +255,7 @@ function buildProductWhereClause(input: {
   minPrice?: number;
   maxPrice?: number;
   availability?: ProductAvailabilityFilter;
+  discountedOnly?: boolean;
 }) {
   const whereParts: string[] = [];
   const whereParams: unknown[] = [];
@@ -281,6 +282,10 @@ function buildProductWhereClause(input: {
   if (input.search) {
     whereParts.push("(p.name LIKE ? OR p.short_description LIKE ? OR p.description LIKE ?)");
     whereParams.push(`%${input.search}%`, `%${input.search}%`, `%${input.search}%`);
+  }
+
+  if (input.discountedOnly) {
+    whereParts.push("p.discounted_price IS NOT NULL");
   }
 
   const normalizedColors = Array.from(
@@ -330,6 +335,7 @@ export async function listProducts(input: {
   maxPrice?: number;
   availability?: ProductAvailabilityFilter;
   sort?: ProductSortOption[];
+  discountedOnly?: boolean;
   activeOnly: boolean;
 }): Promise<{ items: ProductRecord[]; total: number }> {
   const { whereClause, whereParams } = buildProductWhereClause(input);
@@ -416,6 +422,7 @@ export async function listProducts(input: {
 export async function getProductFilterFacets(input: {
   categorySlug?: string;
   search?: string;
+  discountedOnly?: boolean;
   activeOnly: boolean;
 }): Promise<{
   price: { min: number | null; max: number | null };
@@ -427,6 +434,7 @@ export async function getProductFilterFacets(input: {
     activeOnly: input.activeOnly,
     categorySlug: input.categorySlug,
     search: input.search,
+    discountedOnly: input.discountedOnly,
     availability: "all",
   });
 

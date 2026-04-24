@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, SlidersHorizontal } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 
 import { CategoryFilters } from "@/components/category-filters";
 import { ProductCard } from "@/components/product-card";
@@ -36,7 +36,6 @@ const SORT_OPTIONS = [
 ] as const;
 
 type SortOption = (typeof SORT_OPTIONS)[number]["value"];
-
 type RawSearchParams = Record<string, string | string[] | undefined>;
 
 function firstParam(value: string | string[] | undefined): string | undefined {
@@ -122,8 +121,7 @@ function pageWindow(current: number, totalPages: number): number[] {
   return pages;
 }
 
-function buildCategoryHref(input: {
-  slug: string;
+function buildSearchHref(input: {
   page: number;
   pageSize: number;
   search?: string;
@@ -172,14 +170,13 @@ function buildCategoryHref(input: {
   }
 
   const queryString = query.toString();
-  return queryString ? `/category/${input.slug}?${queryString}` : `/category/${input.slug}`;
+  return queryString ? `/search?${queryString}` : "/search";
 }
 
-export default async function CategoryPage(context: {
-  params: Promise<{ slug: string }>;
+export default async function SearchPage(context: {
   searchParams: Promise<RawSearchParams>;
 }) {
-  const [{ slug }, rawSearchParams] = await Promise.all([context.params, context.searchParams]);
+  const rawSearchParams = await context.searchParams;
 
   const search = firstParam(rawSearchParams.search)?.trim() || undefined;
   const selectedBrandSlugs = Array.from(
@@ -206,10 +203,7 @@ export default async function CategoryPage(context: {
   const sortSecondary = parsedSortSecondary && parsedSortSecondary !== sortPrimary ? parsedSortSecondary : undefined;
   const sortOrder = sortSecondary ? [sortPrimary, sortSecondary] : [sortPrimary];
 
-  const facets = await getPublicProductFilterFacets({
-    categorySlug: slug,
-    search,
-  });
+  const facets = await getPublicProductFilterFacets({ search });
 
   const rawMinPrice = parsePrice(firstParam(rawSearchParams.minPrice));
   const rawMaxPrice = parsePrice(firstParam(rawSearchParams.maxPrice));
@@ -226,7 +220,6 @@ export default async function CategoryPage(context: {
   let result = await getPublicProducts({
     page: currentPage,
     pageSize,
-    categorySlug: slug,
     search,
     brandSlugs: selectedBrandSlugs,
     colors: selectedColors,
@@ -242,7 +235,6 @@ export default async function CategoryPage(context: {
     result = await getPublicProducts({
       page: currentPage,
       pageSize,
-      categorySlug: slug,
       search,
       brandSlugs: selectedBrandSlugs,
       colors: selectedColors,
@@ -254,7 +246,7 @@ export default async function CategoryPage(context: {
     totalPages = Math.max(1, Math.ceil(result.total / pageSize));
   }
 
-  const categoryTitle = result.items[0]?.categoryName ?? slugToTitle(slug);
+  const pageTitle = search ? `Search Results for \"${search}\"` : "Search Products";
   const pages = pageWindow(currentPage, totalPages);
   const rangeStart = result.total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = result.total === 0 ? 0 : Math.min(currentPage * pageSize, result.total);
@@ -262,7 +254,6 @@ export default async function CategoryPage(context: {
   const colorLabelByValue = new Map(facets.colors.map((color) => [color.value, color.label]));
 
   const queryState = {
-    slug,
     pageSize,
     search,
     minPrice,
@@ -293,21 +284,19 @@ export default async function CategoryPage(context: {
 
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight text-zinc-900">{categoryTitle}</h1>
+            <h1 className="flex items-center gap-2 text-3xl font-semibold tracking-tight text-zinc-900">
+              <Search className="h-7 w-7" /> {pageTitle}
+            </h1>
             <p className="mt-1 text-sm text-zinc-500">
               Showing {rangeStart}-{rangeEnd} of {result.total} products
             </p>
           </div>
-
-          <Badge variant="outline" className="rounded-full px-3 py-1">
-            <SlidersHorizontal className="h-3.5 w-3.5" /> Filters & Sort
-          </Badge>
         </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
         <CategoryFilters
-          actionPath={`/category/${slug}`}
+          actionPath="/search"
           search={search}
           priceMin={PRICE_FILTER_MIN}
           priceMax={PRICE_FILTER_MAX}
@@ -358,7 +347,7 @@ export default async function CategoryPage(context: {
 
           {result.items.length === 0 ? (
             <section className="rounded-2xl border border-zinc-200 bg-white p-10 text-center text-zinc-500">
-              No products match your current filters. Try broadening the range or resetting filters.
+              No products match your current filters. Try broadening the range or using another keyword.
             </section>
           ) : (
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -374,7 +363,7 @@ export default async function CategoryPage(context: {
                 <PaginationItem>
                   <PaginationPrevious
                     href={currentPage > 1
-                      ? buildCategoryHref({
+                      ? buildSearchHref({
                         ...queryState,
                         page: currentPage - 1,
                       })
@@ -387,7 +376,7 @@ export default async function CategoryPage(context: {
                   <>
                     <PaginationItem>
                       <PaginationLink
-                        href={buildCategoryHref({
+                        href={buildSearchHref({
                           ...queryState,
                           page: 1,
                         })}
@@ -406,7 +395,7 @@ export default async function CategoryPage(context: {
                 {pages.map((pageNumber) => (
                   <PaginationItem key={pageNumber}>
                     <PaginationLink
-                      href={buildCategoryHref({
+                      href={buildSearchHref({
                         ...queryState,
                         page: pageNumber,
                       })}
@@ -426,7 +415,7 @@ export default async function CategoryPage(context: {
                     )}
                     <PaginationItem>
                       <PaginationLink
-                        href={buildCategoryHref({
+                        href={buildSearchHref({
                           ...queryState,
                           page: totalPages,
                         })}
@@ -440,7 +429,7 @@ export default async function CategoryPage(context: {
                 <PaginationItem>
                   <PaginationNext
                     href={currentPage < totalPages
-                      ? buildCategoryHref({
+                      ? buildSearchHref({
                         ...queryState,
                         page: currentPage + 1,
                       })

@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
+  FiChevronDown,
   FiChevronRight,
+  FiGrid,
   FiHeadphones,
   FiLogOut,
   FiMenu,
@@ -14,6 +16,7 @@ import {
   FiShield,
   FiSearch,
   FiShoppingCart,
+  FiTag,
   FiTruck,
   FiUser,
 } from "react-icons/fi";
@@ -26,6 +29,12 @@ import { AuthDialog } from "@/components/auth-dialog";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetClose,
@@ -55,6 +64,7 @@ export function SiteHeader() {
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
+  const [searchText, setSearchText] = useState("");
   const { session, user, token, setAuth, clearAuth } = useAuthStore();
   const { cart, setCart, clearCart } = useCartStore();
   const dashboardHref = session?.role === "admin" ? "/admin" : "/dashboard";
@@ -155,6 +165,23 @@ export function SiteHeader() {
     }
   }, [searchParams, user]);
 
+  useEffect(() => {
+    setSearchText(searchParams.get("search") ?? "");
+  }, [searchParams]);
+
+  function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmed = searchText.trim();
+    const query = new URLSearchParams();
+    if (trimmed.length > 0) {
+      query.set("search", trimmed);
+    }
+
+    const href = query.toString() ? `/search?${query.toString()}` : "/search";
+    router.push(href);
+  }
+
   function onAuthDialogChange(nextOpen: boolean) {
     setAuthDialogOpen(nextOpen);
 
@@ -234,14 +261,24 @@ export function SiteHeader() {
             </Link>
 
             <div className="order-3 w-full md:order-0 md:flex-1">
-              <div className="relative">
+              <form onSubmit={onSearchSubmit} className="relative">
                 <FiSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
                 <Input
                   type="text"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  name="search"
                   placeholder="Search phones, tablets, accessories..."
-                  className="gw-soft-border-dark h-10 rounded-full border bg-zinc-900 pl-9 text-zinc-100 placeholder:text-zinc-500 focus-visible:bg-zinc-950"
+                  className="gw-soft-border-dark h-10 rounded-full border bg-zinc-900 pl-9 pr-22 text-zinc-100 placeholder:text-zinc-500 focus-visible:bg-zinc-950"
                 />
-              </div>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="absolute right-1 top-1/2 h-8 -translate-y-1/2 rounded-full px-3"
+                >
+                  Search
+                </Button>
+              </form>
             </div>
 
             <Sheet>
@@ -337,6 +374,38 @@ export function SiteHeader() {
                   <section className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Categories</p>
 
+                    <div className="grid gap-2">
+                      <SheetClose asChild>
+                        <Link
+                          href="/categories"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span className="inline-flex items-center gap-2"><FiGrid className="h-4 w-4" /> All Categories</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild>
+                        <Link
+                          href="/brands"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span>Brands</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
+
+                      <SheetClose asChild>
+                        <Link
+                          href="/offers"
+                          className="gw-soft-border-dark flex items-center justify-between rounded-xl border bg-white/70 px-3 py-2.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-50 hover:text-zinc-900"
+                        >
+                          <span className="inline-flex items-center gap-2"><FiTag className="h-4 w-4" /> Offers</span>
+                          <FiChevronRight className="h-4 w-4 opacity-70" />
+                        </Link>
+                      </SheetClose>
+                    </div>
+
                     {headerCategories.length > 0 ? (
                       <div className="grid gap-2">
                         {headerCategories.map((entry) => (
@@ -422,23 +491,43 @@ export function SiteHeader() {
 
       <div className="gw-soft-border-light hidden border-t bg-white text-sm text-zinc-700 md:block">
         <div className="mx-auto flex w-full max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2.5 sm:px-6">
-          {headerCategories.map((entry) => (
-            <Link
-              key={entry.label}
-              href={entry.href}
-              className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 font-medium transition ${
-                pathname === entry.href
-                  ? "gw-soft-ring-accent bg-orange-50 text-accent"
-                  : "text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900"
-              }`}
-            >
-              {entry.label} <FiChevronRight className="h-3.5 w-3.5 opacity-70" />
-            </Link>
-          ))}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-9 rounded-full px-3 text-zinc-700"
+              >
+                Categories <FiChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="bottom" sideOffset={10} align="start" className="min-w-56 rounded-xl border-zinc-200 shadow-lg">
+              <DropdownMenuItem asChild>
+                <Link href="/categories" className="w-full cursor-pointer">All Categories</Link>
+              </DropdownMenuItem>
+              {headerCategories.map((entry) => (
+                <DropdownMenuItem key={entry.label} asChild>
+                  <Link href={entry.href} className="w-full cursor-pointer">{entry.label}</Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          {headerCategories.length === 0 && (
-            <span className="text-xs text-zinc-500">No header categories selected yet.</span>
-          )}
+          <Link
+            href="/brands"
+            className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
+          >
+            Brands
+          </Link>
+
+          <Link
+            href="/offers"
+            className="inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3 font-medium text-zinc-700"
+          >
+            <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-700">Hot</span>
+            Offers
+          </Link>
         </div>
       </div>
 
