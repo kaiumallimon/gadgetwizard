@@ -21,6 +21,11 @@ import {
   createAddress,
   type CreateAddressInput,
 } from "@/lib/server/repositories/address-repository";
+import {
+  getOrderPaymentByOrderIdForUser,
+  upsertOrderPayment,
+  type OrderPaymentRecord,
+} from "@/lib/server/repositories/order-payment-repository";
 import { getCartByUserId } from "@/lib/server/repositories/cart-repository";
 import { execute } from "@/lib/server/core/db";
 
@@ -153,6 +158,25 @@ export interface CreateOrderInput {
   addressInput: CheckoutAddressInput;
 }
 
+export interface OrderPayment {
+  orderId: number;
+  userId: number;
+  provider: "stripe";
+  providerPaymentId: string;
+  currency: string;
+  amount: number;
+  amountReceived: number;
+  status: string;
+  paymentMethodTypes: string[];
+  paidAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function centsToAmount(value: number | null | undefined): number {
+  return Number(((value ?? 0) / 100).toFixed(2));
+}
+
 export async function createOrderAfterPayment(input: CreateOrderInput): Promise<Order> {
   const stripe = getStripe();
 
@@ -166,6 +190,19 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
   // Check if order already exists for this payment intent (idempotency)
   const existing = await findOrderByPaymentIntent(input.paymentIntentId);
   if (existing) {
+    await upsertOrderPayment({
+      orderId: Number(existing.id),
+      userId: Number(existing.user_id),
+      provider: "stripe",
+      providerPaymentId: paymentIntent.id,
+      currency: paymentIntent.currency,
+      amount: centsToAmount(paymentIntent.amount),
+      amountReceived: centsToAmount(paymentIntent.amount_received),
+      status: paymentIntent.status,
+      paymentMethodTypes: paymentIntent.payment_method_types,
+      paidAt: new Date(),
+    });
+
     return mapOrderRecord(existing, await getOrderItemsByOrderId(existing.id));
   }
 
@@ -200,6 +237,19 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
     })),
   });
 
+  await upsertOrderPayment({
+    orderId: Number(order.id),
+    userId: input.userId,
+    provider: "stripe",
+    providerPaymentId: paymentIntent.id,
+    currency: paymentIntent.currency,
+    amount: centsToAmount(paymentIntent.amount),
+    amountReceived: centsToAmount(paymentIntent.amount_received),
+    status: paymentIntent.status,
+    paymentMethodTypes: paymentIntent.payment_method_types,
+    paidAt: new Date(),
+  });
+
   // Clear the cart after successful order
   await execute(`DELETE FROM cart_items WHERE cart_id = ?`, [cart.id]);
 
@@ -214,6 +264,15 @@ export async function getOrderForUser(orderId: number, userId: number): Promise<
   }
   const items = await getOrderItemsByOrderId(orderId);
   return mapOrderRecord(order, items);
+}
+
+export async function getOrderPaymentForUser(orderId: number, userId: number): Promise<OrderPayment | null> {
+  const payment = await getOrderPaymentByOrderIdForUser(orderId, userId);
+  if (!payment) {
+    return null;
+  }
+
+  return mapOrderPaymentRecord(payment);
 }
 
 export async function getUserOrders(userId: number): Promise<Order[]> {
@@ -343,5 +402,34 @@ function mapOrderItem(row: OrderItemRecord): OrderItem {
     unitPrice: Number(row.unit_price),
     totalPrice: Number(row.total_price),
     createdAt: toIso(row.created_at),
+  };
+}
+
+function mapOrderPaymentRecord(row: OrderPaymentRecord): OrderPayment {
+  let paymentMethodTypes: string[] = [];
+  if (row.payment_method_types) {
+    try {
+      const parsed = JSON.parse(row.payment_method_types) as unknown;
+      if (Array.isArray(parsed)) {
+        paymentMethodTypes = parsed.filter((value): value is string => typeof value === "string");
+      }
+    } catch {
+      paymentMethodTypes = [];
+    }
+  }
+
+  return {
+    orderId: row.order_id,
+    userId: row.user_id,
+    provider: row.provider,
+    providerPaymentId: row.provider_payment_id,
+    currency: row.currency.toUpperCase(),
+    amount: Number(row.amount),
+    amountReceived: Number(row.amount_received),
+    status: row.status,
+    paymentMethodTypes,
+    paidAt: row.paid_at ? toIso(row.paid_at) : null,
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
   };
 }
