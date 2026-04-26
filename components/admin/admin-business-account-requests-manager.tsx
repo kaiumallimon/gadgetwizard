@@ -122,7 +122,10 @@ export function AdminBusinessAccountRequestsManager({
                 </TableCell>
                 <TableCell className="text-right">
                   {item.status === "pending" ? (
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button type="button" size="sm" variant="outline" asChild>
+                        <Link href={`/admin/business-accounts/${item.id}`}>View</Link>
+                      </Button>
                       <Button
                         type="button"
                         size="sm"
@@ -144,7 +147,12 @@ export function AdminBusinessAccountRequestsManager({
                       </Button>
                     </div>
                   ) : (
-                    <span className="text-xs text-zinc-500">Reviewed</span>
+                    <div className="flex items-center justify-end gap-2">
+                      <Button type="button" size="sm" variant="outline" asChild>
+                        <Link href={`/admin/business-accounts/${item.id}`}>View</Link>
+                      </Button>
+                      <span className="text-xs text-zinc-500">Reviewed</span>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>

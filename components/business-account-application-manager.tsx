@@ -5,7 +5,7 @@ import { Building2, Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import type { BusinessAccount, BusinessAccountStatus } from "@/lib/client/types";
-import { apiClient } from "@/lib/client/api";
+import { ApiError, apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +37,56 @@ type FormState = {
   documentUrls: string;
   additionalNotes: string;
 };
+
+interface ValidationErrorDetails {
+  fieldErrors?: Record<string, string[] | undefined>;
+  formErrors?: string[];
+}
+
+const BUSINESS_ACCOUNT_FIELD_LABELS: Record<string, string> = {
+  businessName: "Business name",
+  legalEntityType: "Legal entity type",
+  registrationNumber: "Registration number",
+  taxId: "Tax ID / VAT",
+  yearsInOperation: "Years in operation",
+  websiteUrl: "Business website",
+  primaryContactName: "Primary contact name",
+  primaryContactRole: "Primary contact role",
+  primaryContactEmail: "Primary contact email",
+  primaryContactPhone: "Primary contact phone",
+  addressLine1: "Address line 1",
+  addressLine2: "Address line 2",
+  city: "City",
+  state: "State / province",
+  postalCode: "Postal code",
+  country: "Country",
+  monthlyPurchaseVolume: "Monthly purchase volume",
+  productCategories: "Product categories",
+  documentUrls: "Document URLs",
+  additionalNotes: "Additional notes",
+};
+
+function getReadableBusinessAccountError(error: unknown): string {
+  if (error instanceof ApiError && error.code === "VALIDATION_ERROR") {
+    const details = (error.details ?? null) as ValidationErrorDetails | null;
+    const fieldEntries = Object.entries(details?.fieldErrors ?? {});
+    const firstFieldError = fieldEntries.find(([, messages]) => Array.isArray(messages) && messages.length > 0);
+
+    if (firstFieldError) {
+      const [fieldName, messages] = firstFieldError;
+      const fieldLabel = BUSINESS_ACCOUNT_FIELD_LABELS[fieldName] ?? fieldName;
+      const fieldMessage = messages?.[0] ?? "Invalid value";
+      return `${fieldLabel}: ${fieldMessage}`;
+    }
+
+    const formError = details?.formErrors?.[0];
+    if (formError) {
+      return formError;
+    }
+  }
+
+  return error instanceof Error ? error.message : "Failed to submit application";
+}
 
 function statusBadgeClass(status: BusinessAccountStatus): string {
   if (status === "approved") {
@@ -141,6 +191,39 @@ export function BusinessAccountApplicationManager({
       return;
     }
 
+    const yearsInOperationInput = form.yearsInOperation.trim();
+    const parsedYearsInOperation = yearsInOperationInput.length > 0 ? Number(yearsInOperationInput) : null;
+    if (
+      parsedYearsInOperation !== null
+      && (!Number.isInteger(parsedYearsInOperation) || parsedYearsInOperation < 0)
+    ) {
+      toast.error("Years in operation must be a non-negative whole number.");
+      return;
+    }
+
+    const websiteUrlInput = form.websiteUrl.trim();
+    if (websiteUrlInput.length > 0) {
+      try {
+        new URL(websiteUrlInput);
+      } catch {
+        toast.error("Business website must be a valid URL, including http:// or https://.");
+        return;
+      }
+    }
+
+    const invalidDocumentUrl = parsedDocumentUrls.find((value) => {
+      try {
+        new URL(value);
+        return false;
+      } catch {
+        return true;
+      }
+    });
+    if (invalidDocumentUrl) {
+      toast.error(`Document URL is invalid: ${invalidDocumentUrl}`);
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -150,8 +233,8 @@ export function BusinessAccountApplicationManager({
           legalEntityType: form.legalEntityType.trim(),
           registrationNumber: form.registrationNumber.trim() || null,
           taxId: form.taxId.trim() || null,
-          yearsInOperation: form.yearsInOperation.trim() ? Number(form.yearsInOperation) : null,
-          websiteUrl: form.websiteUrl.trim() || null,
+          yearsInOperation: parsedYearsInOperation,
+          websiteUrl: websiteUrlInput || null,
           primaryContactName: form.primaryContactName.trim(),
           primaryContactRole: form.primaryContactRole.trim() || null,
           primaryContactEmail: form.primaryContactEmail.trim(),
@@ -171,10 +254,10 @@ export function BusinessAccountApplicationManager({
       );
 
       setAccount(response.item);
-      setForm(toFormState(response.item));
+      setForm(toFormState(null));
       toast.success("Business account application submitted.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to submit application");
+      toast.error(getReadableBusinessAccountError(error));
     } finally {
       setSaving(false);
     }
