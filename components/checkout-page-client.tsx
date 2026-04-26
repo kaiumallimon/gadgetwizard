@@ -32,6 +32,28 @@ export function CheckoutPageClient({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const wholesaleThresholdItems = cart.items.filter(
+    (item) => item.productWholesalePrice !== null && item.productWholesaleMinQuantity !== null,
+  );
+  const firstWholesaleThresholdGapItem = wholesaleThresholdItems.find(
+    (item) => item.quantity < (item.productWholesaleMinQuantity ?? 0),
+  );
+  const hasWholesaleEligibleItems = wholesaleThresholdItems.length > 0;
+  const isBusinessQuantityEligible =
+    hasWholesaleEligibleItems && firstWholesaleThresholdGapItem === undefined;
+  const businessModeDisabled = !isBusinessApproved || !isBusinessQuantityEligible;
+
+  let businessModeDisabledReason: string | null = null;
+  if (!isBusinessApproved) {
+    businessModeDisabledReason = "Business mode is locked until your business account is approved.";
+  } else if (firstWholesaleThresholdGapItem) {
+    const minQuantity = firstWholesaleThresholdGapItem.productWholesaleMinQuantity ?? 0;
+    const shortfall = Math.max(0, minQuantity - firstWholesaleThresholdGapItem.quantity);
+    businessModeDisabledReason = `Go back and increase ${firstWholesaleThresholdGapItem.productName} quantity in cart to at least ${minQuantity}. Add ${shortfall} more.`;
+  } else if (!hasWholesaleEligibleItems) {
+    businessModeDisabledReason = "Your cart does not have wholesale-eligible items yet.";
+  }
+
   const stripePromise = loadStripe(stripePublishableKey);
 
   useEffect(() => {
@@ -98,22 +120,32 @@ export function CheckoutPageClient({
           >
             Regular
           </button>
-          <button
-            type="button"
-            onClick={() => setPurchaseMode("business")}
-            disabled={!isBusinessApproved}
-            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
-              purchaseMode === "business"
-                ? "border-zinc-900 bg-zinc-900 text-white"
-                : "border-zinc-300 bg-white text-zinc-700"
-            } disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            Business
-          </button>
+          <span title={businessModeDisabledReason ?? undefined} className="inline-flex">
+            <button
+              type="button"
+              onClick={() => setPurchaseMode("business")}
+              disabled={businessModeDisabled}
+              className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+                purchaseMode === "business"
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-300 bg-white text-zinc-700"
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              Business
+            </button>
+          </span>
         </div>
         {!isBusinessApproved && (
+          <p className="mt-2 text-xs text-amber-700">Business mode is locked until your business account is approved.</p>
+        )}
+        {isBusinessApproved && firstWholesaleThresholdGapItem && (
           <p className="mt-2 text-xs text-amber-700">
-            Business mode is locked until your business account is approved.
+            For wholesale price, you need to purchase a minimum of {firstWholesaleThresholdGapItem.productWholesaleMinQuantity} quantity of {firstWholesaleThresholdGapItem.productName}. Current quantity is {firstWholesaleThresholdGapItem.quantity}, so increase it from cart.
+          </p>
+        )}
+        {isBusinessApproved && !firstWholesaleThresholdGapItem && !hasWholesaleEligibleItems && (
+          <p className="mt-2 text-xs text-amber-700">
+            No wholesale-eligible products are currently in your cart.
           </p>
         )}
       </div>
