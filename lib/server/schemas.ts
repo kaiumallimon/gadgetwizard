@@ -265,12 +265,12 @@ export const adminUserStatusSchema = z.object({
 
 export const cartAddSchema = z.object({
   productId: z.number().int().positive(),
-  quantity: z.number().int().positive().max(100),
+  quantity: z.number().int().positive(),
 });
 
 export const cartUpdateSchema = z.object({
   productId: z.number().int().positive(),
-  quantity: z.number().int().positive().max(100),
+  quantity: z.number().int().positive(),
 });
 
 export const cartRemoveSchema = z.object({

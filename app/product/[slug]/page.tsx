@@ -108,7 +108,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
     : 0;
 
   return (
-    <div className="w-full px-a4 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
+    <div className="w-full px-5 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
       <div className="mx-auto w-full max-w-6xl space-y-8">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
