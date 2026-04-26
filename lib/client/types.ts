@@ -1,4 +1,6 @@
 export type UserRole = "user" | "admin";
+export type BusinessAccountStatus = "pending" | "approved" | "rejected";
+export type OrderPurchaseMode = "regular" | "business";
 
 export interface AuthSession {
   userId: number;
@@ -14,10 +16,47 @@ export interface AppUser {
   email: string;
   name: string;
   role: UserRole;
-  rewardPoints: number;
+  businessAccountId: number | null;
+  businessAccountStatus: BusinessAccountStatus | null;
+  isBusinessApproved: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface BusinessAccount {
+  id: number;
+  userId: number;
+  status: BusinessAccountStatus;
+  businessName: string;
+  legalEntityType: string;
+  registrationNumber: string | null;
+  taxId: string | null;
+  yearsInOperation: number | null;
+  websiteUrl: string | null;
+  primaryContactName: string;
+  primaryContactRole: string | null;
+  primaryContactEmail: string;
+  primaryContactPhone: string;
+  addressLine1: string;
+  addressLine2: string | null;
+  city: string;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+  monthlyPurchaseVolume: string | null;
+  productCategories: string[];
+  documentUrls: string[];
+  additionalNotes: string | null;
+  reviewNotes: string | null;
+  reviewedByUserId: number | null;
+  reviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  userName?: string;
+  userEmail?: string;
+  reviewedByUserName?: string | null;
+  reviewedByUserEmail?: string | null;
 }
 
 export interface Category {
@@ -57,7 +96,8 @@ export interface Product {
   price: number;
   originalPrice: number;
   discountedPrice: number | null;
-  loyalCustomerPrice: number;
+  wholesalePrice: number | null;
+  wholesaleMinQuantity: number | null;
   stock: number;
   categoryId: number;
   categoryName: string;
@@ -127,6 +167,9 @@ export interface CartItem {
   productSlug: string;
   productImages: string[];
   stock: number;
+  productStockSnapshot: number;
+  productWholesalePrice: number | null;
+  productWholesaleMinQuantity: number | null;
   quantity: number;
   unitPrice: number;
   appliedDiscountedPrice: number | null;
@@ -176,7 +219,9 @@ export interface OrderItem {
   productSku: string | null;
   productImageUrl: string | null;
   quantity: number;
+  isWholesaleItem: boolean;
   unitPrice: number;
+  wholesaleUnitPrice: number | null;
   totalPrice: number;
   createdAt: string;
 }
@@ -197,6 +242,9 @@ export interface Order {
   id: number;
   userId: number;
   status: OrderStatus;
+  purchaseMode: OrderPurchaseMode;
+  isWholesale: boolean;
+  businessAccountId: number | null;
   totalAmount: number;
   subtotal: number;
   shippingAmount: number;
@@ -207,6 +255,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  businessAccount?: BusinessAccount | null;
   // populated for admin view
   userName?: string;
   userEmail?: string;

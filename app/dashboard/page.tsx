@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Award, Shield, ShoppingCart, Sparkles } from "lucide-react";
+import { Building2, Shield, ShoppingCart, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -42,7 +42,7 @@ export default async function DashboardPage() {
             <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">User Dashboard</p>
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Welcome back, {user.name}</h1>
             <p className="mt-2 text-zinc-600">
-              Reward points: {user.rewardPoints}. Reach 100 points to unlock loyalty pricing.
+              Business account status: {user.businessAccountStatus ? user.businessAccountStatus : "not applied"}.
             </p>
           </div>
           <Badge variant="secondary">{user.role}</Badge>
@@ -84,10 +84,12 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Award className="h-4 w-4" /> Reward Points
+              <Building2 className="h-4 w-4" /> Business Account
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">{user.rewardPoints}</CardContent>
+          <CardContent className="pt-0 text-xl font-semibold text-zinc-900">
+            {user.businessAccountStatus ? user.businessAccountStatus.toUpperCase() : "NONE"}
+          </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
@@ -116,6 +118,9 @@ export default async function DashboardPage() {
           </Button>
           <Button asChild variant="outline">
             <Link href="/dashboard/addresses">Saved Addresses</Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href="/dashboard/business-account">Business Account</Link>
           </Button>
           {user.role === "admin" && (
             <Button asChild variant="secondary">

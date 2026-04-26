@@ -3,6 +3,7 @@ import type {
   AppUser,
   AuthSession,
   Banner,
+  BusinessAccount,
   Brand,
   Cart,
   Category,
@@ -407,7 +408,8 @@ export const apiClient = {
     price?: number;
     originalPrice?: number;
     discountedPrice?: number | null;
-    loyalCustomerPrice?: number | null;
+    wholesalePrice?: number | null;
+    wholesaleMinQuantity?: number | null;
     stock: number;
     categoryId: number;
     brandId?: number | null;
@@ -456,7 +458,8 @@ export const apiClient = {
       price?: number;
       originalPrice?: number;
       discountedPrice?: number | null;
-      loyalCustomerPrice?: number | null;
+      wholesalePrice?: number | null;
+      wholesaleMinQuantity?: number | null;
       stock: number;
       categoryId: number;
       brandId?: number | null;
@@ -568,6 +571,7 @@ export const apiClient = {
 
   // Checkout
   async createPaymentIntent(payload: {
+    purchaseMode?: "regular" | "business";
     addressId?: number;
     newAddress?: {
       label?: string;
@@ -591,6 +595,7 @@ export const apiClient = {
   // Orders (user)
   async createOrder(payload: {
     paymentIntentId: string;
+    purchaseMode?: "regular" | "business";
     addressId?: number;
     newAddress?: {
       label?: string;
@@ -740,6 +745,73 @@ export const apiClient = {
 
   async adminUpdateOrderStatus(id: number, payload: { status: string; notes?: string }, token?: string) {
     return apiFetch<{ item: Order }>(`/api/admin/orders/${id}`, {
+      method: "PUT",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getMyBusinessAccount(token?: string) {
+    return apiFetch<{ item: BusinessAccount | null }>("/api/me/business-account", { token });
+  },
+
+  async submitBusinessAccountApplication(payload: {
+    businessName: string;
+    legalEntityType: string;
+    registrationNumber?: string | null;
+    taxId?: string | null;
+    yearsInOperation?: number | null;
+    websiteUrl?: string | null;
+    primaryContactName: string;
+    primaryContactRole?: string | null;
+    primaryContactEmail: string;
+    primaryContactPhone: string;
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    state?: string | null;
+    postalCode?: string | null;
+    country: string;
+    monthlyPurchaseVolume?: string | null;
+    productCategories?: string[] | null;
+    documentUrls?: string[] | null;
+    additionalNotes?: string | null;
+  }, token?: string) {
+    return apiFetch<{ item: BusinessAccount }>("/api/me/business-account", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async adminGetBusinessAccounts(params: {
+    page?: number;
+    pageSize?: number;
+    status?: "pending" | "approved" | "rejected";
+    search?: string;
+  }, token?: string) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.status) query.set("status", params.status);
+    if (params.search) query.set("search", params.search);
+
+    return apiFetch<{ items: BusinessAccount[]; total: number; pagination: { page: number; pageSize: number; total: number; totalPages: number } }>(
+      `/api/admin/business-accounts?${query.toString()}`,
+      { token },
+    );
+  },
+
+  async adminGetBusinessAccount(id: number, token?: string) {
+    return apiFetch<{ item: BusinessAccount }>(`/api/admin/business-accounts/${id}`, { token });
+  },
+
+  async adminReviewBusinessAccount(
+    id: number,
+    payload: { status: "approved" | "rejected"; reviewNotes?: string | null },
+    token?: string,
+  ) {
+    return apiFetch<{ item: BusinessAccount }>(`/api/admin/business-accounts/${id}`, {
       method: "PUT",
       token,
       body: JSON.stringify(payload),

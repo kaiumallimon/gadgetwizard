@@ -24,7 +24,7 @@ interface AdminOverviewDashboardProps {
     totalUsers: number;
     totalProducts: number;
     cartActivity: Array<{ action: CartAction; total: number }>;
-    rewardDistribution: Array<{ tier: "eligible_discount" | "standard"; totalUsers: number; averagePoints: number }>;
+    businessAccountDistribution: Array<{ status: "pending" | "approved" | "rejected" | "none"; totalUsers: number }>;
   };
   categories: Category[];
   products: Product[];
@@ -113,22 +113,32 @@ export function AdminOverviewDashboard({ analytics, categories, products, banner
       .slice(0, 8);
   }, [products]);
 
-  const rewardRows = useMemo(() => {
-    const totalUsers = analytics.rewardDistribution.reduce((sum, item) => sum + item.totalUsers, 0);
+  const businessRows = useMemo(() => {
+    const totalUsers = analytics.businessAccountDistribution.reduce((sum, item) => sum + item.totalUsers, 0);
 
-    return analytics.rewardDistribution.map((item) => {
-      const label = item.tier === "eligible_discount" ? "Eligible Discount" : "Standard";
-      const color = item.tier === "eligible_discount" ? "#0ea5e9" : "#8b5cf6";
-      const percent = formatPercent(item.totalUsers, totalUsers);
+    return analytics.businessAccountDistribution.map((item) => {
+      const labelByStatus: Record<typeof item.status, string> = {
+        none: "Regular Users",
+        pending: "Pending Business",
+        approved: "Approved Business",
+        rejected: "Rejected Business",
+      };
+
+      const colorByStatus: Record<typeof item.status, string> = {
+        none: "#8b5cf6",
+        pending: "#f59e0b",
+        approved: "#16a34a",
+        rejected: "#ef4444",
+      };
 
       return {
         ...item,
-        label,
-        color,
-        percent,
+        label: labelByStatus[item.status],
+        color: colorByStatus[item.status],
+        percent: formatPercent(item.totalUsers, totalUsers),
       };
     });
-  }, [analytics.rewardDistribution]);
+  }, [analytics.businessAccountDistribution]);
 
   const donutSegments = useMemo(() => {
     const ordered: Array<{ action: CartAction; total: number; percent: number; color: string }> = [
@@ -321,13 +331,13 @@ export function AdminOverviewDashboard({ analytics, categories, products, banner
 
         <Card className="xl:col-span-1">
           <CardHeader>
-            <CardTitle className="text-base">Reward Segments</CardTitle>
-            <CardDescription>User distribution by reward threshold eligibility.</CardDescription>
+            <CardTitle className="text-base">Business Segments</CardTitle>
+            <CardDescription>User distribution by business account status.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {rewardRows.length > 0 ? (
-              rewardRows.map((row, index) => (
-                <div key={row.tier} className="space-y-1.5">
+            {businessRows.length > 0 ? (
+              businessRows.map((row, index) => (
+                <div key={row.status} className="space-y-1.5">
                   <div className="flex items-center justify-between text-sm">
                     <p className="font-medium text-zinc-800">{row.label}</p>
                     <p className="text-zinc-500">{formatNumber(row.totalUsers)} users</p>
@@ -342,11 +352,11 @@ export function AdminOverviewDashboard({ analytics, categories, products, banner
                       }}
                     />
                   </div>
-                  <p className="text-xs text-zinc-500">{row.percent}% share | Avg points {Math.round(row.averagePoints)}</p>
+                  <p className="text-xs text-zinc-500">{row.percent}% share</p>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-zinc-500">No reward segment data available yet.</p>
+              <p className="text-sm text-zinc-500">No business segment data available yet.</p>
             )}
           </CardContent>
         </Card>

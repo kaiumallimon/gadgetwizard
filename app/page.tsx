@@ -335,7 +335,7 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-zinc-950 px-5 py-6 text-white sm:px-7">
             <div>
               <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Member Benefits</p>
-              <h3 className="mt-2 text-2xl font-semibold">Get reward-ready pricing and faster support.</h3>
+              <h3 className="mt-2 text-2xl font-semibold">Get volume-ready pricing and faster support.</h3>
             </div>
             <div className="flex gap-3">
               <Link href="/dashboard" className="rounded-full bg-(--accent) px-5 py-2 font-semibold text-white hover:brightness-95">

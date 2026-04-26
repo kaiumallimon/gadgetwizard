@@ -7,7 +7,8 @@ interface UserRow {
   email: string;
   name: string;
   role: UserRole;
-  reward_points: number;
+  business_account_id: number | null;
+  business_account_status: "pending" | "approved" | "rejected" | null;
   is_active: number;
   created_at: Date | string;
   updated_at: Date | string;
@@ -36,7 +37,9 @@ function mapUser(row: UserRow): AppUser {
     email: row.email,
     name: row.name,
     role: row.role,
-    rewardPoints: row.reward_points,
+    businessAccountId: row.business_account_id,
+    businessAccountStatus: row.business_account_status,
+    isBusinessApproved: row.business_account_status === "approved",
     isActive: row.is_active === 1,
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
@@ -46,9 +49,20 @@ function mapUser(row: UserRow): AppUser {
 export async function findUserById(userId: number): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
-      FROM users
-      WHERE id = ?
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      WHERE u.id = ?
       LIMIT 1
     `,
     [userId],
@@ -60,9 +74,20 @@ export async function findUserById(userId: number): Promise<AppUser | null> {
 export async function findUserByAuthUid(authUid: string): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
-      FROM users
-      WHERE auth_uid = ?
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      WHERE u.auth_uid = ?
       LIMIT 1
     `,
     [authUid],
@@ -74,9 +99,20 @@ export async function findUserByAuthUid(authUid: string): Promise<AppUser | null
 export async function findUserByEmail(email: string): Promise<AppUser | null> {
   const row = await queryOne<UserRow>(
     `
-      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
-      FROM users
-      WHERE email = ?
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      WHERE u.email = ?
       LIMIT 1
     `,
     [email],
@@ -88,9 +124,21 @@ export async function findUserByEmail(email: string): Promise<AppUser | null> {
 export async function findUserWithPasswordByEmail(email: string): Promise<{ user: AppUser; passwordHash: string | null } | null> {
   const row = await queryOne<UserWithPasswordRow>(
     `
-      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at, password_hash
-      FROM users
-      WHERE email = ?
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at,
+        u.password_hash
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      WHERE u.email = ?
       LIMIT 1
     `,
     [email],
@@ -150,13 +198,13 @@ export async function listUsers(input: {
   const whereParams: unknown[] = [];
 
   if (input.search) {
-    whereParts.push("(name LIKE ? OR email LIKE ?)");
+    whereParts.push("(u.name LIKE ? OR u.email LIKE ?)");
     const term = `%${input.search}%`;
     whereParams.push(term, term);
   }
 
   if (input.role) {
-    whereParts.push("role = ?");
+    whereParts.push("u.role = ?");
     whereParams.push(input.role);
   }
 
@@ -165,10 +213,21 @@ export async function listUsers(input: {
 
   const rows = await queryRows<UserRow>(
     `
-      SELECT id, auth_uid, email, name, role, reward_points, is_active, created_at, updated_at
-      FROM users
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
       ${whereSql}
-      ORDER BY created_at DESC
+      ORDER BY u.created_at DESC
       LIMIT ? OFFSET ?
     `,
     [...whereParams, input.pageSize, offset],
@@ -177,7 +236,7 @@ export async function listUsers(input: {
   const count = await queryOne<UserCountRow>(
     `
       SELECT COUNT(*) AS total
-      FROM users
+      FROM users u
       ${whereSql}
     `,
     whereParams,

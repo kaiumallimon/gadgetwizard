@@ -149,7 +149,8 @@ function buildProductPayload(
     price: product.originalPrice,
     originalPrice: product.originalPrice,
     discountedPrice: product.discountedPrice,
-    loyalCustomerPrice: product.loyalCustomerPrice,
+    wholesalePrice: product.wholesalePrice,
+    wholesaleMinQuantity: product.wholesaleMinQuantity,
     stock: product.stock,
     categoryId: product.categoryId,
     brandId: product.brandId,
@@ -416,7 +417,12 @@ export function ProductListManager({ initialProducts }: ProductListManagerProps)
                           <p>
                             Discounted: {product.discountedPrice !== null ? `$${product.discountedPrice.toLocaleString()}` : "N/A"}
                           </p>
-                          <p>Loyal: ${product.loyalCustomerPrice.toLocaleString()}</p>
+                          <p>
+                            Wholesale: {product.wholesalePrice !== null ? `$${product.wholesalePrice.toLocaleString()}` : "N/A"}
+                          </p>
+                          <p>
+                            Trigger Qty: {product.wholesaleMinQuantity !== null ? product.wholesaleMinQuantity : "N/A"}
+                          </p>
                         </div>
                       </TableCell>
 

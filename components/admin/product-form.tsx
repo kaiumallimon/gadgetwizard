@@ -251,9 +251,14 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       ? String(initialProduct.discountedPrice)
       : "",
   );
-  const [loyalCustomerPrice, setLoyalCustomerPrice] = useState(
-    initialProduct?.loyalCustomerPrice !== null && initialProduct?.loyalCustomerPrice !== undefined
-      ? String(initialProduct.loyalCustomerPrice)
+  const [wholesalePrice, setWholesalePrice] = useState(
+    initialProduct?.wholesalePrice !== null && initialProduct?.wholesalePrice !== undefined
+      ? String(initialProduct.wholesalePrice)
+      : "",
+  );
+  const [wholesaleMinQuantity, setWholesaleMinQuantity] = useState(
+    initialProduct?.wholesaleMinQuantity !== null && initialProduct?.wholesaleMinQuantity !== undefined
+      ? String(initialProduct.wholesaleMinQuantity)
       : "",
   );
   const [stock, setStock] = useState(initialProduct ? String(initialProduct.stock) : "");
@@ -420,7 +425,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     const parsedPrice = Number(price);
     const parsedStock = Number(stock);
     const parsedDiscountedPrice = discountedPrice.trim() ? Number(discountedPrice) : null;
-    const parsedLoyalCustomerPrice = loyalCustomerPrice.trim() ? Number(loyalCustomerPrice) : null;
+    const parsedWholesalePrice = wholesalePrice.trim() ? Number(wholesalePrice) : null;
+    const parsedWholesaleMinQuantity = wholesaleMinQuantity.trim() ? Number(wholesaleMinQuantity) : null;
     const parsedCategoryId = Number(categoryId);
     const parsedBrandId = brandId.trim() ? Number(brandId) : null;
     const parsedWarrantyMonths = warrantyMonths.trim() ? Number(warrantyMonths) : null;
@@ -465,8 +471,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       return;
     }
 
-    if (parsedLoyalCustomerPrice !== null && (!Number.isFinite(parsedLoyalCustomerPrice) || parsedLoyalCustomerPrice > parsedPrice)) {
-      toast.error("Loyal customer price must be a valid number and cannot be higher than original price.");
+    if (parsedWholesalePrice !== null && (!Number.isFinite(parsedWholesalePrice) || parsedWholesalePrice > parsedPrice)) {
+      toast.error("Wholesale price must be a valid number and cannot be higher than original price.");
       return;
     }
 
@@ -475,8 +481,20 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
       return;
     }
 
-    if (parsedLoyalCustomerPrice !== null && parsedLoyalCustomerPrice < 0) {
-      toast.error("Loyal customer price cannot be negative.");
+    if (parsedWholesalePrice !== null && parsedWholesalePrice < 0) {
+      toast.error("Wholesale price cannot be negative.");
+      return;
+    }
+
+    if (parsedWholesaleMinQuantity !== null && (!Number.isInteger(parsedWholesaleMinQuantity) || parsedWholesaleMinQuantity < 2)) {
+      toast.error("Wholesale minimum quantity must be a whole number greater than or equal to 2.");
+      return;
+    }
+
+    const hasWholesalePrice = parsedWholesalePrice !== null;
+    const hasWholesaleMinQuantity = parsedWholesaleMinQuantity !== null;
+    if (hasWholesalePrice !== hasWholesaleMinQuantity) {
+      toast.error("Wholesale price and wholesale minimum quantity must be provided together.");
       return;
     }
 
@@ -527,7 +545,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
         price: parsedPrice,
         originalPrice: parsedPrice,
         discountedPrice: parsedDiscountedPrice,
-        loyalCustomerPrice: parsedLoyalCustomerPrice,
+        wholesalePrice: parsedWholesalePrice,
+        wholesaleMinQuantity: parsedWholesaleMinQuantity,
         stock: parsedStock,
         categoryId: parsedCategoryId,
         brandId: parsedBrandId,
@@ -625,14 +644,24 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               placeholder={mode === "create" ? "Discounted price in $(optional)" : "Discounted price (optional)"}
             />
           </Field>
-          <Field label={`Loyal Customer Price${currencyHint}`}>
+          <Field label={`Wholesale Price${currencyHint}`}>
             <Input
               type="number"
               min={0}
               step="0.01"
-              value={loyalCustomerPrice}
-              onChange={(event) => setLoyalCustomerPrice(event.target.value)}
-              placeholder={mode === "create" ? "Loyal customer price in $(optional)" : "Loyal customer price (optional)"}
+              value={wholesalePrice}
+              onChange={(event) => setWholesalePrice(event.target.value)}
+              placeholder={mode === "create" ? "Wholesale price in $(optional)" : "Wholesale price (optional)"}
+            />
+          </Field>
+          <Field label="Wholesale Trigger Quantity">
+            <Input
+              type="number"
+              min={2}
+              step="1"
+              value={wholesaleMinQuantity}
+              onChange={(event) => setWholesaleMinQuantity(event.target.value)}
+              placeholder="Quantity where wholesale pricing starts"
             />
           </Field>
           <Field label="Stock">

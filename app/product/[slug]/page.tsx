@@ -5,6 +5,8 @@ import { AddToCartInline } from "@/components/add-to-cart-inline";
 import { ProductReviewsSection } from "@/components/product-reviews-section";
 import { ProductGallery } from "@/components/product-gallery";
 import { Badge } from "@/components/ui/badge";
+import { getServerSession } from "@/lib/server/auth/server-session";
+import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
 import { getApprovedProductReviews } from "@/lib/server/services/review-service";
 
@@ -80,6 +82,8 @@ function parseColorOptions(colorValue: string | null): string[] {
 
 export default async function ProductDetailsPage(context: { params: Promise<{ slug: string }> }) {
   const { slug } = await context.params;
+  const session = await getServerSession();
+  const viewer = session?.role === "user" ? await getCurrentUser(session.userId).catch(() => null) : null;
   const product = await getPublicProductBySlug(slug);
   const approvedReviews = await getApprovedProductReviews(product.id);
   const specificationSections = normalizeSpecificationSections(product.specifications);
@@ -87,7 +91,12 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const fallbackImage = "https://blocks.astratic.com/img/general-img-square.png";
   const galleryImages = product.images.length > 0 ? product.images : [fallbackImage];
   const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
-  const hasLoyalPrice = product.loyalCustomerPrice < product.originalPrice;
+  const canViewWholesale = Boolean(viewer?.isBusinessApproved);
+  const hasWholesalePrice =
+    canViewWholesale &&
+    product.wholesalePrice !== null &&
+    product.wholesaleMinQuantity !== null &&
+    product.wholesalePrice < product.originalPrice;
   const discountedPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
   const savingsAmount = hasDiscount ? product.originalPrice - discountedPrice : 0;
   const savingsPercent = hasDiscount && product.originalPrice > 0
@@ -183,9 +192,9 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
                   </span>
                 )}
 
-                {hasLoyalPrice && (
+                {hasWholesalePrice && (
                   <span className="mt-1 text-sm font-medium text-blue-600">
-                    Loyalty Price: ${product.loyalCustomerPrice.toLocaleString()}
+                    Business Wholesale: ${product.wholesalePrice?.toLocaleString()} from {product.wholesaleMinQuantity}+ units
                   </span>
                 )}
               </div>

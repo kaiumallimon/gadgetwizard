@@ -9,7 +9,8 @@ export interface ProductRecord {
   price: number;
   originalPrice: number;
   discountedPrice: number | null;
-  loyalCustomerPrice: number;
+  wholesalePrice: number | null;
+  wholesaleMinQuantity: number | null;
   stock: number;
   categoryId: number;
   categoryName: string;
@@ -58,7 +59,8 @@ interface ProductRow {
   price: string | number;
   original_price: string | number;
   discounted_price: string | number | null;
-  loyal_customer_price: string | number;
+  wholesale_price: string | number | null;
+  wholesale_min_quantity: number | null;
   stock: number;
   category_id: number;
   category_name: string;
@@ -193,7 +195,8 @@ function parseJson<T>(value: string | null): T | null {
 function mapProduct(row: ProductRow): ProductRecord {
   const originalPrice = Number(row.original_price ?? row.price);
   const discountedPrice = row.discounted_price === null ? null : Number(row.discounted_price);
-  const loyalCustomerPrice = Number(row.loyal_customer_price ?? discountedPrice ?? originalPrice);
+  const wholesalePrice = row.wholesale_price === null ? null : Number(row.wholesale_price);
+  const wholesaleMinQuantity = row.wholesale_min_quantity === null ? null : Number(row.wholesale_min_quantity);
 
   return {
     id: row.id,
@@ -204,7 +207,8 @@ function mapProduct(row: ProductRow): ProductRecord {
     price: originalPrice,
     originalPrice,
     discountedPrice,
-    loyalCustomerPrice,
+    wholesalePrice,
+    wholesaleMinQuantity,
     stock: row.stock,
     categoryId: row.category_id,
     categoryName: row.category_name,
@@ -366,7 +370,8 @@ export async function listProducts(input: {
         p.price,
         p.original_price,
         p.discounted_price,
-        p.loyal_customer_price,
+        p.wholesale_price,
+        p.wholesale_min_quantity,
         p.stock,
         p.category_id,
         c.name AS category_name,
@@ -562,7 +567,8 @@ export async function findProductBySlug(slug: string, activeOnly = true): Promis
         p.price,
         p.original_price,
         p.discounted_price,
-        p.loyal_customer_price,
+        p.wholesale_price,
+        p.wholesale_min_quantity,
         p.stock,
         p.category_id,
         c.name AS category_name,
@@ -626,7 +632,8 @@ export async function findProductById(id: number, activeOnly = false): Promise<P
         p.price,
         p.original_price,
         p.discounted_price,
-        p.loyal_customer_price,
+        p.wholesale_price,
+        p.wholesale_min_quantity,
         p.stock,
         p.category_id,
         c.name AS category_name,
@@ -684,7 +691,8 @@ export async function createProduct(input: {
   description: string | null;
   originalPrice: number;
   discountedPrice: number | null;
-  loyalCustomerPrice: number;
+  wholesalePrice: number | null;
+  wholesaleMinQuantity: number | null;
   stock: number;
   categoryId: number;
   brandId: number | null;
@@ -727,7 +735,8 @@ export async function createProduct(input: {
         price,
         original_price,
         discounted_price,
-        loyal_customer_price,
+        wholesale_price,
+        wholesale_min_quantity,
         stock,
         category_id,
         brand_id,
@@ -759,7 +768,7 @@ export async function createProduct(input: {
         specifications,
         is_active
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     [
       input.name,
@@ -769,7 +778,8 @@ export async function createProduct(input: {
       input.originalPrice,
       input.originalPrice,
       input.discountedPrice,
-      input.loyalCustomerPrice,
+      input.wholesalePrice,
+      input.wholesaleMinQuantity,
       input.stock,
       input.categoryId,
       input.brandId,
@@ -820,7 +830,8 @@ export async function updateProduct(
     description: string | null;
     originalPrice: number;
     discountedPrice: number | null;
-    loyalCustomerPrice: number;
+    wholesalePrice: number | null;
+    wholesaleMinQuantity: number | null;
     stock: number;
     categoryId: number;
     brandId: number | null;
@@ -864,7 +875,8 @@ export async function updateProduct(
         price = ?,
         original_price = ?,
         discounted_price = ?,
-        loyal_customer_price = ?,
+        wholesale_price = ?,
+        wholesale_min_quantity = ?,
         stock = ?,
         category_id = ?,
         brand_id = ?,
@@ -905,7 +917,8 @@ export async function updateProduct(
       input.originalPrice,
       input.originalPrice,
       input.discountedPrice,
-      input.loyalCustomerPrice,
+      input.wholesalePrice,
+      input.wholesaleMinQuantity,
       input.stock,
       input.categoryId,
       input.brandId,

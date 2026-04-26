@@ -7,6 +7,9 @@ export interface CartItemRecord {
   productSlug: string;
   productImages: string[];
   stock: number;
+  productStockSnapshot: number;
+  productWholesalePrice: number | null;
+  productWholesaleMinQuantity: number | null;
   quantity: number;
   unitPrice: number;
   appliedDiscountedPrice: number | null;
@@ -36,6 +39,9 @@ interface CartItemRow {
   product_slug: string;
   product_images: string;
   stock: number;
+  product_stock_snapshot: number;
+  wholesale_price: string | number | null;
+  wholesale_min_quantity: number | null;
   quantity: number;
   unit_price: string | number;
   applied_discounted_price: string | number | null;
@@ -60,6 +66,9 @@ function mapCartItem(row: CartItemRow): CartItemRecord {
     productSlug: row.product_slug,
     productImages: JSON.parse(row.product_images) as string[],
     stock: row.stock,
+    productStockSnapshot: row.product_stock_snapshot,
+    productWholesalePrice: row.wholesale_price === null ? null : Number(row.wholesale_price),
+    productWholesaleMinQuantity: row.wholesale_min_quantity,
     quantity: row.quantity,
     unitPrice: Number(row.unit_price),
     appliedDiscountedPrice: row.applied_discounted_price === null ? null : Number(row.applied_discounted_price),
@@ -116,6 +125,9 @@ export async function getCartByUserId(userId: number): Promise<CartRecord> {
         p.slug AS product_slug,
         p.images AS product_images,
         p.stock,
+        ci.product_stock_snapshot,
+        p.wholesale_price,
+        p.wholesale_min_quantity,
         ci.quantity,
         ci.unit_price,
         ci.applied_discounted_price,
@@ -156,22 +168,49 @@ export async function addToCartItem(input: {
   quantity: number;
   unitPrice: number;
   appliedDiscountedPrice: number | null;
+  productStockSnapshot: number;
 }): Promise<void> {
   await execute(
     `
-      INSERT INTO cart_items (cart_id, product_id, quantity, unit_price, applied_discounted_price)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO cart_items (
+        cart_id,
+        product_id,
+        quantity,
+        unit_price,
+        applied_discounted_price,
+        product_stock_snapshot
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
         quantity = quantity + VALUES(quantity),
         unit_price = VALUES(unit_price),
-        applied_discounted_price = VALUES(applied_discounted_price)
+        applied_discounted_price = VALUES(applied_discounted_price),
+        product_stock_snapshot = VALUES(product_stock_snapshot)
     `,
-    [input.cartId, input.productId, input.quantity, input.unitPrice, input.appliedDiscountedPrice],
+    [
+      input.cartId,
+      input.productId,
+      input.quantity,
+      input.unitPrice,
+      input.appliedDiscountedPrice,
+      input.productStockSnapshot,
+    ],
   );
 }
 
-export async function updateCartItemQuantity(cartItemId: number, quantity: number): Promise<void> {
-  await execute("UPDATE cart_items SET quantity = ? WHERE id = ?", [quantity, cartItemId]);
+export async function updateCartItemQuantity(
+  cartItemId: number,
+  quantity: number,
+  productStockSnapshot: number,
+): Promise<void> {
+  await execute(
+    "UPDATE cart_items SET quantity = ?, product_stock_snapshot = ? WHERE id = ?",
+    [quantity, productStockSnapshot, cartItemId],
+  );
+}
+
+export async function clearCartItemsByCartId(cartId: number): Promise<void> {
+  await execute("DELETE FROM cart_items WHERE cart_id = ?", [cartId]);
 }
 
 export async function removeCartItem(cartItemId: number): Promise<void> {

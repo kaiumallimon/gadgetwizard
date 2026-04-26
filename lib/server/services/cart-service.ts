@@ -10,26 +10,19 @@ import { findProductById } from "@/lib/server/repositories/product-repository";
 import { findUserById } from "@/lib/server/repositories/user-repository";
 import { badRequest, notFound } from "@/lib/server/core/errors";
 
-const REWARD_POINTS_DISCOUNT_THRESHOLD = 100;
-
 function getAppliedDiscountPrice(input: {
-  userRewardPoints: number;
   originalPrice: number;
   discountedPrice: number | null;
-  loyalCustomerPrice: number;
 }): number | null {
-  const discountedPrice = input.discountedPrice;
-  const loyalPrice = input.loyalCustomerPrice < input.originalPrice ? input.loyalCustomerPrice : null;
-
-  if (input.userRewardPoints < REWARD_POINTS_DISCOUNT_THRESHOLD) {
-    return discountedPrice;
+  if (input.discountedPrice === null) {
+    return null;
   }
 
-  if (discountedPrice !== null && loyalPrice !== null) {
-    return Math.min(discountedPrice, loyalPrice);
+  if (input.discountedPrice >= input.originalPrice) {
+    return null;
   }
 
-  return loyalPrice ?? discountedPrice;
+  return input.discountedPrice;
 }
 
 export async function getCartForUser(userId: number) {
@@ -66,10 +59,8 @@ export async function addToCartForUser(input: {
   }
 
   const appliedDiscountedPrice = getAppliedDiscountPrice({
-    userRewardPoints: user.rewardPoints,
     originalPrice: product.originalPrice,
     discountedPrice: product.discountedPrice,
-    loyalCustomerPrice: product.loyalCustomerPrice,
   });
 
   await addToCartItem({
@@ -78,6 +69,7 @@ export async function addToCartForUser(input: {
     quantity: input.quantity,
     unitPrice: product.originalPrice,
     appliedDiscountedPrice,
+    productStockSnapshot: product.stock,
   });
 
   await insertCartActivity({
@@ -116,7 +108,7 @@ export async function updateCartForUser(input: {
     throw notFound("Cart item not found");
   }
 
-  await updateCartItemQuantity(existing.id, input.quantity);
+  await updateCartItemQuantity(existing.id, input.quantity, product.stock);
 
   await insertCartActivity({
     userId: input.userId,

@@ -29,7 +29,7 @@ interface AdminConsoleProps {
     totalUsers: number;
     totalProducts: number;
     cartActivity: Array<{ action: string; total: number }>;
-    rewardDistribution: Array<{ tier: string; totalUsers: number; averagePoints: number }>;
+    businessAccountDistribution: Array<{ status: string; totalUsers: number }>;
   };
   initialCategories: Category[];
   initialProducts: Product[];
@@ -629,19 +629,17 @@ export function AdminConsole({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  <BarChart3 className="h-4 w-4" /> Reward Distribution
+                  <BarChart3 className="h-4 w-4" /> Business Account Distribution
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                {initialAnalytics.rewardDistribution.length === 0 && (
-                  <p className="text-sm text-zinc-500">No reward data yet.</p>
+                {initialAnalytics.businessAccountDistribution.length === 0 && (
+                  <p className="text-sm text-zinc-500">No business account data yet.</p>
                 )}
-                {initialAnalytics.rewardDistribution.map((item) => (
-                  <div key={item.tier} className="rounded-lg border border-zinc-200 px-3 py-2">
-                    <p className="text-sm font-semibold text-zinc-900">{item.tier}</p>
-                    <p className="text-xs text-zinc-500">
-                      Users: {item.totalUsers} | Avg Points: {Math.round(item.averagePoints)}
-                    </p>
+                {initialAnalytics.businessAccountDistribution.map((item) => (
+                  <div key={item.status} className="rounded-lg border border-zinc-200 px-3 py-2">
+                    <p className="text-sm font-semibold text-zinc-900">{item.status}</p>
+                    <p className="text-xs text-zinc-500">Users: {item.totalUsers}</p>
                   </div>
                 ))}
               </CardContent>

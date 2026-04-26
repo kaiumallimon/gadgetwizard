@@ -34,7 +34,8 @@ interface ProductAdminInput {
   price?: number;
   originalPrice?: number;
   discountedPrice?: number | null;
-  loyalCustomerPrice?: number | null;
+  wholesalePrice?: number | null;
+  wholesaleMinQuantity?: number | null;
   stock: number;
   categoryId: number;
   brandId?: number | null;
@@ -78,7 +79,8 @@ function sanitizeStringList(values?: string[] | null): string[] {
 function normalizeProductInput(input: ProductAdminInput): {
   originalPrice: number;
   discountedPrice: number | null;
-  loyalCustomerPrice: number;
+  wholesalePrice: number | null;
+  wholesaleMinQuantity: number | null;
 } {
   const originalPrice = input.originalPrice ?? input.price;
   if (originalPrice === undefined) {
@@ -89,15 +91,31 @@ function normalizeProductInput(input: ProductAdminInput): {
     throw badRequest("Discounted price cannot exceed original price");
   }
 
-  const loyalCustomerPrice = input.loyalCustomerPrice ?? input.discountedPrice ?? originalPrice;
-  if (loyalCustomerPrice > originalPrice) {
-    throw badRequest("Loyal customer price cannot exceed original price");
+  if (
+    input.wholesalePrice !== undefined &&
+    input.wholesalePrice !== null &&
+    input.wholesalePrice > originalPrice
+  ) {
+    throw badRequest("Wholesale price cannot exceed original price");
+  }
+
+  const hasWholesalePrice = input.wholesalePrice !== undefined && input.wholesalePrice !== null;
+  const hasWholesaleMinQuantity =
+    input.wholesaleMinQuantity !== undefined && input.wholesaleMinQuantity !== null;
+
+  if (hasWholesalePrice !== hasWholesaleMinQuantity) {
+    throw badRequest("Wholesale price and minimum quantity must be provided together");
+  }
+
+  if (hasWholesaleMinQuantity && Number(input.wholesaleMinQuantity) < 2) {
+    throw badRequest("Wholesale minimum quantity must be at least 2");
   }
 
   return {
     originalPrice,
     discountedPrice: input.discountedPrice ?? null,
-    loyalCustomerPrice,
+    wholesalePrice: input.wholesalePrice ?? null,
+    wholesaleMinQuantity: input.wholesaleMinQuantity ?? null,
   };
 }
 
@@ -196,7 +214,8 @@ export async function createProductAdmin(input: {
   price?: number;
   originalPrice?: number;
   discountedPrice?: number | null;
-  loyalCustomerPrice?: number | null;
+  wholesalePrice?: number | null;
+  wholesaleMinQuantity?: number | null;
   stock: number;
   categoryId: number;
   brandId?: number | null;
@@ -256,7 +275,8 @@ export async function createProductAdmin(input: {
     description: input.description ?? null,
     originalPrice: pricing.originalPrice,
     discountedPrice: pricing.discountedPrice,
-    loyalCustomerPrice: pricing.loyalCustomerPrice,
+    wholesalePrice: pricing.wholesalePrice,
+    wholesaleMinQuantity: pricing.wholesaleMinQuantity,
     stock: input.stock,
     categoryId: input.categoryId,
     brandId: input.brandId ?? null,
@@ -300,7 +320,8 @@ export async function updateProductAdmin(
     price?: number;
     originalPrice?: number;
     discountedPrice?: number | null;
-    loyalCustomerPrice?: number | null;
+    wholesalePrice?: number | null;
+    wholesaleMinQuantity?: number | null;
     stock: number;
     categoryId: number;
     brandId?: number | null;
@@ -365,7 +386,8 @@ export async function updateProductAdmin(
     description: input.description !== undefined ? input.description : existing.description,
     originalPrice: pricing.originalPrice,
     discountedPrice: pricing.discountedPrice,
-    loyalCustomerPrice: pricing.loyalCustomerPrice,
+    wholesalePrice: pricing.wholesalePrice,
+    wholesaleMinQuantity: pricing.wholesaleMinQuantity,
     stock: input.stock,
     categoryId: input.categoryId,
     brandId: input.brandId !== undefined ? input.brandId : existing.brandId,

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCartForUser } from "@/lib/server/services/cart-service";
 import { getUserAddresses } from "@/lib/server/services/address-service";
+import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getEnv } from "@/lib/server/core/env";
 import { CheckoutPageClient } from "@/components/checkout-page-client";
 
@@ -30,7 +31,8 @@ export default async function CheckoutPage() {
     );
   }
 
-  const [cart, savedAddresses] = await Promise.all([
+  const [user, cart, savedAddresses] = await Promise.all([
+    getCurrentUser(session.userId),
     getCartForUser(session.userId),
     getUserAddresses(session.userId),
   ]);
@@ -50,6 +52,7 @@ export default async function CheckoutPage() {
         cart={cart}
         savedAddresses={savedAddresses}
         stripePublishableKey={publishableKey}
+        isBusinessApproved={user.isBusinessApproved}
       />
     </div>
   );

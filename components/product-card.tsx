@@ -27,7 +27,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [wishlistPending, setWishlistPending] = useState(false);
-  const { session, token } = useAuthStore();
+  const { session, token, user } = useAuthStore();
   const { setCart } = useCartStore();
   const { loadedForUserId, productIds, ensureLoaded, setWishlist } = useWishlistStore();
 
@@ -87,7 +87,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const image = product.images[0] ?? "https://images.unsplash.com/photo-1517336714739-489689fd1ca8?w=1200";
   const hasDiscount = product.discountedPrice !== null && product.discountedPrice < product.originalPrice;
-  const hasLoyal = product.loyalCustomerPrice < product.originalPrice;
+  const canViewWholesale = Boolean(user?.isBusinessApproved);
+  const hasWholesale =
+    canViewWholesale &&
+    product.wholesalePrice !== null &&
+    product.wholesaleMinQuantity !== null &&
+    product.wholesalePrice < product.originalPrice;
   const displayPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
   const discountAmount = hasDiscount ? Math.max(0, product.originalPrice - displayPrice) : 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
@@ -154,12 +159,12 @@ export function ProductCard({ product }: ProductCardProps) {
             {hasDiscount && <span className="text-xs font-semibold text-red-500 line-through">{format$(product.originalPrice)}</span>}
           </div>
 
-          {(hasDiscount || hasLoyal) && (
+          {(hasDiscount || hasWholesale) && (
             <div className="flex flex-wrap gap-1">
               {hasDiscount && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Deal</Badge>}
-              {hasLoyal && (
+              {hasWholesale && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  Loyal {format$(product.loyalCustomerPrice)}
+                  Wholesale {format$(product.wholesalePrice ?? 0)} @ {product.wholesaleMinQuantity}+
                 </Badge>
               )}
               {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}

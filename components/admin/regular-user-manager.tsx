@@ -106,7 +106,7 @@ export function RegularUserManager({ initialUsers }: RegularUserManagerProps) {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Reward Points</TableHead>
+                  <TableHead>Business Account</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -120,7 +120,11 @@ export function RegularUserManager({ initialUsers }: RegularUserManagerProps) {
                     <TableRow key={userItem.id}>
                       <TableCell className="font-medium text-zinc-900">{userItem.name}</TableCell>
                       <TableCell className="text-zinc-700">{userItem.email}</TableCell>
-                      <TableCell className="text-zinc-700">{userItem.rewardPoints}</TableCell>
+                      <TableCell className="text-zinc-700">
+                        {userItem.businessAccountStatus
+                          ? userItem.businessAccountStatus.charAt(0).toUpperCase() + userItem.businessAccountStatus.slice(1)
+                          : "None"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={userItem.isActive ? "secondary" : "outline"} className={userItem.isActive ? "" : "border-red-200 bg-red-50 text-red-700"}>
                           {userItem.isActive ? "Active" : "Banned"}

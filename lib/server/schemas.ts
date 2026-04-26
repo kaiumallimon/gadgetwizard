@@ -83,7 +83,8 @@ export const adminProductSchema = z.object({
   price: z.number().nonnegative().optional(),
   originalPrice: z.number().nonnegative().optional(),
   discountedPrice: z.number().nonnegative().nullable().optional(),
-  loyalCustomerPrice: z.number().nonnegative().nullable().optional(),
+  wholesalePrice: z.number().nonnegative().nullable().optional(),
+  wholesaleMinQuantity: z.number().int().min(2).nullable().optional(),
   stock: z.number().int().nonnegative(),
   categoryId: z.number().int().positive(),
   brandId: z.number().int().positive().nullable().optional(),
@@ -133,13 +134,100 @@ export const adminProductSchema = z.object({
     });
   }
 
-  if (value.loyalCustomerPrice !== null && value.loyalCustomerPrice !== undefined && value.loyalCustomerPrice > originalPrice) {
+  if (value.wholesalePrice !== null && value.wholesalePrice !== undefined && value.wholesalePrice > originalPrice) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Loyal customer price cannot exceed original price",
-      path: ["loyalCustomerPrice"],
+      message: "Wholesale price cannot exceed original price",
+      path: ["wholesalePrice"],
     });
   }
+
+  const hasWholesalePrice = value.wholesalePrice !== null && value.wholesalePrice !== undefined;
+  const hasWholesaleMinQuantity =
+    value.wholesaleMinQuantity !== null && value.wholesaleMinQuantity !== undefined;
+
+  if (hasWholesalePrice !== hasWholesaleMinQuantity) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Wholesale price and minimum quantity must be provided together",
+      path: hasWholesalePrice ? ["wholesaleMinQuantity"] : ["wholesalePrice"],
+    });
+  }
+});
+
+export const orderPurchaseModeSchema = z.enum(["regular", "business"]);
+
+export const businessAccountApplicationSchema = z.object({
+  businessName: z.string().trim().min(2).max(255),
+  legalEntityType: z.string().trim().min(2).max(120),
+  registrationNumber: z.string().trim().max(120).nullable().optional(),
+  taxId: z.string().trim().max(120).nullable().optional(),
+  yearsInOperation: z.number().int().min(0).max(200).nullable().optional(),
+  websiteUrl: z.string().trim().url().max(500).nullable().optional(),
+  primaryContactName: z.string().trim().min(2).max(255),
+  primaryContactRole: z.string().trim().max(120).nullable().optional(),
+  primaryContactEmail: z.string().trim().email().max(255),
+  primaryContactPhone: z.string().trim().min(3).max(30),
+  addressLine1: z.string().trim().min(3).max(500),
+  addressLine2: z.string().trim().max(500).nullable().optional(),
+  city: z.string().trim().min(2).max(255),
+  state: z.string().trim().max(255).nullable().optional(),
+  postalCode: z.string().trim().max(20).nullable().optional(),
+  country: z.string().trim().min(2).max(120).default("Bangladesh"),
+  monthlyPurchaseVolume: z.string().trim().max(120).nullable().optional(),
+  productCategories: z.array(z.string().trim().min(1).max(120)).max(20).nullable().optional(),
+  documentUrls: z.array(z.string().trim().url().max(1000)).max(20).nullable().optional(),
+  additionalNotes: z.string().trim().max(5000).nullable().optional(),
+});
+
+export const adminBusinessAccountQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(["pending", "approved", "rejected"]).optional(),
+  search: z.string().trim().min(1).optional(),
+});
+
+export const adminBusinessAccountReviewSchema = z.object({
+  status: z.enum(["approved", "rejected"]),
+  reviewNotes: z.string().trim().max(5000).nullable().optional(),
+});
+
+const checkoutAddressSchema = z.object({
+  label: z.string().trim().max(100).optional(),
+  fullName: z.string().trim().min(1).max(255),
+  phone: z.string().trim().min(1).max(30),
+  addressLine1: z.string().trim().min(1).max(500),
+  addressLine2: z.string().trim().max(500).optional(),
+  city: z.string().trim().min(1).max(255),
+  state: z.string().trim().max(255).optional(),
+  postalCode: z.string().trim().max(20).optional(),
+  country: z.string().trim().max(100).default("Bangladesh"),
+  saveAddress: z.boolean().optional(),
+});
+
+export const checkoutCreatePaymentIntentSchema = z.object({
+  purchaseMode: orderPurchaseModeSchema.default("regular"),
+  addressId: z.number().int().positive().optional(),
+  newAddress: checkoutAddressSchema.optional(),
+});
+
+export const createOrderSchema = z.object({
+  paymentIntentId: z.string().trim().min(1),
+  purchaseMode: orderPurchaseModeSchema.default("regular"),
+  addressId: z.number().int().positive().optional(),
+  newAddress: checkoutAddressSchema.optional(),
+}).refine((data) => data.addressId !== undefined || data.newAddress !== undefined, {
+  message: "Either addressId or newAddress is required",
+});
+
+export const adminOrdersQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum([
+    "pending_payment", "paid", "processing", "shipped",
+    "delivered", "cancelled", "refunded",
+  ]).optional(),
+  search: z.string().trim().min(1).optional(),
 });
 
 export const adminBannerSchema = z.object({

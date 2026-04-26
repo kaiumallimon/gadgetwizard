@@ -28,6 +28,11 @@ These SQL files are ordered and should be executed sequentially.
 22. 022_create_product_reviews.sql
 23. 023_create_wishlist_items.sql
 24. 024_create_order_payments.sql
+25. 025_remove_reward_and_loyalty.sql
+26. 026_add_product_wholesale_pricing.sql
+27. 027_create_business_accounts.sql
+28. 028_add_wholesale_fields_to_orders.sql
+29. 029_add_cart_item_stock_snapshot.sql
 
 ## Run Migrations Manually
 
@@ -59,6 +64,11 @@ mysql -u <username> -p <database_name> < migrations/021_create_addresses.sql
 mysql -u <username> -p <database_name> < migrations/022_create_product_reviews.sql
 mysql -u <username> -p <database_name> < migrations/023_create_wishlist_items.sql
 mysql -u <username> -p <database_name> < migrations/024_create_order_payments.sql
+mysql -u <username> -p <database_name> < migrations/025_remove_reward_and_loyalty.sql
+mysql -u <username> -p <database_name> < migrations/026_add_product_wholesale_pricing.sql
+mysql -u <username> -p <database_name> < migrations/027_create_business_accounts.sql
+mysql -u <username> -p <database_name> < migrations/028_add_wholesale_fields_to_orders.sql
+mysql -u <username> -p <database_name> < migrations/029_add_cart_item_stock_snapshot.sql
 ```
 
 ## Notes
@@ -68,7 +78,6 @@ mysql -u <username> -p <database_name> < migrations/024_create_order_payments.sq
 - Product images and specifications are stored as JSON for flexible CDN URL arrays and specs.
 - Cart design uses one active cart per user for now (no checkout/order yet).
 - Cart activity logs support basic admin analytics.
-- Reward points ledger is future-ready for purchase integration.
 - Banners use one responsive image source, active windows, and click-through URLs.
 - Categories now support optional image_url for richer storefront category cards.
 - Categories support is_header_category flag for curated header navigation links.
@@ -81,3 +90,8 @@ mysql -u <username> -p <database_name> < migrations/024_create_order_payments.sq
 - 017 creates FAQs for public help content and admin management.
 - 018 creates system_activity_logs for production-grade CRUD monitoring across API routes.
 - 019 migrates authentication from firebase_uid to auth_uid and adds password_hash fields for NextAuth credentials.
+- 025 removes legacy reward/loyalty schema (reward points and loyal customer price).
+- 026 adds product-level wholesale pricing fields and trigger quantity rules.
+- 027 adds business account applications and admin approval workflow data model.
+- 028 marks wholesale orders/items and links wholesale orders to approved business accounts.
+- 029 stores per-item stock snapshots in carts for stale stock detection at checkout.

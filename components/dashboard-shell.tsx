@@ -19,6 +19,7 @@ import {
     Megaphone,
     CircleHelp,
     Package,
+    Building2,
     ShoppingBag,
     ShoppingCart,
     Star,
@@ -90,6 +91,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Orders",
                         items: [
                             { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+                            { href: "/admin/business-accounts", label: "Business Requests", icon: Building2 },
                             { href: "/admin/wishlist", label: "Wishlist", icon: Heart },
                             { href: "/admin/reviews", label: "Reviews", icon: Star },
                         ],
@@ -143,6 +145,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         { href: "/dashboard/wishlist", label: "Wishlist", icon: Heart },
                         { href: "/dashboard/orders", label: "My Orders", icon: ClipboardList },
                         { href: "/dashboard/addresses", label: "Addresses", icon: MapPin },
+                        { href: "/dashboard/business-account", label: "Business Account", icon: Building2 },
                     ],
                 },
             ],

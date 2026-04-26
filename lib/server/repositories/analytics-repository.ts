@@ -9,10 +9,9 @@ interface ActionCountRow {
   total: number;
 }
 
-interface RewardDistributionRow {
-  tier: "eligible_discount" | "standard";
+interface BusinessAccountDistributionRow {
+  status: "pending" | "approved" | "rejected" | "none";
   total_users: number;
-  avg_points: number;
 }
 
 interface RecentActivityRow {
@@ -44,14 +43,14 @@ export async function getAnalyticsSummary() {
     `,
   );
 
-  const rewardDistribution = await queryRows<RewardDistributionRow>(
+  const businessAccountDistribution = await queryRows<BusinessAccountDistributionRow>(
     `
       SELECT
-        CASE WHEN reward_points >= 100 THEN 'eligible_discount' ELSE 'standard' END AS tier,
-        COUNT(*) AS total_users,
-        AVG(reward_points) AS avg_points
-      FROM users
-      GROUP BY CASE WHEN reward_points >= 100 THEN 'eligible_discount' ELSE 'standard' END
+        COALESCE(ba.status, 'none') AS status,
+        COUNT(*) AS total_users
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      GROUP BY COALESCE(ba.status, 'none')
     `,
   );
 
@@ -59,10 +58,9 @@ export async function getAnalyticsSummary() {
     totalUsers: users?.total ?? 0,
     totalProducts: products?.total ?? 0,
     cartActivity,
-    rewardDistribution: rewardDistribution.map((row) => ({
-      tier: row.tier,
+    businessAccountDistribution: businessAccountDistribution.map((row) => ({
+      status: row.status,
       totalUsers: row.total_users,
-      averagePoints: Number(row.avg_points ?? 0),
     })),
   };
 }

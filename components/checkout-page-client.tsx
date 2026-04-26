@@ -13,16 +13,19 @@ interface CheckoutPageClientProps {
   cart: Cart;
   savedAddresses: UserAddress[];
   stripePublishableKey: string;
+  isBusinessApproved: boolean;
 }
 
 export function CheckoutPageClient({
   cart,
   savedAddresses,
   stripePublishableKey,
+  isBusinessApproved,
 }: CheckoutPageClientProps) {
   const { token } = useAuthStore();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [purchaseMode, setPurchaseMode] = useState<"regular" | "business">("regular");
   const [initialAddressId, setInitialAddressId] = useState<number | undefined>(
     savedAddresses.find((a) => a.isDefault)?.id ?? savedAddresses[0]?.id,
   );
@@ -35,9 +38,11 @@ export function CheckoutPageClient({
     let active = true;
 
     async function init() {
+      setLoading(true);
+      setError(null);
       try {
         const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
-        const result = await apiClient.createPaymentIntent({}, token ?? undefined);
+        const result = await apiClient.createPaymentIntent({ purchaseMode }, token ?? undefined);
         if (!active) return;
         setClientSecret(result.clientSecret);
         setPaymentIntentId(result.paymentIntentId);
@@ -55,8 +60,7 @@ export function CheckoutPageClient({
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [purchaseMode, savedAddresses, token]);
 
   if (loading) {
     return (
@@ -76,25 +80,66 @@ export function CheckoutPageClient({
   }
 
   return (
-    <Elements
-      stripe={stripePromise}
-      options={{
-        clientSecret,
-        appearance: {
-          theme: "stripe",
-          variables: {
-            colorPrimary: "#f97316",
-            borderRadius: "12px",
+    <div className="space-y-4">
+      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+        <p className="text-sm font-medium text-zinc-900">Purchase Mode</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Business mode applies wholesale pricing only where product quantity thresholds are met.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setPurchaseMode("regular")}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+              purchaseMode === "regular"
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-300 bg-white text-zinc-700"
+            }`}
+          >
+            Regular
+          </button>
+          <button
+            type="button"
+            onClick={() => setPurchaseMode("business")}
+            disabled={!isBusinessApproved}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+              purchaseMode === "business"
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-300 bg-white text-zinc-700"
+            } disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            Business
+          </button>
+        </div>
+        {!isBusinessApproved && (
+          <p className="mt-2 text-xs text-amber-700">
+            Business mode is locked until your business account is approved.
+          </p>
+        )}
+      </div>
+
+      <Elements
+        stripe={stripePromise}
+        options={{
+          clientSecret,
+          appearance: {
+            theme: "stripe",
+            variables: {
+              colorPrimary: "#f97316",
+              borderRadius: "12px",
+            },
           },
-        },
-      }}
-    >
-      <CheckoutForm
-        cart={cart}
-        savedAddresses={savedAddresses}
-        paymentIntentId={paymentIntentId}
-        initialAddressId={initialAddressId}
-      />
-    </Elements>
+        }}
+      >
+        <CheckoutForm
+          cart={cart}
+          savedAddresses={savedAddresses}
+          paymentIntentId={paymentIntentId}
+          purchaseMode={purchaseMode}
+          isBusinessApproved={isBusinessApproved}
+          initialAddressId={initialAddressId}
+        />
+      </Elements>
+    </div>
   );
 }

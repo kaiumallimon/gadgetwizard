@@ -38,6 +38,8 @@ interface CheckoutFormProps {
   cart: Cart;
   savedAddresses: UserAddress[];
   paymentIntentId: string;
+  purchaseMode: "regular" | "business";
+  isBusinessApproved: boolean;
   initialAddressId?: number;
 }
 
@@ -45,6 +47,8 @@ export function CheckoutForm({
   cart,
   savedAddresses,
   paymentIntentId,
+  purchaseMode,
+  isBusinessApproved,
   initialAddressId,
 }: CheckoutFormProps) {
   const router = useRouter();
@@ -73,8 +77,24 @@ export function CheckoutForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const regularModeBlockedItems = purchaseMode === "regular"
+    ? cart.items.filter(
+      (item) =>
+        item.productWholesaleMinQuantity !== null &&
+        item.quantity >= item.productWholesaleMinQuantity,
+    )
+    : [];
+
   const total = cart.items.reduce((sum, item) => {
-    const price = item.appliedDiscountedPrice ?? item.unitPrice;
+    const regularPrice = item.appliedDiscountedPrice ?? item.unitPrice;
+    const isWholesaleItem =
+      purchaseMode === "business" &&
+      isBusinessApproved &&
+      item.productWholesalePrice !== null &&
+      item.productWholesaleMinQuantity !== null &&
+      item.quantity >= item.productWholesaleMinQuantity;
+
+    const price = isWholesaleItem ? (item.productWholesalePrice ?? regularPrice) : regularPrice;
     return sum + price * item.quantity;
   }, 0);
 
@@ -135,8 +155,8 @@ export function CheckoutForm({
 
       // Create order on backend
       const orderPayload = showNewAddressForm
-        ? { paymentIntentId, newAddress }
-        : { paymentIntentId, addressId: selectedAddressId! };
+        ? { paymentIntentId, purchaseMode, newAddress }
+        : { paymentIntentId, purchaseMode, addressId: selectedAddressId! };
 
       const { order } = await apiClient.createOrder(orderPayload, token ?? undefined);
       clearCart();
@@ -162,10 +182,27 @@ export function CheckoutForm({
                 {item.productName} <span className="text-zinc-400">× {item.quantity}</span>
               </span>
               <span className="font-medium text-zinc-900">
-                ${((item.appliedDiscountedPrice ?? item.unitPrice) * item.quantity).toLocaleString()}
+                ${(
+                  (
+                    purchaseMode === "business" &&
+                    isBusinessApproved &&
+                    item.productWholesalePrice !== null &&
+                    item.productWholesaleMinQuantity !== null &&
+                    item.quantity >= item.productWholesaleMinQuantity
+                      ? item.productWholesalePrice
+                      : (item.appliedDiscountedPrice ?? item.unitPrice)
+                  ) * item.quantity
+                ).toLocaleString()}
               </span>
             </div>
           ))}
+          {regularModeBlockedItems.length > 0 && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              Regular mode is blocked for:
+              {regularModeBlockedItems.map((item) => ` ${item.productName} (${item.productWholesaleMinQuantity}+ qty)`).join(", ")}
+              . Switch to business mode to continue.
+            </div>
+          )}
           <div className="border-t border-zinc-100 pt-2">
             <div className="flex items-center justify-between font-semibold">
               <span className="text-zinc-900">Total</span>
@@ -369,7 +406,7 @@ export function CheckoutForm({
 
       <Button
         type="submit"
-        disabled={!stripe || !elements || submitting}
+        disabled={!stripe || !elements || submitting || regularModeBlockedItems.length > 0}
         className="w-full rounded-full bg-orange-500 py-6 text-base font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
       >
         {submitting ? "Placing Order..." : `Pay $${total.toLocaleString()} & Place Order`}

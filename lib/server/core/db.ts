@@ -1,4 +1,4 @@
-import mysql, { type Pool, type ResultSetHeader, type RowDataPacket } from "mysql2/promise";
+import mysql, { type Pool, type PoolConnection, type ResultSetHeader, type RowDataPacket } from "mysql2/promise";
 
 import { getEnv } from "@/lib/server/core/env";
 
@@ -90,4 +90,25 @@ export async function execute(sql: string, params: unknown[] = []): Promise<Resu
     const [result] = await conn.query<ResultSetHeader>(sql, params);
     return result;
   });
+}
+
+export async function withTransaction<T>(operation: (connection: PoolConnection) => Promise<T>): Promise<T> {
+  const pool = getPool();
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const result = await operation(connection);
+    await connection.commit();
+    return result;
+  } catch (error) {
+    try {
+      await connection.rollback();
+    } catch {
+      // best-effort rollback
+    }
+    throw error;
+  } finally {
+    connection.release();
+  }
 }

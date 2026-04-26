@@ -6,7 +6,7 @@ import { requireRole } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
 import { badRequest } from "@/lib/server/core/errors";
 import { parseJsonBody } from "@/lib/server/core/validation";
-import { updateAdminOrderStatus } from "@/lib/server/services/order-service";
+import { getAdminOrderById, updateAdminOrderStatus } from "@/lib/server/services/order-service";
 import type { OrderStatus } from "@/lib/client/types";
 
 export const dynamic = "force-dynamic";
@@ -39,4 +39,24 @@ async function PUTHandler(
   }
 }
 
+async function GETHandler(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    await requireRole(request, ["admin"]);
+    const { id } = await params;
+    const orderId = Number(id);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      throw badRequest("Invalid order ID");
+    }
+
+    const order = await getAdminOrderById(orderId);
+    return jsonResponse({ item: order }, 200, noStoreHeaders());
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
+export const GET = withRouteAudit(GETHandler);
 export const PUT = withRouteAudit(PUTHandler);
