@@ -65,11 +65,7 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
                   sizes="(min-width: 1280px) 1120px, 100vw"
                   className="object-cover object-center transition duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-linear-to-r from-black/60 via-black/18 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-4 text-white md:p-6">
-                  <p className="text-xs uppercase tracking-[0.18em] text-white/75">Featured Campaign</p>
-                  <h2 className="mt-2 max-w-xl text-xl font-semibold md:text-3xl">{banner.title}</h2>
-                </div>
+                
               </>
             );
 
