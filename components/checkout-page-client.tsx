@@ -8,6 +8,7 @@ import type { Cart, UserAddress } from "@/lib/client/types";
 import { apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { CheckoutForm } from "@/components/checkout-form";
+import type { CheckoutFulfillmentMethod } from "@/lib/shared/checkout";
 
 interface CheckoutPageClientProps {
   cart: Cart;
@@ -26,6 +27,7 @@ export function CheckoutPageClient({
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [purchaseMode, setPurchaseMode] = useState<"regular" | "business">("regular");
+  const [fulfillmentMethod, setFulfillmentMethod] = useState<CheckoutFulfillmentMethod>("delivery");
   const [initialAddressId, setInitialAddressId] = useState<number | undefined>(
     savedAddresses.find((a) => a.isDefault)?.id ?? savedAddresses[0]?.id,
   );
@@ -64,11 +66,16 @@ export function CheckoutPageClient({
       setError(null);
       try {
         const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
-        const result = await apiClient.createPaymentIntent({ purchaseMode }, token ?? undefined);
+        const result = await apiClient.createPaymentIntent(
+          { purchaseMode, fulfillmentMethod },
+          token ?? undefined,
+        );
         if (!active) return;
         setClientSecret(result.clientSecret);
         setPaymentIntentId(result.paymentIntentId);
-        if (defaultAddress) setInitialAddressId(defaultAddress.id);
+        if (fulfillmentMethod === "delivery" && defaultAddress) {
+          setInitialAddressId(defaultAddress.id);
+        }
       } catch (err) {
         if (!active) return;
         setError(err instanceof Error ? err.message : "Failed to initialize payment. Please try again.");
@@ -82,7 +89,7 @@ export function CheckoutPageClient({
     return () => {
       active = false;
     };
-  }, [purchaseMode, savedAddresses, token]);
+  }, [purchaseMode, fulfillmentMethod, savedAddresses, token]);
 
   if (loading) {
     return (
@@ -150,6 +157,37 @@ export function CheckoutPageClient({
         )}
       </div>
 
+      <div className="rounded-xl border border-zinc-200 bg-white p-4">
+        <p className="text-sm font-medium text-zinc-900">Fulfillment</p>
+        <p className="mt-1 text-xs text-zinc-500">
+          Delivery is $10, free above $200, and showroom pickup is always free.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setFulfillmentMethod("delivery")}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+              fulfillmentMethod === "delivery"
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-300 bg-white text-zinc-700"
+            }`}
+          >
+            Deliver to address
+          </button>
+          <button
+            type="button"
+            onClick={() => setFulfillmentMethod("pickup")}
+            className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
+              fulfillmentMethod === "pickup"
+                ? "border-zinc-900 bg-zinc-900 text-white"
+                : "border-zinc-300 bg-white text-zinc-700"
+            }`}
+          >
+            Pickup from showroom
+          </button>
+        </div>
+      </div>
+
       <Elements
         stripe={stripePromise}
         options={{
@@ -168,6 +206,7 @@ export function CheckoutPageClient({
           savedAddresses={savedAddresses}
           paymentIntentId={paymentIntentId}
           purchaseMode={purchaseMode}
+          fulfillmentMethod={fulfillmentMethod}
           isBusinessApproved={isBusinessApproved}
           initialAddressId={initialAddressId}
         />

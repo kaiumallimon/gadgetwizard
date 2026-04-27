@@ -3,6 +3,11 @@ import Stripe from "stripe";
 import { getEnv } from "@/lib/server/core/env";
 import { badRequest, notFound } from "@/lib/server/core/errors";
 import { withTransaction } from "@/lib/server/core/db";
+import {
+  calculateCheckoutTotal,
+  getShowroomPickupSnapshot,
+  type CheckoutFulfillmentMethod,
+} from "@/lib/shared/checkout";
 import type {
   AddressSnapshot,
   Order,
@@ -52,6 +57,7 @@ function getStripe(): Stripe {
 
 export interface CheckoutAddressInput {
   purchaseMode?: OrderPurchaseMode;
+  fulfillmentMethod?: CheckoutFulfillmentMethod;
   addressId?: number;
   newAddress?: {
     label?: string;
@@ -83,6 +89,10 @@ async function resolveShippingAddress(
   userId: number,
   input: CheckoutAddressInput,
 ): Promise<{ snapshot: AddressSnapshot; savedAddressId?: number }> {
+  if ((input.fulfillmentMethod ?? "delivery") === "pickup") {
+    return { snapshot: getShowroomPickupSnapshot() };
+  }
+
   if (input.addressId) {
     const addr = await getAddressById(input.addressId);
     if (!addr || addr.user_id !== userId) {
@@ -284,6 +294,7 @@ export async function createPaymentIntent(
 ): Promise<{ clientSecret: string; paymentIntentId: string; amount: number }> {
   const stripe = getStripe();
   const purchaseMode = input?.purchaseMode ?? "regular";
+  const fulfillmentMethod = input?.fulfillmentMethod ?? "delivery";
 
   const cart = await getCartByUserId(userId);
   if (!cart || cart.items.length === 0) {
@@ -299,8 +310,8 @@ export async function createPaymentIntent(
   }));
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
-  const totalAmount = subtotal;
-  const amountInCents = Math.round(totalAmount * 100);
+  const totals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
+  const amountInCents = Math.round(totals.total * 100);
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountInCents,
@@ -309,6 +320,8 @@ export async function createPaymentIntent(
     metadata: {
       userId: String(userId),
       purchaseMode,
+      fulfillmentMethod,
+      shippingAmount: String(totals.deliveryCharge),
       businessAccountId: checkoutContext.approvedAccount ? String(checkoutContext.approvedAccount.id) : "",
     },
   });
@@ -320,7 +333,7 @@ export async function createPaymentIntent(
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
-    amount: totalAmount,
+    amount: totals.total,
   };
 }
 
@@ -328,6 +341,7 @@ export interface CreateOrderInput {
   userId: number;
   paymentIntentId: string;
   purchaseMode?: OrderPurchaseMode;
+  fulfillmentMethod?: CheckoutFulfillmentMethod;
   addressInput: CheckoutAddressInput;
 }
 
@@ -373,13 +387,17 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
   }
 
   const purchaseMode = input.purchaseMode ?? "regular";
+  const fulfillmentMethod = paymentIntent.metadata.fulfillmentMethod === "pickup" ? "pickup" : "delivery";
   const cart = await getCartByUserId(input.userId);
   if (!cart || cart.items.length === 0) {
     throw badRequest("Cart is empty — cannot create order.");
   }
 
   const checkoutContext = await getBusinessCheckoutContext(input.userId, purchaseMode);
-  const { snapshot } = await resolveShippingAddress(input.userId, input.addressInput);
+  const { snapshot } = await resolveShippingAddress(input.userId, {
+    ...input.addressInput,
+    fulfillmentMethod,
+  });
 
   const createdOrder = await withTransaction(async (connection) => {
     const productIds = Array.from(new Set(cart.items.map((item) => item.productId)));
@@ -413,6 +431,7 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
     }
 
     const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+    const totals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
     const isWholesale = items.some((item) => item.isWholesaleItem);
 
     const order = await createOrderRepo(
@@ -421,9 +440,9 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
         purchaseMode,
         isWholesale,
         businessAccountId: checkoutContext.approvedAccount?.id ?? null,
-        totalAmount: subtotal,
+        totalAmount: totals.total,
         subtotal,
-        shippingAmount: 0,
+        shippingAmount: totals.deliveryCharge,
         stripePaymentIntentId: input.paymentIntentId,
         stripePaymentStatus: paymentIntent.status,
         shippingAddressSnapshot: snapshot,

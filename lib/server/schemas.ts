@@ -211,6 +211,7 @@ const checkoutAddressSchema = z.object({
 
 export const checkoutCreatePaymentIntentSchema = z.object({
   purchaseMode: orderPurchaseModeSchema.default("regular"),
+  fulfillmentMethod: z.enum(["delivery", "pickup"]).default("delivery"),
   addressId: z.number().int().positive().optional(),
   newAddress: checkoutAddressSchema.optional(),
 });
@@ -218,10 +219,17 @@ export const checkoutCreatePaymentIntentSchema = z.object({
 export const createOrderSchema = z.object({
   paymentIntentId: z.string().trim().min(1),
   purchaseMode: orderPurchaseModeSchema.default("regular"),
+  fulfillmentMethod: z.enum(["delivery", "pickup"]).default("delivery"),
   addressId: z.number().int().positive().optional(),
   newAddress: checkoutAddressSchema.optional(),
-}).refine((data) => data.addressId !== undefined || data.newAddress !== undefined, {
-  message: "Either addressId or newAddress is required",
+}).refine((data) => {
+  if (data.fulfillmentMethod === "pickup") {
+    return true;
+  }
+
+  return data.addressId !== undefined || data.newAddress !== undefined;
+}, {
+  message: "Either addressId or newAddress is required for delivery",
 });
 
 export const adminOrdersQuerySchema = z.object({

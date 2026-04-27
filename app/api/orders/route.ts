@@ -28,6 +28,7 @@ async function POSTHandler(request: NextRequest) {
       userId: session.userId,
       paymentIntentId: body.paymentIntentId,
       purchaseMode: body.purchaseMode,
+      fulfillmentMethod: body.fulfillmentMethod,
       addressInput: {
         addressId: body.addressId,
         newAddress: body.newAddress,

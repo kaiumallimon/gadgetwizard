@@ -21,6 +21,7 @@ import type {
   ChatConversationSourceType,
   ChatMessage,
 } from "@/lib/client/types";
+import type { CheckoutFulfillmentMethod } from "@/lib/shared/checkout";
 
 class ApiError extends Error {
   status: number;
@@ -602,6 +603,7 @@ export const apiClient = {
   // Checkout
   async createPaymentIntent(payload: {
     purchaseMode?: "regular" | "business";
+    fulfillmentMethod?: CheckoutFulfillmentMethod;
     addressId?: number;
     newAddress?: {
       label?: string;
@@ -626,6 +628,7 @@ export const apiClient = {
   async createOrder(payload: {
     paymentIntentId: string;
     purchaseMode?: "regular" | "business";
+    fulfillmentMethod?: CheckoutFulfillmentMethod;
     addressId?: number;
     newAddress?: {
       label?: string;

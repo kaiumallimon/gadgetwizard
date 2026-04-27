@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { calculateCheckoutTotal, type CheckoutFulfillmentMethod } from "@/lib/shared/checkout";
 
 const addressSchema = z.object({
   label: z.string().max(100).optional(),
@@ -39,6 +40,7 @@ interface CheckoutFormProps {
   savedAddresses: UserAddress[];
   paymentIntentId: string;
   purchaseMode: "regular" | "business";
+  fulfillmentMethod: CheckoutFulfillmentMethod;
   isBusinessApproved: boolean;
   initialAddressId?: number;
 }
@@ -48,6 +50,7 @@ export function CheckoutForm({
   savedAddresses,
   paymentIntentId,
   purchaseMode,
+  fulfillmentMethod,
   isBusinessApproved,
   initialAddressId,
 }: CheckoutFormProps) {
@@ -85,7 +88,7 @@ export function CheckoutForm({
     )
     : [];
 
-  const total = cart.items.reduce((sum, item) => {
+  const subtotal = cart.items.reduce((sum, item) => {
     const regularPrice = item.appliedDiscountedPrice ?? item.unitPrice;
     const isWholesaleItem =
       purchaseMode === "business" &&
@@ -97,6 +100,13 @@ export function CheckoutForm({
     const price = isWholesaleItem ? (item.productWholesalePrice ?? regularPrice) : regularPrice;
     return sum + price * item.quantity;
   }, 0);
+  const checkoutTotals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
+  const isPickup = fulfillmentMethod === "pickup";
+  const deliveryLabel = isPickup
+    ? "Showroom pickup"
+    : checkoutTotals.deliveryCharge === 0
+      ? "Free delivery"
+      : "Delivery charge";
 
   function handleAddressChange(field: keyof AddressFormData, value: string | boolean) {
     setNewAddress((prev) => ({ ...prev, [field]: value }));
@@ -121,20 +131,21 @@ export function CheckoutForm({
     setSubmitting(true);
 
     try {
-      // Validate address if using new form
-      if (!showNewAddressForm && selectedAddressId) {
-        // using saved address
-      } else {
-        const parsed = addressSchema.safeParse(newAddress);
-        if (!parsed.success) {
-          const errors: Partial<Record<keyof AddressFormData, string>> = {};
-          parsed.error.issues.forEach((issue) => {
-            const key = issue.path[0] as keyof AddressFormData;
-            if (key) errors[key] = issue.message;
-          });
-          setFormErrors(errors);
-          setSubmitting(false);
-          return;
+      if (fulfillmentMethod === "delivery") {
+        if (!showNewAddressForm && selectedAddressId) {
+          // using saved address
+        } else {
+          const parsed = addressSchema.safeParse(newAddress);
+          if (!parsed.success) {
+            const errors: Partial<Record<keyof AddressFormData, string>> = {};
+            parsed.error.issues.forEach((issue) => {
+              const key = issue.path[0] as keyof AddressFormData;
+              if (key) errors[key] = issue.message;
+            });
+            setFormErrors(errors);
+            setSubmitting(false);
+            return;
+          }
         }
       }
 
@@ -154,9 +165,11 @@ export function CheckoutForm({
       }
 
       // Create order on backend
-      const orderPayload = showNewAddressForm
-        ? { paymentIntentId, purchaseMode, newAddress }
-        : { paymentIntentId, purchaseMode, addressId: selectedAddressId! };
+      const orderPayload = fulfillmentMethod === "pickup"
+        ? { paymentIntentId, purchaseMode, fulfillmentMethod }
+        : showNewAddressForm
+          ? { paymentIntentId, purchaseMode, fulfillmentMethod, newAddress }
+          : { paymentIntentId, purchaseMode, fulfillmentMethod, addressId: selectedAddressId! };
 
       const { order } = await apiClient.createOrder(orderPayload, token ?? undefined);
       clearCart();
@@ -203,10 +216,18 @@ export function CheckoutForm({
               . Switch to business mode to continue.
             </div>
           )}
-          <div className="border-t border-zinc-100 pt-2">
+          <div className="border-t border-zinc-100 pt-2 space-y-1.5">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-600">Items total</span>
+              <span className="font-medium text-zinc-900">${subtotal.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-zinc-600">{deliveryLabel}</span>
+              <span className="font-medium text-zinc-900">${checkoutTotals.deliveryCharge.toLocaleString()}</span>
+            </div>
             <div className="flex items-center justify-between font-semibold">
               <span className="text-zinc-900">Total</span>
-              <span className="text-lg text-emerald-700">${total.toLocaleString()}</span>
+              <span className="text-lg text-emerald-700">${checkoutTotals.total.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
@@ -216,11 +237,18 @@ export function CheckoutForm({
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <FiMapPin className="h-4 w-4" /> Shipping Address
+            <FiMapPin className="h-4 w-4" /> {isPickup ? "Showroom Pickup" : "Shipping Address"}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {savedAddresses.length > 0 && (
+          {isPickup ? (
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm text-zinc-700">
+              <p className="font-semibold text-zinc-900">Pickup from showroom</p>
+              <p className="mt-1 text-zinc-600">
+                No delivery charge will be added. We’ll prepare your order for collection after payment.
+              </p>
+            </div>
+          ) : savedAddresses.length > 0 && (
             <div className="space-y-2">
               {savedAddresses.map((addr) => (
                 <button
@@ -266,7 +294,7 @@ export function CheckoutForm({
             </div>
           )}
 
-          {showNewAddressForm && (
+          {!isPickup && showNewAddressForm && (
             <div className="space-y-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
               <p className="text-sm font-semibold text-zinc-700">New Shipping Address</p>
 
@@ -409,7 +437,7 @@ export function CheckoutForm({
         disabled={!stripe || !elements || submitting || regularModeBlockedItems.length > 0}
         className="w-full rounded-full bg-orange-500 py-6 text-base font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
       >
-        {submitting ? "Placing Order..." : `Pay $${total.toLocaleString()} & Place Order`}
+        {submitting ? "Placing Order..." : `Pay $${checkoutTotals.total.toLocaleString()} & Place Order`}
       </Button>
     </form>
   );
