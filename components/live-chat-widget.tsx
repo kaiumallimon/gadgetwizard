@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
-import { Loader2, MessageCircle, SendHorizontal, Wifi, WifiOff } from "lucide-react";
+import { ChevronDown, Loader2, MessageCircle, SendHorizontal, Wifi, WifiOff } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/client/api";
 import type {
@@ -38,6 +38,8 @@ interface QueuedMessage {
   body: string;
   createdAt: string;
 }
+
+const COMPOSER_LIMIT = 100;
 
 function isUnauthorizedError(error: unknown): boolean {
   return error instanceof ApiError && error.status === 401;
@@ -467,31 +469,61 @@ export function LiveChatWidget({
   }
 
   const panelContent = (
-    <div className="flex h-full min-h-0 flex-col bg-white">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3">
-        <div>
-          <p className="text-sm font-semibold text-zinc-900">Live Support</p>
-          <p className="text-xs text-zinc-500">Fast help from our support team</p>
+    <div className="flex h-full min-h-0 flex-col rounded-[22px] bg-white">
+      <div className="border-b border-zinc-200 bg-white/95 px-3 py-2 backdrop-blur">
+        <div className="flex items-center justify-between gap-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs font-semibold text-zinc-800">
+            <span className="h-2.5 w-2.5 rounded-full bg-linear-to-br from-orange-400 to-rose-500" />
+            <span>GadgetWizard Chat</span>
+          </div>
+
+          <div className="inline-flex items-center text-zinc-500">
+            <button
+              type="button"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md transition hover:bg-zinc-100 hover:text-zinc-800"
+              aria-label="Minimize chat"
+              onClick={() => setOpen(false)}
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-        <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${realtimeStatus.toneClass}`}>
+
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500">
           <RealtimeStatusIcon className="h-3.5 w-3.5" />
-          {realtimeStatus.label}
-        </span>
+          <span>{realtimeStatus.label}</span>
+        </div>
+
+        {conversations.length > 1 ? (
+          <div className="mt-2">
+            <select
+              value={activeConversationId ?? ""}
+              onChange={(event) => setActiveConversationId(Number(event.target.value))}
+              className="h-8 w-full rounded-md border border-zinc-200 bg-white px-2 text-xs text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300"
+            >
+              {conversations.map((conversation) => (
+                <option key={conversation.id} value={conversation.id}>
+                  #{conversation.id} {conversation.sourceType.toUpperCase()} {conversation.unreadCount > 0 ? `(${conversation.unreadCount} new)` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : null}
       </div>
 
       {isBootstrapping ? (
-        <div className="flex flex-1 items-center justify-center text-zinc-500">
+        <div className="flex flex-1 items-center justify-center bg-zinc-50 text-zinc-500">
           <Loader2 className="h-5 w-5 animate-spin" />
         </div>
       ) : viewerRole === "guest" ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-6 text-center">
           <p className="text-sm text-zinc-600">Please sign in to start a support conversation.</p>
           <Button asChild>
             <Link href="/login">Sign In</Link>
           </Button>
         </div>
       ) : viewerRole === "admin" ? (
-        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-6 text-center">
           <p className="text-sm text-zinc-600">You are signed in as admin. Use the dedicated inbox panel.</p>
           <Button asChild>
             <Link href="/admin/live-chat">Open Admin Inbox</Link>
@@ -503,27 +535,7 @@ export function LiveChatWidget({
             <p className="mx-4 mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
           ) : null}
 
-          <div className="space-y-2 border-b border-zinc-100 px-4 py-3">
-            {conversations.length > 1 && (
-              <select
-                value={activeConversationId ?? ""}
-                onChange={(event) => setActiveConversationId(Number(event.target.value))}
-                className="h-9 w-full rounded-md border border-zinc-200 bg-white px-2 text-sm text-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-              >
-                {conversations.map((conversation) => (
-                  <option key={conversation.id} value={conversation.id}>
-                    #{conversation.id} {conversation.sourceType.toUpperCase()} {conversation.unreadCount > 0 ? `(${conversation.unreadCount} new)` : ""}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {activeConversation?.isOtherParticipantTyping && (
-              <p className="text-xs text-zinc-500">Support agent is typing...</p>
-            )}
-          </div>
-
-          <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-zinc-50 px-3 py-3">
             {isLoadingMessages ? (
               <div className="flex items-center justify-center text-zinc-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -538,16 +550,25 @@ export function LiveChatWidget({
                   return (
                     <div
                       key={message.id}
-                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
-                        isMine
-                          ? "ml-auto bg-orange-500 text-white"
-                          : "mr-auto border border-zinc-200 bg-zinc-50 text-zinc-800"
-                      }`}
+                      className={`flex max-w-[92%] flex-col ${isMine ? "ml-auto items-end" : "mr-auto items-start"}`}
                     >
-                      <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
-                      <div className={`mt-1 text-[11px] ${isMine ? "text-orange-100" : "text-zinc-500"}`}>
-                        {formatTime(message.createdAt)}
-                        {isMine && ` · ${message.isReadByOtherParticipant ? "Read" : "Sent"}`}
+                      <p className={`text-[11px] ${isMine ? "text-right text-zinc-500" : "text-zinc-500"}`}>
+                        {isMine ? "You" : message.senderName}
+                        <span className="ml-1">{formatTime(message.createdAt)}</span>
+                      </p>
+                      <div
+                        className={`mt-1 rounded-2xl px-3 py-2 text-sm ${
+                          isMine
+                            ? "bg-zinc-900 text-white"
+                            : "border border-zinc-200 bg-white text-zinc-800"
+                        } w-fit max-w-full`}
+                      >
+                        <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                        {isMine ? (
+                          <div className="mt-1 text-[11px] text-zinc-300">
+                            {message.isReadByOtherParticipant ? "Read" : "Sent"}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   );
@@ -556,7 +577,7 @@ export function LiveChatWidget({
                 {queuedMessages.map((message) => (
                   <div
                     key={message.id}
-                    className="ml-auto max-w-[85%] rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                    className="ml-auto max-w-[92%] rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800"
                   >
                     <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
                     <p className="mt-1 text-[11px] text-amber-700">Queued · {formatTime(message.createdAt)}</p>
@@ -566,13 +587,17 @@ export function LiveChatWidget({
             )}
           </div>
 
-          <div className="border-t border-zinc-100 p-3">
-            <div className="flex items-end gap-2">
+          <div className="border-t border-zinc-200 bg-white px-2 py-2">
+            {activeConversation?.isOtherParticipantTyping ? (
+              <p className="mb-1 px-2 text-[11px] text-zinc-500">Support agent is typing...</p>
+            ) : null}
+
+            <div className="rounded-xl border border-zinc-200 bg-zinc-50 px-2 py-2">
               <Textarea
-                rows={2}
+                rows={1}
                 value={composer}
                 onChange={(event) => {
-                  const value = event.target.value;
+                  const value = event.target.value.slice(0, COMPOSER_LIMIT);
                   setComposer(value);
 
                   if (!activeConversationId) {
@@ -600,8 +625,8 @@ export function LiveChatWidget({
                     void stopTyping();
                   }, 1200);
                 }}
-                placeholder="Write your message..."
-                className="min-h-10 resize-none"
+                placeholder="Type a message..."
+                className="min-h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
@@ -609,18 +634,25 @@ export function LiveChatWidget({
                   }
                 }}
               />
-              <Button
-                type="button"
-                size="icon"
-                className="h-10 w-10 shrink-0"
-                disabled={isSendingMessage || composer.trim().length === 0}
-                onClick={() => {
-                  void sendCurrentMessage();
-                }}
-              >
-                {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
-                <span className="sr-only">Send message</span>
-              </Button>
+
+              <div className="mt-1 flex items-center justify-end gap-1 text-zinc-500">
+                <span className="text-[11px] text-zinc-400">
+                  {composer.length}/{COMPOSER_LIMIT}
+                </span>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 shrink-0 rounded-md text-zinc-700 hover:bg-zinc-100"
+                  disabled={isSendingMessage || composer.trim().length === 0}
+                  onClick={() => {
+                    void sendCurrentMessage();
+                  }}
+                >
+                  {isSendingMessage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <SendHorizontal className="h-3.5 w-3.5" />}
+                  <span className="sr-only">Send message</span>
+                </Button>
+              </div>
             </div>
           </div>
         </>
@@ -633,29 +665,31 @@ export function LiveChatWidget({
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 h-12 rounded-full px-5 shadow-lg"
+        className="fixed bottom-6 right-6 z-40 h-12 rounded-full border border-zinc-200 bg-white px-4 text-zinc-900 shadow-[0_10px_30px_rgba(0,0,0,0.16)] hover:bg-zinc-50"
       >
-        <MessageCircle className="h-5 w-5" />
-        <span>Live Chat</span>
+        <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-orange-400 to-rose-500 text-white">
+          <MessageCircle className="h-4 w-4" />
+        </span>
+        <span className="pl-1">Chat</span>
         {unreadCount > 0 && (
-          <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-white px-1 text-xs font-semibold text-orange-600">
+          <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1 text-xs font-semibold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
       </Button>
 
       <Dialog open={open && !isMobile} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[85vh] w-[min(96vw,560px)] max-w-none overflow-hidden p-0">
+        <DialogContent className="max-h-[88vh] w-[min(96vw,420px)] max-w-none overflow-hidden border-zinc-200 p-0 shadow-[0_24px_80px_rgba(0,0,0,0.28)] sm:left-auto sm:right-6 sm:top-auto sm:bottom-6 sm:translate-x-0 sm:translate-y-0 [&>button]:hidden">
           <DialogHeader className="sr-only">
             <DialogTitle>Live Support Chat</DialogTitle>
             <DialogDescription>Realtime chat with support agents</DialogDescription>
           </DialogHeader>
-          <div className="h-[70vh]">{panelContent}</div>
+          <div className="h-[72vh] min-h-130">{panelContent}</div>
         </DialogContent>
       </Dialog>
 
       <Sheet open={open && isMobile} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="h-[84vh] rounded-t-2xl p-0">
+        <SheetContent side="bottom" className="h-[84vh] rounded-t-[22px] p-0" showCloseButton={false}>
           <SheetHeader className="sr-only">
             <SheetTitle>Live Support Chat</SheetTitle>
             <SheetDescription>Realtime chat with support agents</SheetDescription>

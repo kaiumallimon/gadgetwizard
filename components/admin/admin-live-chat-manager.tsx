@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, SendHorizontal, Wifi, WifiOff } from "lucide-react";
+import { Loader2, SendHorizontal, Wifi, WifiOff, X } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
 import type { ChatConversation, ChatMessage, ChatRealtimeEvent } from "@/lib/client/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
 
 interface AdminLiveChatManagerProps {
@@ -45,6 +46,7 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
   const [isOnline, setIsOnline] = useState(true);
   const [queuedMessages, setQueuedMessages] = useState<QueuedAdminMessage[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isMobileThreadsOpen, setIsMobileThreadsOpen] = useState(false);
 
   const flushInProgressRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -160,6 +162,16 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
 
     void refreshMessages(activeConversationId, { markRead: true, showLoader: true });
   }, [activeConversationId, refreshMessages]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void refreshConversations(search, { showLoader: false });
+    }, 280);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [refreshConversations, search]);
 
   useEffect(() => {
     const stream = new EventSource("/api/chat/stream");
@@ -291,68 +303,97 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
     }
   }
 
-  return (
-    <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[320px_1fr]">
-      <aside className="rounded-2xl border border-zinc-200 bg-white p-3">
-        <div className="space-y-2">
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search customer or context"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            disabled={isSearching}
-            onClick={() => {
+  const selectConversation = useCallback((conversationId: number) => {
+    setActiveConversationId(conversationId);
+    setIsMobileThreadsOpen(false);
+  }, []);
+
+  const conversationDirectory = (
+    <>
+      <div className="space-y-2 border-b border-zinc-200 p-3">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Search customer or context"
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
               void refreshConversations(search, { showLoader: true });
-            }}
-          >
-            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Refresh Conversations
-          </Button>
-        </div>
+            }
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full"
+          disabled={isSearching}
+          onClick={() => {
+            void refreshConversations(search, { showLoader: true });
+          }}
+        >
+          {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Search Conversations
+        </Button>
+      </div>
 
-        <div className="mt-3 max-h-[60vh] space-y-2 overflow-y-auto pr-1">
-          {conversations.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-zinc-200 px-3 py-4 text-sm text-zinc-500">
-              No conversations found.
-            </p>
-          ) : (
-            conversations.map((conversation) => (
-              <button
-                key={conversation.id}
-                type="button"
-                onClick={() => setActiveConversationId(conversation.id)}
-                className={`w-full rounded-lg border px-3 py-2 text-left transition ${
-                  conversation.id === activeConversationId
-                    ? "border-orange-300 bg-orange-50"
-                    : "border-zinc-200 hover:bg-zinc-50"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="truncate text-sm font-semibold text-zinc-900">{conversation.customerName}</p>
-                  {conversation.unreadCount > 0 ? (
-                    <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
-                      {conversation.unreadCount}
-                    </span>
-                  ) : null}
-                </div>
-                <p className="truncate text-xs text-zinc-500">{conversation.customerEmail}</p>
-                <p className="truncate text-xs text-zinc-600">{conversation.latestMessagePreview ?? "No messages yet"}</p>
-                <p className="mt-1 text-[11px] text-zinc-400">{formatDateTime(conversation.latestMessageAt)}</p>
-              </button>
-            ))
-          )}
-        </div>
-      </aside>
+      <div className="mt-0 flex-1 space-y-2 overflow-y-auto p-3">
+        {conversations.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-zinc-200 px-3 py-4 text-sm text-zinc-500">
+            No conversations found.
+          </p>
+        ) : (
+          conversations.map((conversation) => (
+            <button
+              key={conversation.id}
+              type="button"
+              onClick={() => selectConversation(conversation.id)}
+              className={`w-full rounded-lg border px-3 py-2 text-left transition ${
+                conversation.id === activeConversationId
+                  ? "border-orange-300 bg-orange-50"
+                  : "border-zinc-200 hover:bg-zinc-50"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-2">
+                <p className="truncate text-sm font-semibold text-zinc-900">{conversation.customerName}</p>
+                {conversation.unreadCount > 0 ? (
+                  <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                    {conversation.unreadCount}
+                  </span>
+                ) : null}
+              </div>
+              <p className="truncate text-xs text-zinc-500">{conversation.customerEmail}</p>
+              <p className="truncate text-xs text-zinc-600">{conversation.latestMessagePreview ?? "No messages yet"}</p>
+              <p className="mt-1 text-[11px] text-zinc-400">{formatDateTime(conversation.latestMessageAt)}</p>
+            </button>
+          ))
+        )}
+      </div>
+    </>
+  );
 
-      <section className="flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+  return (
+    <>
+      <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[320px_1fr]">
+        <aside className="hidden min-h-[70vh] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:flex lg:flex-col">
+          {conversationDirectory}
+        </aside>
+
+        <section className="flex min-h-[75vh] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:min-h-[70vh]">
         <header className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-          <div>
-            <p className="text-sm font-semibold text-zinc-900">{activeConversation?.customerName ?? "Select a conversation"}</p>
-            <p className="text-xs text-zinc-500">{activeConversation?.customerEmail ?? ""}</p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 lg:hidden"
+              onClick={() => setIsMobileThreadsOpen(true)}
+            >
+              Threads
+            </Button>
+            <div>
+              <p className="text-sm font-semibold text-zinc-900">{activeConversation?.customerName ?? "Select a conversation"}</p>
+              <p className="text-xs text-zinc-500">{activeConversation?.customerEmail ?? ""}</p>
+            </div>
           </div>
           <span
             className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${
@@ -386,16 +427,22 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
                 return (
                   <div
                     key={message.id}
-                    className={`max-w-[78%] rounded-lg px-3 py-2 text-sm ${
-                      isMine
-                        ? "ml-auto bg-zinc-900 text-white"
-                        : "mr-auto border border-zinc-200 bg-zinc-50 text-zinc-800"
-                    }`}
+                    className={`flex max-w-[92%] flex-col ${isMine ? "ml-auto items-end" : "mr-auto items-start"}`}
                   >
-                    <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
-                    <p className={`mt-1 text-[11px] ${isMine ? "text-zinc-300" : "text-zinc-500"}`}>
-                      {formatTime(message.createdAt)}
+                    <p className={`text-[11px] ${isMine ? "text-right text-zinc-500" : "text-zinc-500"}`}>
+                      {isMine ? "You" : message.senderName}
+                      <span className="ml-1">{formatTime(message.createdAt)}</span>
                     </p>
+
+                    <div
+                      className={`mt-1 w-fit max-w-full rounded-2xl px-3 py-2 text-sm ${
+                        isMine
+                          ? "bg-zinc-900 text-white"
+                          : "border border-zinc-200 bg-zinc-50 text-zinc-800"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                    </div>
                   </div>
                 );
               })}
@@ -403,10 +450,12 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
               {queuedMessages.map((message) => (
                 <div
                   key={message.id}
-                  className="ml-auto max-w-[78%] rounded-lg border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800"
+                  className="ml-auto flex max-w-[92%] flex-col items-end"
                 >
-                  <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
-                  <p className="mt-1 text-[11px] text-amber-700">Queued · {formatTime(message.createdAt)}</p>
+                  <div className="w-fit max-w-full rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                    <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                    <p className="mt-1 text-[11px] text-amber-700">Queued · {formatTime(message.createdAt)}</p>
+                  </div>
                 </div>
               ))}
             </>
@@ -475,7 +524,26 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
             </Button>
           </div>
         </footer>
-      </section>
-    </div>
+        </section>
+      </div>
+
+      <Sheet open={isMobileThreadsOpen} onOpenChange={setIsMobileThreadsOpen}>
+        <SheetContent side="left" className="w-[92vw] max-w-sm p-0" showCloseButton={false}>
+          <SheetHeader className="border-b border-zinc-200 p-3">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-sm font-semibold text-zinc-900">Threads</SheetTitle>
+              <SheetClose asChild>
+                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close threads</span>
+                </Button>
+              </SheetClose>
+            </div>
+            <SheetDescription className="text-xs text-zinc-500">Select a conversation to reply</SheetDescription>
+          </SheetHeader>
+          <div className="flex h-full min-h-0 flex-col bg-white">{conversationDirectory}</div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
