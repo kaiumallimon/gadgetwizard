@@ -532,11 +532,18 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
           <SheetHeader className="border-b border-zinc-200 p-3">
             <div className="flex items-center justify-between">
               <SheetTitle className="text-sm font-semibold text-zinc-900">Threads</SheetTitle>
-              <SheetClose asChild>
-                <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close threads</span>
-                </Button>
+              <SheetClose
+                render={
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-800"
+                  />
+                }
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close threads</span>
               </SheetClose>
             </div>
             <SheetDescription className="text-xs text-zinc-500">Select a conversation to reply</SheetDescription>
