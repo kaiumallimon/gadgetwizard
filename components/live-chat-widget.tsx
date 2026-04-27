@@ -194,6 +194,10 @@ export function LiveChatWidget({
         void refreshUnreadCount();
 
         setActiveConversationId((previous) => {
+          if (!open) {
+            return previous;
+          }
+
           if (previous && items.some((entry) => entry.id === previous)) {
             return previous;
           }
@@ -207,7 +211,7 @@ export function LiveChatWidget({
         return [];
       }
     },
-    [refreshUnreadCount, sourceRef, sourceType, viewerRole],
+    [open, refreshUnreadCount, sourceRef, sourceType, viewerRole],
   );
 
   const refreshMessages = useCallback(
@@ -252,11 +256,9 @@ export function LiveChatWidget({
       setViewerRole(me.session.role);
       setAuthChecked(true);
 
-      if (me.session.role !== "user") {
-        return;
+      if (me.session.role === "user") {
+        await refreshUnreadCount();
       }
-
-      await refreshConversations(true);
     } catch (error) {
       if (isUnauthorizedError(error)) {
         setViewerRole("guest");
@@ -269,15 +271,23 @@ export function LiveChatWidget({
     } finally {
       setIsBootstrapping(false);
     }
-  }, [refreshConversations]);
+  }, [refreshUnreadCount]);
 
   useEffect(() => {
-    if (!open || authChecked) {
+    if (authChecked) {
       return;
     }
 
     void bootstrap();
-  }, [authChecked, bootstrap, open]);
+  }, [authChecked, bootstrap]);
+
+  useEffect(() => {
+    if (!open || !authChecked || viewerRole !== "user" || conversations.length > 0) {
+      return;
+    }
+
+    void refreshConversations(true);
+  }, [authChecked, conversations.length, open, refreshConversations, viewerRole]);
 
   useEffect(() => {
     if (!open || viewerRole !== "user") {
@@ -329,7 +339,7 @@ export function LiveChatWidget({
           void refreshConversations(false);
           void refreshUnreadCount();
 
-          if (activeConversationId && payload.conversationId === activeConversationId) {
+          if (open && activeConversationId && payload.conversationId === activeConversationId) {
             void refreshMessages(activeConversationId, { markRead: true, showLoader: false });
           }
           return;
@@ -338,7 +348,7 @@ export function LiveChatWidget({
         if (payload.type === "messages.read") {
           void refreshUnreadCount();
 
-          if (activeConversationId && payload.conversationId === activeConversationId) {
+          if (open && activeConversationId && payload.conversationId === activeConversationId) {
             void refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           }
         }
@@ -644,7 +654,7 @@ export function LiveChatWidget({
                   }, 1200);
                 }}
                 placeholder="Type a message..."
-                className="min-h-8 border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
+                className="min-h-8 rounded-none border-0 bg-transparent p-0 text-sm shadow-none focus-visible:ring-0"
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
