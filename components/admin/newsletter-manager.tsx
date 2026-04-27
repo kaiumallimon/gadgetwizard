@@ -6,11 +6,18 @@ import { toast } from "sonner";
 
 import { apiClient } from "@/lib/client/api";
 import type { NewsletterAdminSummary, NewsletterSendSummary } from "@/lib/client/types";
-import { useAuthStore } from "@/lib/stores/auth-store";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 
@@ -33,53 +40,71 @@ function safeErrorMessage(error: unknown, fallback: string): string {
 }
 
 export function NewsletterManager({ initialSummary }: NewsletterManagerProps) {
-  const { token } = useAuthStore();
-
-  const [subject, setSubject] = useState("Weekly Gadget Digest - Curated picks for you");
-  const [preheader, setPreheader] = useState("Exclusive deals, fresh arrivals, and premium picks inside.");
-  const [bodyHtml, setBodyHtml] = useState("<p>Start writing your premium newsletter content here...</p>");
+  const [subject, setSubject] = useState("");
+  const [preheader, setPreheader] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("<p></p>");
   const [sending, setSending] = useState(false);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
   const [lastResult, setLastResult] = useState<NewsletterSendSummary | null>(null);
 
   const bodyTextLength = useMemo(() => plainTextFromHtml(bodyHtml).length, [bodyHtml]);
 
   async function uploadEditorImage(file: File): Promise<string> {
-    const response = await apiClient.adminUploadCdnImage(file, token ?? undefined);
+    const response = await apiClient.adminUploadCdnImage(file);
     return response.item.url;
   }
 
-  async function sendNewsletter() {
+  function validateNewsletterInput(): { subject: string; preheader?: string } | null {
     const normalizedSubject = subject.trim();
     const normalizedPreheader = preheader.trim();
 
     if (normalizedSubject.length < 3) {
       toast.error("Subject must be at least 3 characters.");
-      return;
+      return null;
     }
 
     if (bodyTextLength < 20) {
       toast.error("Newsletter content must include at least 20 characters.");
+      return null;
+    }
+
+    return {
+      subject: normalizedSubject,
+      preheader: normalizedPreheader || undefined,
+    };
+  }
+
+  function onSendClick() {
+    if (sending || initialSummary.activeSubscribers === 0) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Send this newsletter to ${initialSummary.activeSubscribers} active subscribers?`,
-    );
-
-    if (!confirmed) {
+    const validated = validateNewsletterInput();
+    if (!validated) {
       return;
     }
+
+    setSendDialogOpen(true);
+  }
+
+  async function confirmAndSendNewsletter() {
+    const validated = validateNewsletterInput();
+    if (!validated) {
+      setSendDialogOpen(false);
+      return;
+    }
+
+    setSendDialogOpen(false);
 
     try {
       setSending(true);
 
       const response = await apiClient.adminSendNewsletter(
         {
-          subject: normalizedSubject,
-          preheader: normalizedPreheader || undefined,
+          subject: validated.subject,
+          preheader: validated.preheader,
           bodyHtml,
         },
-        token ?? undefined,
       );
 
       setLastResult(response.summary);
@@ -100,6 +125,38 @@ export function NewsletterManager({ initialSummary }: NewsletterManagerProps) {
 
   return (
     <div className="space-y-6">
+      <Dialog
+        open={sendDialogOpen}
+        onOpenChange={(nextOpen) => {
+          if (!sending) {
+            setSendDialogOpen(nextOpen);
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Send Newsletter Campaign</DialogTitle>
+            <DialogDescription>
+              Send this campaign to {initialSummary.activeSubscribers} active subscribers now?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-700">
+            <p className="font-medium text-zinc-900">{subject.trim() || "Untitled campaign"}</p>
+            <p className="mt-1 text-xs text-zinc-500">Body length: {bodyTextLength} characters</p>
+          </div>
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setSendDialogOpen(false)} disabled={sending}>
+              Cancel
+            </Button>
+            <Button type="button" onClick={confirmAndSendNewsletter} disabled={sending}>
+              <Send className="h-4 w-4" /> {sending ? "Sending..." : "Confirm Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader className="pb-3">
@@ -185,7 +242,7 @@ export function NewsletterManager({ initialSummary }: NewsletterManagerProps) {
               Emails follow GadgetWizard brand colors and typography. Your rich text content defines the campaign body.
             </p>
 
-            <Button type="button" onClick={sendNewsletter} disabled={sending || initialSummary.activeSubscribers === 0}>
+            <Button type="button" onClick={onSendClick} disabled={sending || initialSummary.activeSubscribers === 0}>
               <Send className="h-4 w-4" /> {sending ? "Sending..." : "Send Newsletter"}
             </Button>
           </div>

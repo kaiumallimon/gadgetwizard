@@ -402,9 +402,9 @@ export const apiClient = {
     },
     token?: string,
   ) {
+    void token;
     return apiFetch<{ success: boolean; summary: NewsletterSendSummary }>("/api/admin/newsletter/send", {
       method: "POST",
-      token,
       body: JSON.stringify(payload),
     });
   },
@@ -581,12 +581,12 @@ export const apiClient = {
   },
 
   async adminUploadCdnImage(file: File, token?: string) {
+    void token;
     const formData = new FormData();
     formData.set("file", file);
 
     return apiFetch<{ item: CdnFileAsset }>("/api/admin/cdn/upload", {
       method: "POST",
-      token,
       body: formData,
     });
   },

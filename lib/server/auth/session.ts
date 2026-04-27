@@ -18,16 +18,7 @@ function getTokenFromAuthorizationHeader(request: Request): string | null {
   return token;
 }
 
-export async function readSession(request: NextRequest | Request): Promise<AuthSession | null> {
-  const bearerToken = getTokenFromAuthorizationHeader(request);
-  if (bearerToken) {
-    const legacySession = await verifyBackendJwt(bearerToken);
-    if (legacySession) {
-      return legacySession;
-    }
-  }
-
-  const session = await auth();
+function mapNextAuthSessionToAuthSession(session: Awaited<ReturnType<typeof auth>>): AuthSession | null {
   if (!session?.user?.email || !session.user.name || !session.user.id || !session.user.role) {
     return null;
   }
@@ -39,4 +30,21 @@ export async function readSession(request: NextRequest | Request): Promise<AuthS
     name: session.user.name,
     role: session.user.role,
   };
+}
+
+export async function readSession(request: NextRequest | Request): Promise<AuthSession | null> {
+  const nextAuthSession = mapNextAuthSessionToAuthSession(await auth());
+  if (nextAuthSession) {
+    return nextAuthSession;
+  }
+
+  const bearerToken = getTokenFromAuthorizationHeader(request);
+  if (bearerToken) {
+    const legacySession = await verifyBackendJwt(bearerToken);
+    if (legacySession) {
+      return legacySession;
+    }
+  }
+
+  return null;
 }
