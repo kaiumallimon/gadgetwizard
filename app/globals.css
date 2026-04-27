@@ -333,3 +333,13 @@ button {
     @apply font-sans;
   }
 }
+
+@keyframes brand-marquee {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}

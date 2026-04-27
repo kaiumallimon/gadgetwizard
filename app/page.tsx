@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { BadgePercent, CreditCard, Headset, RefreshCcw, Truck, type LucideIcon } from "lucide-react";
+import { Headset, ShieldCheck, Truck, Warehouse, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
@@ -7,21 +7,19 @@ import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/client/types";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
 import { getPublicBrands } from "@/lib/server/services/brand-service";
-import { getPublicCategoryTree } from "@/lib/server/services/category-service";
 import { getPublicProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const [banners, categories, brands, productPool] = await Promise.all([
+  const [banners, brands, productPool] = await Promise.all([
     getPublicBanners(),
-    getPublicCategoryTree(),
     getPublicBrands(),
     getPublicProducts({ page: 1, pageSize: 48 }),
   ]);
 
-  const featuredCategoryHighlights = categories.filter((category) => category.isFeatured).slice(0, 12);
   const brandHighlights = brands.slice(0, 24);
+  const marqueeBrands = brandHighlights;
   const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
   const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
   const fallbackTrends = newTrends.length > 0 ? newTrends : productPool.items.slice(0, 6);
@@ -78,19 +76,11 @@ export default async function HomePage() {
   ];
   const visibleCuratedProductSections = curatedProductSections.filter((section) => section.items.length > 0);
 
-  const categoryImageById = new Map<number, string>();
-  for (const product of productPool.items) {
-    if (!categoryImageById.has(product.categoryId) && product.images.length > 0) {
-      categoryImageById.set(product.categoryId, product.images[0]);
-    }
-  }
-
   const serviceHighlights: Array<{ title: string; note: string; icon: LucideIcon }> = [
-    { title: "36 Months EMI", note: "Flexible monthly plans", icon: CreditCard },
-    { title: "Fastest Home Delivery", note: "Express dispatch nationwide", icon: Truck },
-    { title: "Exchange Facility", note: "Upgrade with trade-in", icon: RefreshCcw },
-    { title: "Best Price Deals", note: "Daily promo pricing", icon: BadgePercent },
-    { title: "After Sales Service", note: "Dedicated support team", icon: Headset },
+    { title: "Free Shipping", note: "Free Shipping on all orders over $100", icon: Truck },
+    { title: "24/7 Self Pickup", note: "Flexible time to pickup in office", icon: Warehouse },
+    { title: "Online Support", note: "Talk with us via live chat", icon: Headset },
+    { title: "Secure Payment", note: "Shop with confidence", icon: ShieldCheck },
   ];
 
   const storefrontInfoBlocks: Array<{ title: string; body: string }> = [
@@ -125,7 +115,7 @@ export default async function HomePage() {
               <p className="mt-1 text-sm text-zinc-500">Interactive perks built for smoother checkout and better after-sales support.</p>
             </div>
           </div>
-            <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-2 text-sm text-zinc-700 sm:grid-cols-2 lg:grid-cols-4">
               {serviceHighlights.map((item) => {
                 const Icon = item.icon;
 
@@ -151,54 +141,6 @@ export default async function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-4xl font-semibold text-zinc-900">
-                Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Categories</span>
-              </h2>
-              <p className="mt-2 text-sm text-zinc-500">Jump into curated collections by tapping a category tile.</p>
-            </div>
-            <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
-              {featuredCategoryHighlights.length} highlighted
-            </span>
-          </div>
-
-          {featuredCategoryHighlights.length === 0 ? (
-            <p className="mt-6 text-sm text-zinc-500">No featured categories available right now.</p>
-          ) : (
-            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-              {featuredCategoryHighlights.map((category) => (
-                <Link
-                  href={`/category/${category.slug}`}
-                  key={category.id}
-                  className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
-                >
-                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 md:h-12 lg:h-14">
-                    {category.imageUrl || category.icon || categoryImageById.get(category.id) ? (
-                      <img
-                        src={category.imageUrl ?? category.icon ?? categoryImageById.get(category.id)}
-                        alt={category.name}
-                        className="h-full w-full object-contain"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
-                        {category.name.slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-0.5 p-2 sm:p-3">
-                    <p className="line-clamp-1 text-xs text-center text-zinc-500 group-hover:text-(--accent)">
-                      {category.name}
-                    </p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-2xl bg-white p-5 sm:p-7">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 className="text-4xl font-semibold text-zinc-900">
                 Shop By <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Brands</span>
               </h2>
               <p className="mt-2 text-sm text-zinc-500">Discover product lines by your favorite brands in one tap.</p>
@@ -211,28 +153,36 @@ export default async function HomePage() {
           {brandHighlights.length === 0 ? (
             <p className="text-sm text-zinc-500">No brands available yet.</p>
           ) : (
-            <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-              {brandHighlights.map((brand) => (
-                <Link
-                  href={`/brand/${brand.slug}`}
-                  key={brand.id}
-                  className="group overflow-hidden bg-white transition hover:-translate-y-0.5 "
-                >
-                  <div className="flex h-10 w-full items-center justify-center bg-white p-2 md:h-12 lg:h-14">
-                    {brand.imageUrl ? (
-                      <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
-                        {brand.name.slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
+            <div className="group/brand-marquee relative mt-6 overflow-hidden">
+              <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-linear-to-r from-white to-transparent" />
+              <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-linear-to-l from-white to-transparent" />
 
-                  <div className="space-y-0.5 p-2 sm:p-3">
-                    <p className="line-clamp-1 text-center text-xs text-zinc-500 group-hover:text-(--accent) sm:text-sm">{brand.name}</p>
-                  </div>
-                </Link>
-              ))}
+              <div className="flex w-max animate-[brand-marquee_42s_linear_infinite] will-change-transform group-hover/brand-marquee:paused">
+                {[0, 1].map((copyIndex) => {
+                  const isClone = copyIndex === 1;
+
+                  return (
+                    <div key={`brand-copy-${copyIndex}`} aria-hidden={isClone || undefined} className="flex shrink-0 gap-3 pr-3">
+                      {marqueeBrands.map((brand, index) => (
+                        <Link
+                          href={`/brand/${brand.slug}`}
+                          key={`${copyIndex}-${brand.id}-${index}`}
+                          tabIndex={isClone ? -1 : undefined}
+                          className="group/brand relative flex h-20 w-36 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-orange-200"
+                        >
+                          {brand.imageUrl ? (
+                            <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
+                              {brand.name.slice(0, 1).toUpperCase()}
+                            </div>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
         </section>
@@ -269,7 +219,7 @@ export default async function HomePage() {
                 <p className="mt-2 text-sm text-zinc-500">Handpicked products with strong value and customer demand.</p>
               </div>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-center gap-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
               {fallbackFeatured.map((product) => (
                 <div key={product.id} className={uniformProductCardWidthClass}>
                   <ProductCard product={product} />
@@ -296,7 +246,7 @@ export default async function HomePage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-center gap-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
               {section.items.map((product) => (
                 <div key={`${section.key}-${product.id}`} className={uniformProductCardWidthClass}>
                   <ProductCard product={product} />
@@ -353,6 +303,7 @@ export default async function HomePage() {
           </div>
         </section> */}
       </div>
+
     </div>
   );
 }
