@@ -3,6 +3,8 @@ import {
   countConversationsForAdmin,
   countConversationsForCustomer,
   countMessagesByConversationId,
+  countMessagesByConversationIdAndSenderRole,
+  countUnreadMessagesBySenderRole,
   createConversation,
   createMessage,
   findOpenConversationForCustomer,
@@ -16,7 +18,8 @@ import {
   type ChatConversationRow,
   type ChatMessageRow,
 } from "@/lib/server/repositories/chat-repository";
-import { publishChatRealtimeEvent } from "@/lib/server/realtime/chat-realtime";
+import { hasOnlineAdminConnections, publishChatRealtimeEvent } from "@/lib/server/realtime/chat-realtime";
+import { findAnyActiveAdminUser } from "@/lib/server/repositories/user-repository";
 import type {
   ChatConversation,
   ChatConversationSourceType,
@@ -119,6 +122,54 @@ function publishConversationEvent(input: {
   publishChatRealtimeEvent(input.event, {
     userIds: [input.customerUserId],
     includeAllAdmins: true,
+  });
+}
+
+const OFFLINE_AUTOREPLY_BODY =
+  "Thanks for reaching out. Our support team is currently offline, and an admin will respond within 24 hours.";
+
+async function maybeSendOfflineAutoReply(conversation: ChatConversationRow): Promise<void> {
+  if (hasOnlineAdminConnections()) {
+    return;
+  }
+
+  const adminMessageCount = await countMessagesByConversationIdAndSenderRole(conversation.id, "admin");
+  if (adminMessageCount > 0) {
+    return;
+  }
+
+  const fallbackAdmin = conversation.admin_user_id
+    ? { id: conversation.admin_user_id }
+    : await findAnyActiveAdminUser();
+
+  if (!fallbackAdmin) {
+    return;
+  }
+
+  const autoReply = await createMessage({
+    conversationId: conversation.id,
+    senderUserId: fallbackAdmin.id,
+    senderRole: "admin",
+    body: OFFLINE_AUTOREPLY_BODY,
+  });
+
+  publishConversationEvent({
+    conversationId: conversation.id,
+    customerUserId: conversation.customer_user_id,
+    event: {
+      type: "message.created",
+      conversationId: conversation.id,
+      messageId: autoReply.id,
+    },
+  });
+
+  publishConversationEvent({
+    conversationId: conversation.id,
+    customerUserId: conversation.customer_user_id,
+    event: {
+      type: "conversation.updated",
+      conversationId: conversation.id,
+    },
   });
 }
 
@@ -266,6 +317,14 @@ export async function getChatMessagesForSession(
   };
 }
 
+export async function getChatUnreadMessageCountForSession(session: AuthSession): Promise<number> {
+  if (session.role === "admin") {
+    return countUnreadMessagesBySenderRole("user");
+  }
+
+  return countUnreadMessagesBySenderRole("admin");
+}
+
 export async function sendChatMessageForSession(
   session: AuthSession,
   conversationId: number,
@@ -307,6 +366,10 @@ export async function sendChatMessageForSession(
       conversationId,
     },
   });
+
+  if (session.role === "user") {
+    await maybeSendOfflineAutoReply(conversation);
+  }
 
   return mapMessage(message, session.role);
 }

@@ -1,36 +1,11 @@
-# Dependencies
 node_modules/
-.pnp
-.pnp.js
-
-# Build outputs
+.next/
+.git/
 dist/
 build/
-.next/
 out/
-
-# Environment & secrets
-.env
-.env.local
-.env.production
-
-# Logs
-logs/
+public/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
 *.log
-npm-debug.log*
-
-# Cache
-.cache/
-.parcel-cache/
-
-# Media & uploads (heavy files)
-public/uploads/
-public/images/
-
-# Testing
-coverage/
-
-# Misc
-.DS_Store
-*.psd
-*.zip

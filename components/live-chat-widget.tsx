@@ -108,6 +108,7 @@ export function LiveChatWidget({
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [chatUnreadCount, setChatUnreadCount] = useState(0);
 
   const flushInProgressRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,11 +117,6 @@ export function LiveChatWidget({
   const activeConversation = useMemo(
     () => conversations.find((entry) => entry.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
-  );
-
-  const unreadCount = useMemo(
-    () => conversations.reduce((sum, entry) => sum + entry.unreadCount, 0),
-    [conversations],
   );
 
   const realtimeStatus = resolveRealtimeStatus({
@@ -166,6 +162,19 @@ export function LiveChatWidget({
     }
   }, []);
 
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const response = await apiClient.getChatUnreadCount();
+      setChatUnreadCount(response.count);
+    } catch {
+      // best effort; badge is informational only
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshUnreadCount();
+  }, [refreshUnreadCount]);
+
   const refreshConversations = useCallback(
     async (ensureConversation = false): Promise<ChatConversation[]> => {
       try {
@@ -182,6 +191,7 @@ export function LiveChatWidget({
 
         setConversations(items);
         setErrorMessage(null);
+        void refreshUnreadCount();
 
         setActiveConversationId((previous) => {
           if (previous && items.some((entry) => entry.id === previous)) {
@@ -197,7 +207,7 @@ export function LiveChatWidget({
         return [];
       }
     },
-    [sourceRef, sourceType, viewerRole],
+    [refreshUnreadCount, sourceRef, sourceType, viewerRole],
   );
 
   const refreshMessages = useCallback(
@@ -219,6 +229,7 @@ export function LiveChatWidget({
           previous.map((entry) => (entry.id === response.conversation.id ? response.conversation : entry)),
         );
         setErrorMessage(null);
+        void refreshUnreadCount();
 
         if (markRead && response.conversation.unreadCount > 0) {
           await markConversationAsRead(conversationId);
@@ -231,7 +242,7 @@ export function LiveChatWidget({
         }
       }
     },
-    [markConversationAsRead],
+    [markConversationAsRead, refreshUnreadCount],
   );
 
   const bootstrap = useCallback(async () => {
@@ -282,7 +293,7 @@ export function LiveChatWidget({
   }, [activeConversationId, open, refreshMessages, viewerRole]);
 
   useEffect(() => {
-    if (!open || viewerRole !== "user") {
+    if (viewerRole !== "user") {
       return;
     }
 
@@ -310,11 +321,13 @@ export function LiveChatWidget({
 
         if (payload.type === "conversation.created") {
           void refreshConversations(false);
+          void refreshUnreadCount();
           return;
         }
 
         if (payload.type === "message.created") {
           void refreshConversations(false);
+          void refreshUnreadCount();
 
           if (activeConversationId && payload.conversationId === activeConversationId) {
             void refreshMessages(activeConversationId, { markRead: true, showLoader: false });
@@ -323,6 +336,8 @@ export function LiveChatWidget({
         }
 
         if (payload.type === "messages.read") {
+          void refreshUnreadCount();
+
           if (activeConversationId && payload.conversationId === activeConversationId) {
             void refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           }
@@ -336,7 +351,7 @@ export function LiveChatWidget({
       setIsRealtimeConnected(false);
       stream.close();
     };
-  }, [activeConversationId, open, refreshConversations, refreshMessages, viewerRole]);
+  }, [activeConversationId, open, refreshConversations, refreshMessages, refreshUnreadCount, viewerRole]);
 
   const stopTyping = useCallback(async () => {
     if (!activeConversationId || !isTypingRef.current) {
@@ -387,6 +402,7 @@ export function LiveChatWidget({
           setQueuedMessages((previous) => previous.slice(deliveredCount));
           await refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           await refreshConversations(false);
+          await refreshUnreadCount();
         }
       } finally {
         flushInProgressRef.current = false;
@@ -402,6 +418,7 @@ export function LiveChatWidget({
     queuedMessages,
     refreshConversations,
     refreshMessages,
+    refreshUnreadCount,
     viewerRole,
   ]);
 
@@ -453,6 +470,7 @@ export function LiveChatWidget({
       await apiClient.sendChatMessage(conversationId, { body });
       await refreshMessages(conversationId, { markRead: false, showLoader: false });
       await refreshConversations(false);
+      await refreshUnreadCount();
     } catch {
       setQueuedMessages((previous) => [
         ...previous,
@@ -671,9 +689,10 @@ export function LiveChatWidget({
           <MessageCircle className="h-4 w-4" />
         </span>
         <span className="pl-1">Chat</span>
-        {unreadCount > 0 && (
-          <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-zinc-900 px-1 text-xs font-semibold text-white">
-            {unreadCount > 99 ? "99+" : unreadCount}
+        {chatUnreadCount > 0 && (
+          <span className="ml-1 inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">
+            <span className="h-2 w-2 rounded-full bg-orange-500" />
+            <span>{chatUnreadCount > 99 ? "99+" : chatUnreadCount}</span>
           </span>
         )}
       </Button>

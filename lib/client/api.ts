@@ -126,6 +126,10 @@ export const apiClient = {
     return apiFetch<{ items: Brand[] }>("/api/brands");
   },
 
+  async getChatUnreadCount(token?: string) {
+    return apiFetch<{ count: number }>("/api/chat/unread-count", { token });
+  },
+
   async getFaqs() {
     return apiFetch<{ items: Faq[] }>("/api/faqs");
   },

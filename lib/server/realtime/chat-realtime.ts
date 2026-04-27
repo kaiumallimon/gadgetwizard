@@ -78,6 +78,21 @@ function activeConnectionsForUser(userId: number, role: UserRole): number {
   return count;
 }
 
+function activeConnectionsForRole(role: UserRole): number {
+  let count = 0;
+  for (const client of getHub().clients.values()) {
+    if (client.session.role === role) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
+export function hasOnlineAdminConnections(): boolean {
+  return activeConnectionsForRole("admin") > 0;
+}
+
 function publishPresence(session: AuthSession, isOnline: boolean): void {
   publishChatRealtimeEvent(
     {

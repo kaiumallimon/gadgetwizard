@@ -266,6 +266,36 @@ export async function countMessagesByConversationId(conversationId: number): Pro
   return row?.total ?? 0;
 }
 
+export async function countMessagesByConversationIdAndSenderRole(
+  conversationId: number,
+  senderRole: ChatSenderRole,
+): Promise<number> {
+  const row = await queryOne<CountRow>(
+    `SELECT COUNT(*) AS total
+     FROM chat_messages
+     WHERE conversation_id = ?
+       AND sender_role = ?`,
+    [conversationId, senderRole],
+  );
+
+  return row?.total ?? 0;
+}
+
+export async function countUnreadMessagesBySenderRole(senderRole: ChatSenderRole): Promise<number> {
+  const row = await queryOne<CountRow>(
+    `SELECT COUNT(*) AS total
+     FROM chat_messages
+     WHERE sender_role = ?
+       AND (
+         (sender_role = 'admin' AND read_by_customer_at IS NULL)
+         OR (sender_role = 'user' AND read_by_admin_at IS NULL)
+       )`,
+    [senderRole],
+  );
+
+  return row?.total ?? 0;
+}
+
 export async function getMessageById(id: number): Promise<ChatMessageRow | null> {
   return queryOne<ChatMessageRow>(
     `SELECT

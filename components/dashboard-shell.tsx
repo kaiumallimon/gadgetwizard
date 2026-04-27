@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
     BarChart3,
     Boxes,
@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { apiClient } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -66,6 +67,49 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     const pathname = usePathname();
     const { user, clearAuth } = useAuthStore();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [chatUnreadCount, setChatUnreadCount] = useState(0);
+
+    const refreshChatUnreadCount = useCallback(async () => {
+        if (variant !== "admin") {
+            return;
+        }
+
+        try {
+            const response = await apiClient.getChatUnreadCount();
+            setChatUnreadCount(response.count);
+        } catch {
+            setChatUnreadCount(0);
+        }
+    }, [variant]);
+
+    useEffect(() => {
+        if (variant !== "admin") {
+            return;
+        }
+
+        void refreshChatUnreadCount();
+
+        const stream = new EventSource("/api/chat/stream");
+
+        stream.onmessage = (event) => {
+            try {
+                const payload = JSON.parse(event.data) as { type?: string };
+                if (payload.type === "message.created" || payload.type === "messages.read" || payload.type === "conversation.created") {
+                    void refreshChatUnreadCount();
+                }
+            } catch {
+                // ignore malformed payloads
+            }
+        };
+
+        stream.onerror = () => {
+            // best-effort live updates; the next successful refresh will correct the badge
+        };
+
+        return () => {
+            stream.close();
+        };
+    }, [refreshChatUnreadCount, variant]);
 
     const nav = useMemo(() => {
         if (variant === "admin") {
@@ -248,6 +292,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                             <div className="space-y-1">
                                 {group.items.map((item) => {
                                     const Icon = item.icon;
+                                    const showChatBadge = variant === "admin" && item.href === "/admin/live-chat" && chatUnreadCount > 0;
                                     return (
                                         <Link
                                             key={item.href}
@@ -262,6 +307,12 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                         >
                                             <Icon className="h-4 w-4" />
                                             <span>{item.label}</span>
+                                            {showChatBadge ? (
+                                                <span className="ml-auto inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                                                    <span className="h-2 w-2 rounded-full bg-orange-500" />
+                                                    <span>{chatUnreadCount > 99 ? "99+" : chatUnreadCount}</span>
+                                                </span>
+                                            ) : null}
                                         </Link>
                                     );
                                 })}

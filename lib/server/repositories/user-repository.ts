@@ -270,6 +270,31 @@ export async function createAdminUser(input: {
   return user;
 }
 
+export async function findAnyActiveAdminUser(): Promise<AppUser | null> {
+  const row = await queryOne<UserRow>(
+    `
+      SELECT
+        u.id,
+        u.auth_uid,
+        u.email,
+        u.name,
+        u.role,
+        ba.id AS business_account_id,
+        ba.status AS business_account_status,
+        u.is_active,
+        u.created_at,
+        u.updated_at
+      FROM users u
+      LEFT JOIN business_accounts ba ON ba.user_id = u.id
+      WHERE u.role = 'admin' AND u.is_active = 1
+      ORDER BY u.id ASC
+      LIMIT 1
+    `,
+  );
+
+  return row ? mapUser(row) : null;
+}
+
 export async function updateUserActiveStatus(userId: number, isActive: boolean): Promise<AppUser | null> {
   await execute(
     `
