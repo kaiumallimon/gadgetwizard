@@ -44,6 +44,7 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
   const [isRealtimeConnected, setIsRealtimeConnected] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [queuedMessages, setQueuedMessages] = useState<QueuedAdminMessage[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const flushInProgressRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -54,8 +55,13 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
     [conversations, activeConversationId],
   );
 
-  const refreshConversations = useCallback(async (searchValue?: string) => {
-    setIsSearching(true);
+  const refreshConversations = useCallback(async (searchValue?: string, options: { showLoader?: boolean } = {}) => {
+    const { showLoader = true } = options;
+
+    if (showLoader) {
+      setIsSearching(true);
+    }
+
     try {
       const response = await apiClient.getChatConversations({
         page: 1,
@@ -64,6 +70,7 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
       });
 
       setConversations(response.items);
+      setErrorMessage(null);
       setActiveConversationId((previous) => {
         if (previous && response.items.some((entry) => entry.id === previous)) {
           return previous;
@@ -71,27 +78,47 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
 
         return response.items[0]?.id ?? null;
       });
+    } catch {
+      setErrorMessage("Unable to refresh conversations right now.");
     } finally {
-      setIsSearching(false);
+      if (showLoader) {
+        setIsSearching(false);
+      }
     }
   }, []);
 
-  const refreshMessages = useCallback(async (conversationId: number, markRead = true) => {
-    setIsLoadingMessages(true);
+  const refreshMessages = useCallback(
+    async (
+      conversationId: number,
+      options: { markRead?: boolean; showLoader?: boolean } = {},
+    ) => {
+      const { markRead = true, showLoader = true } = options;
+
+      if (showLoader) {
+        setIsLoadingMessages(true);
+      }
+
     try {
-      const response = await apiClient.getChatMessages(conversationId, { page: 1, pageSize: 120 });
+      const response = await apiClient.getChatMessages(conversationId, { page: 1, pageSize: 100 });
       setMessages(response.items);
       setConversations((previous) =>
         previous.map((entry) => (entry.id === response.conversation.id ? response.conversation : entry)),
       );
+      setErrorMessage(null);
 
-      if (markRead) {
+      if (markRead && response.conversation.unreadCount > 0) {
         await apiClient.markChatConversationRead(conversationId);
       }
+    } catch {
+      setErrorMessage("Unable to refresh messages right now.");
     } finally {
-      setIsLoadingMessages(false);
+      if (showLoader) {
+        setIsLoadingMessages(false);
+      }
     }
-  }, []);
+    },
+    [],
+  );
 
   const stopTyping = useCallback(async () => {
     if (!activeConversationId || !isTypingRef.current) {
@@ -131,7 +158,7 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
       return;
     }
 
-    void refreshMessages(activeConversationId);
+    void refreshMessages(activeConversationId, { markRead: true, showLoader: true });
   }, [activeConversationId, refreshMessages]);
 
   useEffect(() => {
@@ -157,15 +184,22 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
           return;
         }
 
-        if (
-          payload.type === "conversation.created" ||
-          payload.type === "conversation.updated" ||
-          payload.type === "message.created" ||
-          payload.type === "messages.read"
-        ) {
-          void refreshConversations(search);
+        if (payload.type === "conversation.created") {
+          void refreshConversations(search, { showLoader: false });
+          return;
+        }
+
+        if (payload.type === "message.created") {
+          void refreshConversations(search, { showLoader: false });
           if (activeConversationId && payload.conversationId === activeConversationId) {
-            void refreshMessages(activeConversationId);
+            void refreshMessages(activeConversationId, { markRead: true, showLoader: false });
+          }
+          return;
+        }
+
+        if (payload.type === "messages.read") {
+          if (activeConversationId && payload.conversationId === activeConversationId) {
+            void refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           }
         }
       } catch {
@@ -213,8 +247,8 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
 
         if (deliveredCount > 0) {
           setQueuedMessages((previous) => previous.slice(deliveredCount));
-          await refreshMessages(activeConversationId);
-          await refreshConversations(search);
+          await refreshMessages(activeConversationId, { markRead: false, showLoader: false });
+          await refreshConversations(search, { showLoader: false });
         }
       } finally {
         flushInProgressRef.current = false;
@@ -244,8 +278,8 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
     setIsSendingMessage(true);
     try {
       await apiClient.sendChatMessage(activeConversationId, { body });
-      await refreshMessages(activeConversationId);
-      await refreshConversations(search);
+      await refreshMessages(activeConversationId, { markRead: false, showLoader: false });
+      await refreshConversations(search, { showLoader: false });
     } catch {
       setQueuedMessages((previous) => [
         ...previous,
@@ -272,7 +306,7 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
             className="w-full"
             disabled={isSearching}
             onClick={() => {
-              void refreshConversations(search);
+              void refreshConversations(search, { showLoader: true });
             }}
           >
             {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -335,6 +369,10 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
         </header>
 
         <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
+          {errorMessage ? (
+            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+          ) : null}
+
           {!activeConversationId ? (
             <p className="text-sm text-zinc-500">Choose a conversation to begin.</p>
           ) : isLoadingMessages ? (

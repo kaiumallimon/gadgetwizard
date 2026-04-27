@@ -105,6 +105,7 @@ export function LiveChatWidget({
   const [composer, setComposer] = useState("");
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const flushInProgressRef = useRef(false);
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -165,35 +166,49 @@ export function LiveChatWidget({
 
   const refreshConversations = useCallback(
     async (ensureConversation = false): Promise<ChatConversation[]> => {
-      const response = await apiClient.getChatConversations({ page: 1, pageSize: 20 });
-      let items = response.items;
+      try {
+        const response = await apiClient.getChatConversations({ page: 1, pageSize: 20 });
+        let items = response.items;
 
-      if (ensureConversation && viewerRole === "user" && items.length === 0) {
-        const created = await apiClient.createChatConversation({
-          sourceType,
-          sourceRef,
-        });
-        items = [created.item];
-      }
-
-      setConversations(items);
-
-      setActiveConversationId((previous) => {
-        if (previous && items.some((entry) => entry.id === previous)) {
-          return previous;
+        if (ensureConversation && viewerRole === "user" && items.length === 0) {
+          const created = await apiClient.createChatConversation({
+            sourceType,
+            sourceRef,
+          });
+          items = [created.item];
         }
 
-        return items[0]?.id ?? null;
-      });
+        setConversations(items);
+        setErrorMessage(null);
 
-      return items;
+        setActiveConversationId((previous) => {
+          if (previous && items.some((entry) => entry.id === previous)) {
+            return previous;
+          }
+
+          return items[0]?.id ?? null;
+        });
+
+        return items;
+      } catch {
+        setErrorMessage("Unable to refresh conversations right now.");
+        return [];
+      }
     },
     [sourceRef, sourceType, viewerRole],
   );
 
   const refreshMessages = useCallback(
-    async (conversationId: number, markRead = true) => {
-      setIsLoadingMessages(true);
+    async (
+      conversationId: number,
+      options: { markRead?: boolean; showLoader?: boolean } = {},
+    ) => {
+      const { markRead = true, showLoader = true } = options;
+
+      if (showLoader) {
+        setIsLoadingMessages(true);
+      }
+
       try {
         const response = await apiClient.getChatMessages(conversationId, { page: 1, pageSize: 80 });
         setMessages(response.items);
@@ -201,12 +216,17 @@ export function LiveChatWidget({
         setConversations((previous) =>
           previous.map((entry) => (entry.id === response.conversation.id ? response.conversation : entry)),
         );
+        setErrorMessage(null);
 
-        if (markRead) {
+        if (markRead && response.conversation.unreadCount > 0) {
           await markConversationAsRead(conversationId);
         }
+      } catch {
+        setErrorMessage("Unable to refresh messages right now.");
       } finally {
-        setIsLoadingMessages(false);
+        if (showLoader) {
+          setIsLoadingMessages(false);
+        }
       }
     },
     [markConversationAsRead],
@@ -223,11 +243,7 @@ export function LiveChatWidget({
         return;
       }
 
-      const items = await refreshConversations(true);
-      const firstConversationId = items[0]?.id ?? null;
-      if (firstConversationId) {
-        await refreshMessages(firstConversationId);
-      }
+      await refreshConversations(true);
     } catch (error) {
       if (isUnauthorizedError(error)) {
         setViewerRole("guest");
@@ -235,11 +251,12 @@ export function LiveChatWidget({
         return;
       }
 
-      throw error;
+      setErrorMessage("Live chat is temporarily unavailable.");
+      setAuthChecked(true);
     } finally {
       setIsBootstrapping(false);
     }
-  }, [refreshConversations, refreshMessages]);
+  }, [refreshConversations]);
 
   useEffect(() => {
     if (!open || authChecked) {
@@ -259,7 +276,7 @@ export function LiveChatWidget({
       return;
     }
 
-    void refreshMessages(activeConversationId);
+    void refreshMessages(activeConversationId, { markRead: true, showLoader: true });
   }, [activeConversationId, open, refreshMessages, viewerRole]);
 
   useEffect(() => {
@@ -289,16 +306,23 @@ export function LiveChatWidget({
           return;
         }
 
-        if (
-          payload.type === "conversation.created" ||
-          payload.type === "conversation.updated" ||
-          payload.type === "message.created" ||
-          payload.type === "messages.read"
-        ) {
+        if (payload.type === "conversation.created") {
+          void refreshConversations(false);
+          return;
+        }
+
+        if (payload.type === "message.created") {
           void refreshConversations(false);
 
           if (activeConversationId && payload.conversationId === activeConversationId) {
-            void refreshMessages(activeConversationId);
+            void refreshMessages(activeConversationId, { markRead: true, showLoader: false });
+          }
+          return;
+        }
+
+        if (payload.type === "messages.read") {
+          if (activeConversationId && payload.conversationId === activeConversationId) {
+            void refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           }
         }
       } catch {
@@ -359,7 +383,7 @@ export function LiveChatWidget({
 
         if (deliveredCount > 0) {
           setQueuedMessages((previous) => previous.slice(deliveredCount));
-          await refreshMessages(activeConversationId);
+          await refreshMessages(activeConversationId, { markRead: false, showLoader: false });
           await refreshConversations(false);
         }
       } finally {
@@ -425,7 +449,7 @@ export function LiveChatWidget({
     setIsSendingMessage(true);
     try {
       await apiClient.sendChatMessage(conversationId, { body });
-      await refreshMessages(conversationId);
+      await refreshMessages(conversationId, { markRead: false, showLoader: false });
       await refreshConversations(false);
     } catch {
       setQueuedMessages((previous) => [
@@ -475,6 +499,10 @@ export function LiveChatWidget({
         </div>
       ) : (
         <>
+          {errorMessage ? (
+            <p className="mx-4 mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+          ) : null}
+
           <div className="space-y-2 border-b border-zinc-100 px-4 py-3">
             {conversations.length > 1 && (
               <select
