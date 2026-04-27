@@ -1,6 +1,6 @@
 import { HttpError, badRequest } from "@/lib/server/core/errors";
 import { renderNewsletterCampaignEmail } from "@/lib/server/mail/templates";
-import { assertSmtpConfigured, sendSmtpMail } from "@/lib/server/mail/smtp";
+import { assertSmtpConfigured, sendSmtpMail, verifySmtpTransport } from "@/lib/server/mail/smtp";
 import {
   countActiveNewsletterSubscribers,
   listActiveNewsletterSubscribers,
@@ -41,6 +41,19 @@ function isDnsTimeoutError(error: unknown): boolean {
 function isSmtpCredentialError(error: unknown): boolean {
   const code = errorCode(error);
   return code === "EAUTH";
+}
+
+function isSmtpConnectionError(error: unknown): boolean {
+  const code = errorCode(error);
+  return code === "ECONNECTION"
+    || code === "ECONNREFUSED"
+    || code === "ECONNRESET"
+    || code === "ETIMEDOUT"
+    || code === "ETIMEOUT"
+    || code === "ESOCKET"
+    || code === "EHOSTUNREACH"
+    || code === "ENETUNREACH"
+    || code === "ENOTFOUND";
 }
 
 function stripHtmlToText(value: string): string {
@@ -99,6 +112,40 @@ export async function sendNewsletterCampaignAdmin(input: {
 }) {
   assertSmtpConfigured();
 
+  try {
+    await verifySmtpTransport();
+  } catch (error) {
+    if (isDnsTimeoutError(error)) {
+      throw new HttpError(
+        503,
+        "SMTP DNS lookup timed out. Check server DNS/network access to your SMTP host and retry.",
+        "SMTP_DNS_TIMEOUT",
+      );
+    }
+
+    if (isSmtpCredentialError(error)) {
+      throw new HttpError(
+        502,
+        "SMTP authentication failed. Verify SMTP username/password (or app password) and retry.",
+        "SMTP_AUTH_FAILED",
+      );
+    }
+
+    if (isSmtpConnectionError(error)) {
+      throw new HttpError(
+        503,
+        "Unable to connect to the SMTP server. Check SMTP host/port/network reachability and retry.",
+        "SMTP_CONNECTION_FAILED",
+      );
+    }
+
+    throw new HttpError(
+      502,
+      `SMTP preflight verification failed: ${safeErrorText(error)}`,
+      "SMTP_PRECHECK_FAILED",
+    );
+  }
+
   const subscribers = await listActiveNewsletterSubscribers();
   if (subscribers.length === 0) {
     throw badRequest("No active newsletter subscribers yet.");
@@ -113,10 +160,14 @@ export async function sendNewsletterCampaignAdmin(input: {
   let failedCount = 0;
   let dnsTimeoutFailures = 0;
   let credentialFailures = 0;
+  let connectionFailures = 0;
   let firstFailure: unknown = null;
 
   for (let index = 0; index < subscribers.length; index += NEWSLETTER_SEND_BATCH_SIZE) {
     const batch = subscribers.slice(index, index + NEWSLETTER_SEND_BATCH_SIZE);
+    let batchDnsTimeoutFailures = 0;
+    let batchCredentialFailures = 0;
+    let batchConnectionFailures = 0;
 
     const results = await Promise.all(batch.map(async (subscriber) => {
       try {
@@ -139,10 +190,17 @@ export async function sendNewsletterCampaignAdmin(input: {
 
         if (isDnsTimeoutError(error)) {
           dnsTimeoutFailures += 1;
+          batchDnsTimeoutFailures += 1;
         }
 
         if (isSmtpCredentialError(error)) {
           credentialFailures += 1;
+          batchCredentialFailures += 1;
+        }
+
+        if (isSmtpConnectionError(error)) {
+          connectionFailures += 1;
+          batchConnectionFailures += 1;
         }
 
         console.error("Newsletter delivery failed", {
@@ -162,6 +220,30 @@ export async function sendNewsletterCampaignAdmin(input: {
         failedCount += 1;
       }
     }
+
+    if (sentCount === 0 && batchDnsTimeoutFailures > 0) {
+      throw new HttpError(
+        503,
+        "SMTP DNS lookup timed out. Check server DNS/network access to your SMTP host and retry.",
+        "SMTP_DNS_TIMEOUT",
+      );
+    }
+
+    if (sentCount === 0 && batchCredentialFailures > 0) {
+      throw new HttpError(
+        502,
+        "SMTP authentication failed. Verify SMTP username/password (or app password) and retry.",
+        "SMTP_AUTH_FAILED",
+      );
+    }
+
+    if (sentCount === 0 && batchConnectionFailures > 0) {
+      throw new HttpError(
+        503,
+        "Unable to connect to the SMTP server. Check SMTP host/port/network reachability and retry.",
+        "SMTP_CONNECTION_FAILED",
+      );
+    }
   }
 
   if (sentCount === 0) {
@@ -178,6 +260,14 @@ export async function sendNewsletterCampaignAdmin(input: {
         502,
         "SMTP authentication failed. Verify SMTP username/password (or app password) and retry.",
         "SMTP_AUTH_FAILED",
+      );
+    }
+
+    if (connectionFailures === subscribers.length) {
+      throw new HttpError(
+        503,
+        "Unable to connect to the SMTP server. Check SMTP host/port/network reachability and retry.",
+        "SMTP_CONNECTION_FAILED",
       );
     }
 

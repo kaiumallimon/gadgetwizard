@@ -5,7 +5,14 @@ import { getEnv } from "@/lib/server/core/env";
 
 declare global {
   var __gadgetwizardMailTransporter: nodemailer.Transporter | undefined;
+  var __gadgetwizardMailTransportVerifiedAt: number | undefined;
 }
+
+const SMTP_CONNECTION_TIMEOUT_MS = 10_000;
+const SMTP_GREETING_TIMEOUT_MS = 10_000;
+const SMTP_SOCKET_TIMEOUT_MS = 15_000;
+const SMTP_DNS_TIMEOUT_MS = 8_000;
+const SMTP_VERIFY_CACHE_TTL_MS = 60_000;
 
 function getMailConfig() {
   const env = getEnv();
@@ -46,9 +53,24 @@ function getTransporter(): nodemailer.Transporter {
     port: config.port,
     secure: config.secure,
     auth: config.auth,
+    connectionTimeout: SMTP_CONNECTION_TIMEOUT_MS,
+    greetingTimeout: SMTP_GREETING_TIMEOUT_MS,
+    socketTimeout: SMTP_SOCKET_TIMEOUT_MS,
+    dnsTimeout: SMTP_DNS_TIMEOUT_MS,
   });
 
   return globalThis.__gadgetwizardMailTransporter;
+}
+
+export async function verifySmtpTransport(): Promise<void> {
+  const lastVerifiedAt = globalThis.__gadgetwizardMailTransportVerifiedAt ?? 0;
+  if (Date.now() - lastVerifiedAt < SMTP_VERIFY_CACHE_TTL_MS) {
+    return;
+  }
+
+  const transporter = getTransporter();
+  await transporter.verify();
+  globalThis.__gadgetwizardMailTransportVerifiedAt = Date.now();
 }
 
 export async function sendSmtpMail(input: {
