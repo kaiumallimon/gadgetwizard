@@ -2,6 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { CreditCard, Headset, MapPin, Phone, ShieldCheck, Truck } from "lucide-react";
 
+import { NewsletterSubscribeForm } from "@/components/newsletter-subscribe-form";
+
 const quickShopLinks = [
   { href: "/", label: "Home" },
   { href: "/faqs", label: "FAQs" },
@@ -90,6 +92,10 @@ export function SiteFooter() {
               <p className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40">
                 <MapPin className="h-4 w-4 text-orange-300" /> Dhaka, Bangladesh
               </p>
+            </div>
+
+            <div className="mt-5 border-t border-zinc-700/40 pt-4">
+              <NewsletterSubscribeForm />
             </div>
           </div>
         </div>

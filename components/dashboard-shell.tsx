@@ -26,6 +26,7 @@ import {
     Heart,
     Tag,
     MessageCircle,
+    Mail,
     UserRound,
     Users,
     Plus,
@@ -103,6 +104,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         items: [
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
                             { href: "/admin/faqs", label: "FAQs", icon: CircleHelp, exact: true },
+                            { href: "/admin/newsletter", label: "Newsletter", icon: Mail, exact: true },
                         ],
                     },
                     {

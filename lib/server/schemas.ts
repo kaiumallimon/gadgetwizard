@@ -54,6 +54,10 @@ export const passwordResetConfirmSchema = z.object({
     .regex(/[^A-Za-z0-9]/, "Password must include at least one special character"),
 });
 
+export const newsletterSubscribeSchema = z.object({
+  email: z.string().trim().email().max(255),
+});
+
 export const adminCategorySchema = z.object({
   name: z.string().trim().min(2).max(120),
   slug: z.string().trim().min(2).max(150).optional(),
@@ -252,6 +256,19 @@ export const adminFaqSchema = z.object({
     }),
   sortOrder: z.number().int().min(0).max(100000).optional(),
   isActive: z.boolean().optional(),
+});
+
+export const adminNewsletterSendSchema = z.object({
+  subject: z.string().trim().min(3).max(180),
+  preheader: z.string().trim().max(255).optional(),
+  bodyHtml: z
+    .string()
+    .trim()
+    .min(1)
+    .max(120000)
+    .refine((value) => stripHtmlToText(value).length >= 20, {
+      message: "Newsletter content must contain at least 20 characters of text",
+    }),
 });
 
 export const adminCreateUserSchema = z.object({

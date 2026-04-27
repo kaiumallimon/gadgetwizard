@@ -97,3 +97,28 @@ export function renderPasswordResetEmail(input: {
     ctaUrl: input.resetUrl,
   });
 }
+
+export function renderNewsletterCampaignEmail(input: {
+  subject: string;
+  preheader?: string;
+  bodyHtml: string;
+}): string {
+  const trimmedPreheader = input.preheader?.trim();
+
+  return baseEmailLayout({
+    preheader: trimmedPreheader || `Latest update: ${input.subject}`,
+    title: input.subject,
+    subtitle: "Curated updates and exclusive product highlights from GadgetWizard.",
+    bodyHtml: `
+      <div style="border:1px solid #fed7aa;border-radius:14px;padding:14px 16px;background:#fff7ed;">
+        <p style="margin:0;color:#9a3412;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;">Newsletter</p>
+        <p style="margin:8px 0 0;color:#7c2d12;font-size:13px;line-height:1.7;">Premium picks, price drops, and launches selected for GadgetWizard subscribers.</p>
+      </div>
+
+      <div style="margin-top:16px;border:1px solid #e4e4e7;border-radius:14px;padding:18px;background:#ffffff;">
+        <div style="color:#18181b;font-size:14px;line-height:1.75;">${input.bodyHtml}</div>
+      </div>
+    `,
+    footerNote: "You are receiving this email because you subscribed to GadgetWizard newsletter updates.",
+  });
+}

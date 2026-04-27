@@ -10,6 +10,7 @@ import type {
   CdnFileAsset,
   CdnStats,
   Faq,
+  NewsletterSendSummary,
   Order,
   Product,
   ProductReview,
@@ -127,6 +128,13 @@ export const apiClient = {
 
   async getFaqs() {
     return apiFetch<{ items: Faq[] }>("/api/faqs");
+  },
+
+  async subscribeNewsletter(email: string) {
+    return apiFetch<{ success: boolean; message: string }>("/api/newsletter/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
   },
 
   async getProducts(params: { page?: number; pageSize?: number; categorySlug?: string; brandSlug?: string; search?: string }) {
@@ -383,6 +391,21 @@ export const apiClient = {
     return apiFetch<{ success: boolean }>(`/api/admin/faqs/${id}`, {
       method: "DELETE",
       token,
+    });
+  },
+
+  async adminSendNewsletter(
+    payload: {
+      subject: string;
+      preheader?: string;
+      bodyHtml: string;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ success: boolean; summary: NewsletterSendSummary }>("/api/admin/newsletter/send", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
     });
   },
 

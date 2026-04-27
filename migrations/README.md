@@ -34,6 +34,7 @@ These SQL files are ordered and should be executed sequentially.
 28. 028_add_wholesale_fields_to_orders.sql
 29. 029_add_cart_item_stock_snapshot.sql
 30. 030_create_live_chat.sql
+31. 031_create_newsletter_subscribers.sql
 
 ## Run Migrations Manually
 
@@ -71,6 +72,7 @@ mysql -u <username> -p <database_name> < migrations/027_create_business_accounts
 mysql -u <username> -p <database_name> < migrations/028_add_wholesale_fields_to_orders.sql
 mysql -u <username> -p <database_name> < migrations/029_add_cart_item_stock_snapshot.sql
 mysql -u <username> -p <database_name> < migrations/030_create_live_chat.sql
+mysql -u <username> -p <database_name> < migrations/031_create_newsletter_subscribers.sql
 ```
 
 ## Notes
@@ -98,3 +100,4 @@ mysql -u <username> -p <database_name> < migrations/030_create_live_chat.sql
 - 028 marks wholesale orders/items and links wholesale orders to approved business accounts.
 - 029 stores per-item stock snapshots in carts for stale stock detection at checkout.
 - 030 creates real-time chat conversations and messages with read and typing state.
+- 031 creates newsletter_subscribers for footer subscriptions and admin newsletter campaigns.

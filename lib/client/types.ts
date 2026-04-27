@@ -160,6 +160,16 @@ export interface Faq {
   updatedAt: string;
 }
 
+export interface NewsletterAdminSummary {
+  activeSubscribers: number;
+}
+
+export interface NewsletterSendSummary {
+  totalSubscribers: number;
+  sentCount: number;
+  failedCount: number;
+}
+
 export interface CartItem {
   id: number;
   productId: number;
