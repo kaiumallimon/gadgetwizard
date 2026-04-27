@@ -31,6 +31,7 @@ export default async function HomePage() {
   const newArrivalProducts = productPool.items.filter((item) => item.isNewArrival).slice(0, 8);
   const freeDeliveryProducts = productPool.items.filter((item) => item.isFreeDelivery).slice(0, 8);
   const limitedStockProducts = productPool.items.filter((item) => item.isLimitedStock).slice(0, 8);
+  const uniformProductCardWidthClass = "w-65 min-w-65";
 
   const curatedProductSections: Array<{
     key: string;
@@ -250,7 +251,7 @@ export default async function HomePage() {
 
             <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
               {fallbackTrends.map((product) => (
-                <div key={product.id} className="w-65 min-w-65">
+                <div key={product.id} className={uniformProductCardWidthClass}>
                   <ProductCard product={product} />
                 </div>
               ))}
@@ -268,9 +269,11 @@ export default async function HomePage() {
                 <p className="mt-2 text-sm text-zinc-500">Handpicked products with strong value and customer demand.</p>
               </div>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-center gap-4">
               {fallbackFeatured.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className={uniformProductCardWidthClass}>
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           </section>
@@ -293,9 +296,11 @@ export default async function HomePage() {
               </span>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-center gap-4">
               {section.items.map((product) => (
-                <ProductCard key={`${section.key}-${product.id}`} product={product} />
+                <div key={`${section.key}-${product.id}`} className={uniformProductCardWidthClass}>
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           </section>

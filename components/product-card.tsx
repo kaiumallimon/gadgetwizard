@@ -164,7 +164,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {hasDiscount && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Deal</Badge>}
               {hasWholesale && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                  Wholesale {format$(product.wholesalePrice ?? 0)} @ {product.wholesaleMinQuantity}+
+                  Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
                 </Badge>
               )}
               {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
