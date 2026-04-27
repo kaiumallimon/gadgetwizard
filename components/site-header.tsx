@@ -308,7 +308,7 @@ export function SiteHeader() {
                   <Link href="/cart" aria-label="Cart">
                     <FiShoppingCart className="h-4 w-4" />
                     {cartItemCount > 0 && (
-                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
+                      <span className="absolute -right-1.5 -top-1.5 flex p-1.25 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
                         {cartItemCount > 99 ? "99+" : cartItemCount}
                       </span>
                     )}
@@ -477,7 +477,7 @@ export function SiteHeader() {
                     <FiShoppingCart className="h-4 w-4" />
                     <span className="hidden sm:inline">Cart</span>
                     {cartItemCount > 0 && (
-                      <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
+                      <span className="absolute -right-1.5 -top-1.5 flex p-1.25 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold leading-none text-white">
                         {cartItemCount > 99 ? "99+" : cartItemCount}
                       </span>
                     )}

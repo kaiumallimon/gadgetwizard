@@ -57,45 +57,24 @@ export default async function BrandsPage() {
 
         {featuredBrands.length > 0 && (
           <section className="rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6">
-            <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-semibold text-zinc-900">Featured Brands</h2>
-                <p className="mt-1 text-sm text-zinc-500">Highlighted manufacturers shoppers love right now.</p>
+                <h2 className="text-xl font-semibold text-zinc-900">Featured Brands</h2>
+                <p className="text-sm text-zinc-500">Highlighted manufacturers shoppers love right now.</p>
               </div>
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
-                {featuredBrands.length} highlighted
-              </span>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredBrands.map((brand) => {
-                const imageUrl = brand.imageUrl ?? previewImageByBrandSlug.get(brand.slug);
-
-                return (
-                  <Link
-                    key={brand.id}
-                    href={`/brand/${brand.slug}`}
-                    className="group overflow-hidden rounded-xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md"
-                  >
-                    <div className="flex h-40 w-full items-center justify-center bg-linear-to-br from-zinc-50 via-white to-sky-50/40 p-4 sm:h-44">
-                      {imageUrl ? (
-                        <img src={imageUrl} alt={brand.name} className="h-full w-full object-contain" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-3xl font-semibold text-zinc-500">
-                          {brand.name.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center justify-between gap-3 px-4 py-3">
-                      <p className="line-clamp-1 text-sm font-semibold text-zinc-800">{brand.name}</p>
-                      <span className="inline-flex items-center gap-1 text-xs font-medium text-zinc-500 transition group-hover:text-sky-600">
-                        Explore <ChevronRight className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
+            <div className="flex flex-wrap gap-2">
+              {featuredBrands.map((brand) => (
+                <Link
+                  key={brand.id}
+                  href={`/brand/${brand.slug}`}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-sky-300 hover:bg-sky-50 hover:text-zinc-900"
+                >
+                  {brand.name}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              ))}
             </div>
           </section>
         )}

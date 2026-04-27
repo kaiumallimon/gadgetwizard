@@ -438,6 +438,7 @@ export async function listProducts(input: {
 
 export async function getProductFilterFacets(input: {
   categorySlug?: string;
+  brandSlug?: string;
   search?: string;
   discountedOnly?: boolean;
   newArrivalsOnly?: boolean;
@@ -452,6 +453,7 @@ export async function getProductFilterFacets(input: {
   const { whereClause, whereParams } = buildProductWhereClause({
     activeOnly: input.activeOnly,
     categorySlug: input.categorySlug,
+    brandSlug: input.brandSlug,
     search: input.search,
     discountedOnly: input.discountedOnly,
     newArrivalsOnly: input.newArrivalsOnly,

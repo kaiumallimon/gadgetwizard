@@ -156,6 +156,7 @@ export async function getPublicProducts(input: {
 
 export async function getPublicProductFilterFacets(input: {
   categorySlug?: string;
+  brandSlug?: string;
   search?: string;
   discountedOnly?: boolean;
   newArrivalsOnly?: boolean;
@@ -163,6 +164,7 @@ export async function getPublicProductFilterFacets(input: {
 }) {
   return getProductFilterFacets({
     categorySlug: input.categorySlug,
+    brandSlug: input.brandSlug,
     search: input.search,
     discountedOnly: input.discountedOnly,
     newArrivalsOnly: input.newArrivalsOnly,
