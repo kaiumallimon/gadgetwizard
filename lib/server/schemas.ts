@@ -286,3 +286,30 @@ export const adminWishlistQuerySchema = z.object({
   pageSize: z.coerce.number().int().positive().max(100).default(25),
   search: z.string().trim().min(1).optional(),
 });
+
+export const chatSourceTypeSchema = z.enum(["home", "dashboard", "product", "order", "account", "other"]);
+
+export const chatConversationsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+  search: z.string().trim().min(1).max(120).optional(),
+});
+
+export const createChatConversationSchema = z.object({
+  sourceType: chatSourceTypeSchema.default("home"),
+  sourceRef: z.string().trim().max(191).nullable().optional(),
+  initialMessage: z.string().trim().min(1).max(2000).optional(),
+});
+
+export const chatMessagesQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(50),
+});
+
+export const sendChatMessageSchema = z.object({
+  body: z.string().trim().min(1).max(2000),
+});
+
+export const chatTypingSchema = z.object({
+  isTyping: z.boolean(),
+});

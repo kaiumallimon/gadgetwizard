@@ -3,6 +3,7 @@ import { Headset, ShieldCheck, Truck, Warehouse, type LucideIcon } from "lucide-
 import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
+import { LiveChatWidget } from "@/components/live-chat-widget";
 import { ProductCard } from "@/components/product-card";
 import type { Product } from "@/lib/client/types";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
@@ -304,6 +305,7 @@ export default async function HomePage() {
         </section> */}
       </div>
 
+      <LiveChatWidget sourceType="home" />
     </div>
   );
 }

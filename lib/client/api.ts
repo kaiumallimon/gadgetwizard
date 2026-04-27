@@ -16,6 +16,9 @@ import type {
   Wishlist,
   AdminWishlistEntry,
   UserAddress,
+  ChatConversation,
+  ChatConversationSourceType,
+  ChatMessage,
 } from "@/lib/client/types";
 
 class ApiError extends Error {
@@ -842,6 +845,70 @@ export const apiClient = {
     return apiFetch<{ success: boolean }>(`/api/admin/reviews/${id}`, {
       method: "DELETE",
       token,
+    });
+  },
+
+  // Chat
+  async getChatConversations(params: { page?: number; pageSize?: number; search?: string } = {}, token?: string) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+    if (params.search) query.set("search", params.search);
+
+    return apiFetch<{
+      items: ChatConversation[];
+      pagination: { page: number; pageSize: number; total: number; totalPages: number };
+    }>(`/api/chat/conversations?${query.toString()}`, { token });
+  },
+
+  async createChatConversation(
+    payload: { sourceType?: ChatConversationSourceType; sourceRef?: string | null; initialMessage?: string },
+    token?: string,
+  ) {
+    return apiFetch<{ item: ChatConversation }>("/api/chat/conversations", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async getChatMessages(
+    conversationId: number,
+    params: { page?: number; pageSize?: number } = {},
+    token?: string,
+  ) {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.pageSize) query.set("pageSize", String(params.pageSize));
+
+    return apiFetch<{
+      conversation: ChatConversation;
+      items: ChatMessage[];
+      pagination: { page: number; pageSize: number; total: number; totalPages: number };
+    }>(`/api/chat/conversations/${conversationId}/messages?${query.toString()}`, { token });
+  },
+
+  async sendChatMessage(conversationId: number, payload: { body: string }, token?: string) {
+    return apiFetch<{ item: ChatMessage }>(`/api/chat/conversations/${conversationId}/messages`, {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
+  async markChatConversationRead(conversationId: number, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/chat/conversations/${conversationId}/read`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({}),
+    });
+  },
+
+  async setChatTyping(conversationId: number, isTyping: boolean, token?: string) {
+    return apiFetch<{ success: boolean }>(`/api/chat/conversations/${conversationId}/typing`, {
+      method: "POST",
+      token,
+      body: JSON.stringify({ isTyping }),
     });
   },
 };

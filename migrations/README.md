@@ -33,6 +33,7 @@ These SQL files are ordered and should be executed sequentially.
 27. 027_create_business_accounts.sql
 28. 028_add_wholesale_fields_to_orders.sql
 29. 029_add_cart_item_stock_snapshot.sql
+30. 030_create_live_chat.sql
 
 ## Run Migrations Manually
 
@@ -69,6 +70,7 @@ mysql -u <username> -p <database_name> < migrations/026_add_product_wholesale_pr
 mysql -u <username> -p <database_name> < migrations/027_create_business_accounts.sql
 mysql -u <username> -p <database_name> < migrations/028_add_wholesale_fields_to_orders.sql
 mysql -u <username> -p <database_name> < migrations/029_add_cart_item_stock_snapshot.sql
+mysql -u <username> -p <database_name> < migrations/030_create_live_chat.sql
 ```
 
 ## Notes
@@ -95,3 +97,4 @@ mysql -u <username> -p <database_name> < migrations/029_add_cart_item_stock_snap
 - 027 adds business account applications and admin approval workflow data model.
 - 028 marks wholesale orders/items and links wholesale orders to approved business accounts.
 - 029 stores per-item stock snapshots in carts for stale stock detection at checkout.
+- 030 creates real-time chat conversations and messages with read and typing state.

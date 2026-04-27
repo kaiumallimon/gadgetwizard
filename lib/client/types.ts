@@ -299,6 +299,54 @@ export interface ProductReview {
   productSlug?: string;
 }
 
+export type ChatConversationSourceType = "home" | "dashboard" | "product" | "order" | "account" | "other";
+export type ChatConversationStatus = "open" | "closed";
+export type ChatSenderRole = "user" | "admin";
+
+export interface ChatConversation {
+  id: number;
+  customerUserId: number;
+  adminUserId: number | null;
+  customerName: string;
+  customerEmail: string;
+  adminName: string | null;
+  adminEmail: string | null;
+  sourceType: ChatConversationSourceType;
+  sourceRef: string | null;
+  status: ChatConversationStatus;
+  latestMessageId: number | null;
+  latestMessagePreview: string | null;
+  latestMessageSenderRole: ChatSenderRole | null;
+  latestMessageAt: string | null;
+  unreadCount: number;
+  isOtherParticipantTyping: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: number;
+  conversationId: number;
+  senderUserId: number;
+  senderRole: ChatSenderRole;
+  senderName: string;
+  body: string;
+  readByCustomerAt: string | null;
+  readByAdminAt: string | null;
+  isReadByMe: boolean;
+  isReadByOtherParticipant: boolean;
+  createdAt: string;
+}
+
+export type ChatRealtimeEvent =
+  | { type: "connected"; userId: number; role: UserRole }
+  | { type: "conversation.created"; conversationId: number }
+  | { type: "conversation.updated"; conversationId: number }
+  | { type: "message.created"; conversationId: number; messageId: number }
+  | { type: "messages.read"; conversationId: number; byRole: ChatSenderRole }
+  | { type: "typing.updated"; conversationId: number; byRole: ChatSenderRole; isTyping: boolean }
+  | { type: "presence.updated"; userId: number; role: UserRole; isOnline: boolean };
+
 export interface ApiErrorPayload {
   error: {
     code: string;

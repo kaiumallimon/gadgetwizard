@@ -25,6 +25,7 @@ import {
     Star,
     Heart,
     Tag,
+    MessageCircle,
     UserRound,
     Users,
     Plus,
@@ -91,6 +92,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Orders",
                         items: [
                             { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+                            { href: "/admin/live-chat", label: "Live Chat", icon: MessageCircle },
                             { href: "/admin/business-accounts", label: "Business Requests", icon: Building2 },
                             { href: "/admin/wishlist", label: "Wishlist", icon: Heart },
                             { href: "/admin/reviews", label: "Reviews", icon: Star },
