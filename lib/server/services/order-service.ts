@@ -170,16 +170,6 @@ function resolvePricingForMode(input: {
 }): { unitPrice: number; isWholesaleItem: boolean; wholesaleUnitPrice: number | null } {
   const hasWholesaleRule = input.wholesalePrice !== null && input.wholesaleMinQuantity !== null;
 
-  if (
-    input.purchaseMode === "regular" &&
-    hasWholesaleRule &&
-    input.quantity >= (input.wholesaleMinQuantity ?? Number.MAX_SAFE_INTEGER)
-  ) {
-    throw badRequest(
-      `${input.productName} requires business checkout for ${input.wholesaleMinQuantity}+ units. Switch purchase mode to business.`,
-    );
-  }
-
   if (input.purchaseMode === "business" && !input.canUseBusinessMode) {
     throw badRequest("Your business account is not approved yet for wholesale purchases");
   }

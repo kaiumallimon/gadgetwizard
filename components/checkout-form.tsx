@@ -80,14 +80,6 @@ export function CheckoutForm({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const regularModeBlockedItems = purchaseMode === "regular"
-    ? cart.items.filter(
-      (item) =>
-        item.productWholesaleMinQuantity !== null &&
-        item.quantity >= item.productWholesaleMinQuantity,
-    )
-    : [];
-
   const subtotal = cart.items.reduce((sum, item) => {
     const regularPrice = item.appliedDiscountedPrice ?? item.unitPrice;
     const isWholesaleItem =
@@ -184,7 +176,7 @@ export function CheckoutForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Order Summary */}
-      <Card>
+      <Card className="shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Order Summary</CardTitle>
         </CardHeader>
@@ -209,13 +201,6 @@ export function CheckoutForm({
               </span>
             </div>
           ))}
-          {regularModeBlockedItems.length > 0 && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
-              Regular mode is blocked for:
-              {regularModeBlockedItems.map((item) => ` ${item.productName} (${item.productWholesaleMinQuantity}+ qty)`).join(", ")}
-              . Switch to business mode to continue.
-            </div>
-          )}
           <div className="border-t border-zinc-100 pt-2 space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-600">Items total</span>
@@ -234,7 +219,7 @@ export function CheckoutForm({
       </Card>
 
       {/* Shipping Address */}
-      <Card>
+      <Card className="shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
             <FiMapPin className="h-4 w-4" /> {isPickup ? "Showroom Pickup" : "Shipping Address"}
@@ -413,7 +398,7 @@ export function CheckoutForm({
       </Card>
 
       {/* Payment */}
-      <Card>
+      <Card className="shadow-none">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Payment Details</CardTitle>
         </CardHeader>
@@ -434,7 +419,7 @@ export function CheckoutForm({
 
       <Button
         type="submit"
-        disabled={!stripe || !elements || submitting || regularModeBlockedItems.length > 0}
+        disabled={!stripe || !elements || submitting}
         className="w-full rounded-full bg-orange-500 py-6 text-base font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
       >
         {submitting ? "Placing Order..." : `Pay $${checkoutTotals.total.toLocaleString()} & Place Order`}

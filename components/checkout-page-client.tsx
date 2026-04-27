@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 
@@ -47,7 +48,7 @@ export function CheckoutPageClient({
 
   let businessModeDisabledReason: string | null = null;
   if (!isBusinessApproved) {
-    businessModeDisabledReason = "Business mode is locked until your business account is approved.";
+    businessModeDisabledReason = "Want to purchase in wholesale price? Be a business user from your dashboard.";
   } else if (firstWholesaleThresholdGapItem) {
     const minQuantity = firstWholesaleThresholdGapItem.productWholesaleMinQuantity ?? 0;
     const shortfall = Math.max(0, minQuantity - firstWholesaleThresholdGapItem.quantity);
@@ -143,7 +144,13 @@ export function CheckoutPageClient({
           </span>
         </div>
         {!isBusinessApproved && (
-          <p className="mt-2 text-xs text-amber-700">Business mode is locked until your business account is approved.</p>
+          <p className="mt-2 text-xs text-amber-700">
+            Want to purchase in wholesale price? Be a business user from your{' '}
+            <Link href="/dashboard/business-account" className="font-medium underline underline-offset-2">
+              dashboard
+            </Link>
+            .
+          </p>
         )}
         {isBusinessApproved && firstWholesaleThresholdGapItem && (
           <p className="mt-2 text-xs text-amber-700">
