@@ -23,7 +23,7 @@ export default async function AdminLiveChatPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="flex h-full min-h-0 flex-col gap-6">
       <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Live Chat Inbox</h1>
         <p className="mt-2 text-sm text-zinc-600">
@@ -47,7 +47,9 @@ export default async function AdminLiveChatPage() {
         </div>
       </header>
 
-      <AdminLiveChatManager initialConversations={conversations.items} />
+      <div className="min-h-0 flex-1">
+        <AdminLiveChatManager initialConversations={conversations.items} />
+      </div>
     </div>
   );
 }

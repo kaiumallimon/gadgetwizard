@@ -68,6 +68,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     const { user, clearAuth } = useAuthStore();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [chatUnreadCount, setChatUnreadCount] = useState(0);
+    const isLiveChatRoute = variant === "admin" && pathname === "/admin/live-chat";
 
     const refreshChatUnreadCount = useCallback(async () => {
         if (variant !== "admin") {
@@ -366,7 +367,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     <SidebarContent onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
 
-                <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto">
+                <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", isLiveChatRoute ? "overflow-hidden" : "overflow-y-auto") }>
                     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/55 px-4 py-4 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Button
@@ -387,7 +388,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         </div>
                     </header>
 
-                    <main className="px-4 py-5 md:px-6 md:py-6">{children}</main>
+                    <main className={cn("px-4 py-5 md:px-6 md:py-6", isLiveChatRoute && "flex-1 min-h-0 overflow-hidden")}>{children}</main>
                     <Separator />
                 </div>
             </Sheet>

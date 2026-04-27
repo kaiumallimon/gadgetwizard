@@ -385,157 +385,157 @@ export function AdminLiveChatManager({ initialConversations }: AdminLiveChatMana
 
   return (
     <>
-      <div className="grid min-h-[70vh] gap-4 lg:grid-cols-[320px_1fr]">
-        <aside className="hidden min-h-[70vh] overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:flex lg:flex-col">
+      <div className="grid h-full min-h-0 gap-4 lg:grid-cols-[320px_1fr]">
+        <aside className="hidden h-full min-h-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:flex lg:flex-col">
           {conversationDirectory}
         </aside>
 
-        <section className="flex min-h-[75vh] flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white lg:min-h-[70vh]">
-        <header className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-8 lg:hidden"
-              onClick={() => setIsMobileThreadsOpen(true)}
+        <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+          <header className="flex items-center justify-between border-b border-zinc-100 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 lg:hidden"
+                onClick={() => setIsMobileThreadsOpen(true)}
+              >
+                Threads
+              </Button>
+              <div>
+                <p className="text-sm font-semibold text-zinc-900">{activeConversation?.customerName ?? "Select a conversation"}</p>
+                <p className="text-xs text-zinc-500">{activeConversation?.customerEmail ?? ""}</p>
+              </div>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${
+                !isOnline
+                  ? "border-amber-200 bg-amber-50 text-amber-700"
+                  : isRealtimeConnected
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-orange-200 bg-orange-50 text-orange-700"
+              }`}
             >
-              Threads
-            </Button>
-            <div>
-              <p className="text-sm font-semibold text-zinc-900">{activeConversation?.customerName ?? "Select a conversation"}</p>
-              <p className="text-xs text-zinc-500">{activeConversation?.customerEmail ?? ""}</p>
-            </div>
-          </div>
-          <span
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] ${
-              !isOnline
-                ? "border-amber-200 bg-amber-50 text-amber-700"
-                : isRealtimeConnected
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-orange-200 bg-orange-50 text-orange-700"
-            }`}
-          >
-            {!isOnline ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
-            {!isOnline ? "Offline" : isRealtimeConnected ? "Connected" : "Reconnecting"}
-          </span>
-        </header>
+              {!isOnline ? <WifiOff className="h-3.5 w-3.5" /> : <Wifi className="h-3.5 w-3.5" />}
+              {!isOnline ? "Offline" : isRealtimeConnected ? "Connected" : "Reconnecting"}
+            </span>
+          </header>
 
-        <div className="flex-1 space-y-2 overflow-y-auto px-4 py-3">
-          {errorMessage ? (
-            <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
-          ) : null}
+          <div className="flex-1 min-h-0 space-y-2 overflow-y-auto px-4 py-3">
+            {errorMessage ? (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{errorMessage}</p>
+            ) : null}
 
-          {!activeConversationId ? (
-            <p className="text-sm text-zinc-500">Choose a conversation to begin.</p>
-          ) : isLoadingMessages ? (
-            <div className="flex items-center justify-center text-zinc-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-            </div>
-          ) : (
-            <>
-              {messages.map((message) => {
-                const isMine = message.senderRole === "admin";
-                return (
+            {!activeConversationId ? (
+              <p className="text-sm text-zinc-500">Choose a conversation to begin.</p>
+            ) : isLoadingMessages ? (
+              <div className="flex items-center justify-center text-zinc-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+              </div>
+            ) : (
+              <>
+                {messages.map((message) => {
+                  const isMine = message.senderRole === "admin";
+                  return (
+                    <div
+                      key={message.id}
+                      className={`flex max-w-[92%] flex-col ${isMine ? "ml-auto items-end" : "mr-auto items-start"}`}
+                    >
+                      <p className={`text-[11px] ${isMine ? "text-right text-zinc-500" : "text-zinc-500"}`}>
+                        {isMine ? "You" : message.senderName}
+                        <span className="ml-1">{formatTime(message.createdAt)}</span>
+                      </p>
+
+                      <div
+                        className={`mt-1 w-fit max-w-full rounded-2xl px-3 py-2 text-sm ${
+                          isMine
+                            ? "bg-zinc-900 text-white"
+                            : "border border-zinc-200 bg-zinc-50 text-zinc-800"
+                        }`}
+                      >
+                        <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {queuedMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex max-w-[92%] flex-col ${isMine ? "ml-auto items-end" : "mr-auto items-start"}`}
+                    className="ml-auto flex max-w-[92%] flex-col items-end"
                   >
-                    <p className={`text-[11px] ${isMine ? "text-right text-zinc-500" : "text-zinc-500"}`}>
-                      {isMine ? "You" : message.senderName}
-                      <span className="ml-1">{formatTime(message.createdAt)}</span>
-                    </p>
-
-                    <div
-                      className={`mt-1 w-fit max-w-full rounded-2xl px-3 py-2 text-sm ${
-                        isMine
-                          ? "bg-zinc-900 text-white"
-                          : "border border-zinc-200 bg-zinc-50 text-zinc-800"
-                      }`}
-                    >
+                    <div className="w-fit max-w-full rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
                       <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
+                      <p className="mt-1 text-[11px] text-amber-700">Queued · {formatTime(message.createdAt)}</p>
                     </div>
                   </div>
-                );
-              })}
+                ))}
+              </>
+            )}
+          </div>
 
-              {queuedMessages.map((message) => (
-                <div
-                  key={message.id}
-                  className="ml-auto flex max-w-[92%] flex-col items-end"
-                >
-                  <div className="w-fit max-w-full rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                    <p className="whitespace-pre-wrap wrap-break-word">{message.body}</p>
-                    <p className="mt-1 text-[11px] text-amber-700">Queued · {formatTime(message.createdAt)}</p>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-        </div>
+          <footer className="border-t border-zinc-100 p-3">
+            {activeConversation?.isOtherParticipantTyping ? (
+              <p className="mb-2 text-xs text-zinc-500">Customer is typing...</p>
+            ) : null}
 
-        <footer className="border-t border-zinc-100 p-3">
-          {activeConversation?.isOtherParticipantTyping ? (
-            <p className="mb-2 text-xs text-zinc-500">Customer is typing...</p>
-          ) : null}
+            <div className="flex items-end gap-2">
+              <Textarea
+                rows={2}
+                value={composer}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setComposer(value);
 
-          <div className="flex items-end gap-2">
-            <Textarea
-              rows={2}
-              value={composer}
-              onChange={(event) => {
-                const value = event.target.value;
-                setComposer(value);
+                  if (!activeConversationId) {
+                    return;
+                  }
 
-                if (!activeConversationId) {
-                  return;
-                }
+                  if (value.trim().length === 0) {
+                    if (typingTimerRef.current) {
+                      clearTimeout(typingTimerRef.current);
+                    }
+                    void stopTyping();
+                    return;
+                  }
 
-                if (value.trim().length === 0) {
+                  if (!isTypingRef.current) {
+                    isTypingRef.current = true;
+                    void apiClient.setChatTyping(activeConversationId, true);
+                  }
+
                   if (typingTimerRef.current) {
                     clearTimeout(typingTimerRef.current);
                   }
-                  void stopTyping();
-                  return;
-                }
 
-                if (!isTypingRef.current) {
-                  isTypingRef.current = true;
-                  void apiClient.setChatTyping(activeConversationId, true);
-                }
-
-                if (typingTimerRef.current) {
-                  clearTimeout(typingTimerRef.current);
-                }
-
-                typingTimerRef.current = setTimeout(() => {
-                  void stopTyping();
-                }, 1200);
-              }}
-              placeholder={activeConversationId ? "Type a reply..." : "Select conversation to reply"}
-              className="min-h-10 resize-none"
-              disabled={!activeConversationId}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && !event.shiftKey) {
-                  event.preventDefault();
+                  typingTimerRef.current = setTimeout(() => {
+                    void stopTyping();
+                  }, 1200);
+                }}
+                placeholder={activeConversationId ? "Type a reply..." : "Select conversation to reply"}
+                className="min-h-10 resize-none"
+                disabled={!activeConversationId}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    void sendMessage();
+                  }
+                }}
+              />
+              <Button
+                type="button"
+                size="icon"
+                className="h-10 w-10 shrink-0"
+                disabled={!activeConversationId || isSendingMessage || composer.trim().length === 0}
+                onClick={() => {
                   void sendMessage();
-                }
-              }}
-            />
-            <Button
-              type="button"
-              size="icon"
-              className="h-10 w-10 shrink-0"
-              disabled={!activeConversationId || isSendingMessage || composer.trim().length === 0}
-              onClick={() => {
-                void sendMessage();
-              }}
-            >
-              {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
-              <span className="sr-only">Send</span>
-            </Button>
-          </div>
-        </footer>
+                }}
+              >
+                {isSendingMessage ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
+                <span className="sr-only">Send</span>
+              </Button>
+            </div>
+          </footer>
         </section>
       </div>
 
