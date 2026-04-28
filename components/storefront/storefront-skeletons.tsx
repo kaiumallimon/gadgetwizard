@@ -1,5 +1,6 @@
 const baseBlockClass = "animate-pulse rounded-xl bg-zinc-200/70";
 const basePillClass = "animate-pulse rounded-full bg-zinc-200/70";
+const skeletonCardWidthClass = "w-[calc(100vw-4.5rem)] min-w-[calc(100vw-4.5rem)] md:w-65 md:min-w-65";
 
 function SkeletonBlock({ className = "" }: { className?: string }) {
   return <div className={`${baseBlockClass} ${className}`.trim()} />;
@@ -45,6 +46,20 @@ function ListingGridSkeleton({ count = 8 }: { count?: number }) {
   );
 }
 
+function ListingMarqueeSkeleton({ count = 8 }: { count?: number }) {
+  return (
+    <div className="relative overflow-hidden">
+      <div className="flex gap-4">
+        {Array.from({ length: count }).map((_, index) => (
+          <div key={`product-marquee-skeleton-${index}`} className={skeletonCardWidthClass}>
+            <ProductCardSkeleton />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function StorefrontHomeSkeleton() {
   return (
     <div className="bg-white py-6">
@@ -69,7 +84,7 @@ export function StorefrontHomeSkeleton() {
         {Array.from({ length: 2 }).map((_, index) => (
           <section key={`section-skeleton-${index}`} className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
             <SectionHeaderSkeleton />
-            <ListingGridSkeleton count={8} />
+            <ListingMarqueeSkeleton count={8} />
           </section>
         ))}
       </div>

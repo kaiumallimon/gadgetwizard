@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
 import { LiveChatWidget } from "@/components/live-chat-widget";
-import { ProductCard } from "@/components/product-card";
 import { ProductScrollRow } from "@/components/storefront/product-scroll-row";
 import { StorefrontHomeSkeleton } from "@/components/storefront/storefront-skeletons";
 import type { Product } from "@/lib/client/types";
@@ -39,7 +38,7 @@ async function HomeContent() {
   const topRatedProducts = productPool.items.filter((item) => item.isTopRated).slice(0, 8);
   const freeDeliveryProducts = productPool.items.filter((item) => item.isFreeDelivery).slice(0, 8);
   const officialWarrantyProducts = productPool.items.filter((item) => item.isOfficialWarranty).slice(0, 8);
-  const uniformProductCardWidthClass = "w-65 min-w-65";
+  const uniformProductCardWidthClass = "w-[calc(100vw-4.5rem)] min-w-[calc(100vw-4.5rem)] md:w-65 md:min-w-65";
 
   const homepageProductSections: Array<{
     key: string;
@@ -47,14 +46,12 @@ async function HomeContent() {
     titleAccent?: string;
     subtitle: string;
     items: Product[];
-    layout: "grid" | "scroll";
   }> = [
     {
       key: "featured",
       titleLead: "Featured",
       subtitle: "Handpicked products with strong value and customer demand.",
       items: featuredProducts,
-      layout: "grid",
     },
     {
       key: "new-arrivals",
@@ -62,14 +59,12 @@ async function HomeContent() {
       titleAccent: "Arrivals",
       subtitle: "Freshly listed items just added to the storefront.",
       items: newArrivalProducts,
-      layout: "grid",
     },
     {
       key: "trending",
       titleLead: "Trending",
       subtitle: "Top trends shoppers are viewing right now.",
       items: trendingProducts,
-      layout: "scroll",
     },
     {
       key: "top-rated",
@@ -77,7 +72,6 @@ async function HomeContent() {
       titleAccent: "Rated",
       subtitle: "Highly rated picks trusted by verified shoppers.",
       items: topRatedProducts,
-      layout: "grid",
     },
     {
       key: "best-seller",
@@ -85,7 +79,6 @@ async function HomeContent() {
       titleAccent: "Seller",
       subtitle: "Most purchased products customers are choosing this week.",
       items: bestSellerProducts,
-      layout: "grid",
     },
     {
       key: "free-delivery",
@@ -93,7 +86,6 @@ async function HomeContent() {
       titleAccent: "Delivery",
       subtitle: "Save more with products eligible for free delivery.",
       items: freeDeliveryProducts,
-      layout: "grid",
     },
     {
       key: "official-warranty",
@@ -101,7 +93,6 @@ async function HomeContent() {
       titleAccent: "Warranty",
       subtitle: "Products backed by official warranty coverage.",
       items: officialWarrantyProducts,
-      layout: "grid",
     },
   ];
   const visibleHomepageProductSections = homepageProductSections.filter((section) => section.items.length > 0);
@@ -242,17 +233,7 @@ async function HomeContent() {
               </span>
             </div>
 
-            {section.layout === "scroll" ? (
-              <ProductScrollRow items={section.items} cardWidthClass={uniformProductCardWidthClass} />
-            ) : (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
-                {section.items.map((product) => (
-                  <div key={`${section.key}-${product.id}`} className={uniformProductCardWidthClass}>
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-            )}
+            <ProductScrollRow items={section.items} cardWidthClass={uniformProductCardWidthClass} />
           </section>
         ))}
 
