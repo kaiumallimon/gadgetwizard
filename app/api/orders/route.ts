@@ -29,6 +29,7 @@ async function POSTHandler(request: NextRequest) {
       paymentIntentId: body.paymentIntentId,
       purchaseMode: body.purchaseMode,
       fulfillmentMethod: body.fulfillmentMethod,
+      selectedProductIds: body.selectedProductIds,
       addressInput: {
         addressId: body.addressId,
         newAddress: body.newAddress,

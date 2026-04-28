@@ -9,7 +9,32 @@ import { CheckoutPageClient } from "@/components/checkout-page-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function CheckoutPage() {
+type RawSearchParams = Record<string, string | string[] | undefined>;
+
+function firstParam(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+
+  return value;
+}
+
+function parseSelectedProductIds(value: string | undefined): number[] {
+  if (!value) {
+    return [];
+  }
+
+  return value
+    .split(",")
+    .map((entry) => Number(entry.trim()))
+    .filter((entry) => Number.isInteger(entry) && entry > 0);
+}
+
+interface CheckoutPageProps {
+  searchParams: Promise<RawSearchParams>;
+}
+
+export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
   const session = await getServerSession();
 
   if (!session) {
@@ -41,6 +66,21 @@ export default async function CheckoutPage() {
     redirect("/cart");
   }
 
+  const rawSearchParams = await searchParams;
+  const selectedProductIds = parseSelectedProductIds(firstParam(rawSearchParams.selected));
+  const checkoutItems = selectedProductIds.length > 0
+    ? cart.items.filter((item) => selectedProductIds.includes(item.productId))
+    : cart.items;
+
+  if (checkoutItems.length === 0) {
+    redirect("/cart");
+  }
+
+  const checkoutCart = {
+    ...cart,
+    items: checkoutItems,
+  };
+
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
       <div className="mb-6">
@@ -49,7 +89,7 @@ export default async function CheckoutPage() {
       </div>
 
       <CheckoutPageClient
-        cart={cart}
+        cart={checkoutCart}
         savedAddresses={savedAddresses}
         stripePublishableKey={publishableKey}
         isBusinessApproved={user.isBusinessApproved}

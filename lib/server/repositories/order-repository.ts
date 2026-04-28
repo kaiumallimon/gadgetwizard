@@ -378,6 +378,22 @@ export async function clearCartItemsByCartId(cartId: number, connection: PoolCon
   await connection.query("DELETE FROM cart_items WHERE cart_id = ?", [cartId]);
 }
 
+export async function clearCartItemsByProductIds(
+  cartId: number,
+  productIds: number[],
+  connection: PoolConnection,
+): Promise<void> {
+  if (productIds.length === 0) {
+    return;
+  }
+
+  const placeholders = productIds.map(() => "?").join(", ");
+  await connection.query(
+    `DELETE FROM cart_items WHERE cart_id = ? AND product_id IN (${placeholders})`,
+    [cartId, ...productIds],
+  );
+}
+
 export async function hasUserDeliveredOrderForProduct(
   userId: number,
   productId: number,

@@ -16,7 +16,7 @@ import type {
   OrderStatus,
 } from "@/lib/client/types";
 import {
-  clearCartItemsByCartId,
+  clearCartItemsByProductIds,
   createOrder as createOrderRepo,
   decrementProductStock,
   findOrderByPaymentIntent,
@@ -58,6 +58,7 @@ function getStripe(): Stripe {
 export interface CheckoutAddressInput {
   purchaseMode?: OrderPurchaseMode;
   fulfillmentMethod?: CheckoutFulfillmentMethod;
+  selectedProductIds?: number[];
   addressId?: number;
   newAddress?: {
     label?: string;
@@ -84,6 +85,21 @@ type ResolvedOrderItem = {
   wholesaleUnitPrice: number | null;
   totalPrice: number;
 };
+
+function resolveCheckoutCartItems(cart: CartItemRecord[], selectedProductIds?: number[]): CartItemRecord[] {
+  if (!selectedProductIds || selectedProductIds.length === 0) {
+    return cart;
+  }
+
+  const selectedSet = new Set(selectedProductIds);
+  const selectedItems = cart.filter((item) => selectedSet.has(item.productId));
+
+  if (selectedItems.length === 0) {
+    throw badRequest("No selected cart items were found.");
+  }
+
+  return selectedItems;
+}
 
 async function resolveShippingAddress(
   userId: number,
@@ -291,9 +307,11 @@ export async function createPaymentIntent(
     throw badRequest("Your cart is empty.");
   }
 
+  const checkoutItems = resolveCheckoutCartItems(cart.items, input?.selectedProductIds);
+
   const checkoutContext = await getBusinessCheckoutContext(userId, purchaseMode);
 
-  const orderItems = cart.items.map((item) => buildOrderItemFromCart({
+  const orderItems = checkoutItems.map((item) => buildOrderItemFromCart({
     cartItem: item,
     purchaseMode,
     canUseBusinessMode: checkoutContext.canUseBusinessMode,
@@ -332,6 +350,7 @@ export interface CreateOrderInput {
   paymentIntentId: string;
   purchaseMode?: OrderPurchaseMode;
   fulfillmentMethod?: CheckoutFulfillmentMethod;
+  selectedProductIds?: number[];
   addressInput: CheckoutAddressInput;
 }
 
@@ -383,6 +402,8 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
     throw badRequest("Cart is empty — cannot create order.");
   }
 
+  const checkoutItems = resolveCheckoutCartItems(cart.items, input.selectedProductIds);
+
   const checkoutContext = await getBusinessCheckoutContext(input.userId, purchaseMode);
   const { snapshot } = await resolveShippingAddress(input.userId, {
     ...input.addressInput,
@@ -390,14 +411,14 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
   });
 
   const createdOrder = await withTransaction(async (connection) => {
-    const productIds = Array.from(new Set(cart.items.map((item) => item.productId)));
+    const productIds = Array.from(new Set(checkoutItems.map((item) => item.productId)));
     const lockedProducts = await lockProductsForCheckout(productIds, connection);
     const lockedMap = new Map<number, CheckoutProductRow>(
       lockedProducts.map((product) => [product.id, product]),
     );
 
     const items: ResolvedOrderItem[] = [];
-    for (const cartItem of cart.items) {
+    for (const cartItem of checkoutItems) {
       const product = lockedMap.get(cartItem.productId);
       if (!product) {
         throw badRequest(`${cartItem.productName} is no longer available.`);
@@ -441,7 +462,7 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
       connection,
     );
 
-    await clearCartItemsByCartId(cart.id, connection);
+    await clearCartItemsByProductIds(cart.id, checkoutItems.map((item) => item.productId), connection);
 
     return order;
   });

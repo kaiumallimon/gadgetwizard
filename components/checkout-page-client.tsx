@@ -45,6 +45,7 @@ export function CheckoutPageClient({
   const isBusinessQuantityEligible =
     hasWholesaleEligibleItems && firstWholesaleThresholdGapItem === undefined;
   const businessModeDisabled = !isBusinessApproved || !isBusinessQuantityEligible;
+  const selectedProductIds = cart.items.map((item) => item.productId);
 
   let businessModeDisabledReason: string | null = null;
   if (!isBusinessApproved) {
@@ -68,7 +69,7 @@ export function CheckoutPageClient({
       try {
         const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
         const result = await apiClient.createPaymentIntent(
-          { purchaseMode, fulfillmentMethod },
+          { purchaseMode, fulfillmentMethod, selectedProductIds },
           token ?? undefined,
         );
         if (!active) return;

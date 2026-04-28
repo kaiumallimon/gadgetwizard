@@ -604,6 +604,7 @@ export const apiClient = {
   async createPaymentIntent(payload: {
     purchaseMode?: "regular" | "business";
     fulfillmentMethod?: CheckoutFulfillmentMethod;
+    selectedProductIds?: number[];
     addressId?: number;
     newAddress?: {
       label?: string;
@@ -624,11 +625,20 @@ export const apiClient = {
     );
   },
 
+  async validateCheckoutReservation(payload: { selectedProductIds: number[] }, token?: string) {
+    return apiFetch<{ success: boolean }>("/api/checkout/validate", {
+      method: "POST",
+      token,
+      body: JSON.stringify(payload),
+    });
+  },
+
   // Orders (user)
   async createOrder(payload: {
     paymentIntentId: string;
     purchaseMode?: "regular" | "business";
     fulfillmentMethod?: CheckoutFulfillmentMethod;
+    selectedProductIds?: number[];
     addressId?: number;
     newAddress?: {
       label?: string;

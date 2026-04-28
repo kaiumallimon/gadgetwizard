@@ -162,7 +162,7 @@ export function ProductCard({ product }: ProductCardProps) {
           {(hasDiscount || hasWholesale) && (
             <div className="flex flex-wrap gap-1">
               {hasWholesale && (
-                <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                <Badge variant="outline" className="text-muted-foreground">
                   Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
                 </Badge>
               )}

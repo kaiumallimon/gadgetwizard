@@ -19,7 +19,7 @@ export default async function HomePage() {
     getPublicProducts({ page: 1, pageSize: 48 }),
   ]);
 
-  const brandHighlights = brands.slice(0, 24);
+  const brandHighlights = brands.filter((brand) => brand.isFeatured).slice(0, 24);
   const marqueeBrands = brandHighlights;
   const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
   const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);

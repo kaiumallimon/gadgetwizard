@@ -99,6 +99,7 @@ export function CheckoutForm({
     : checkoutTotals.deliveryCharge === 0
       ? "Free delivery"
       : "Delivery charge";
+  const selectedProductIds = cart.items.map((item) => item.productId);
 
   function handleAddressChange(field: keyof AddressFormData, value: string | boolean) {
     setNewAddress((prev) => ({ ...prev, [field]: value }));
@@ -158,10 +159,10 @@ export function CheckoutForm({
 
       // Create order on backend
       const orderPayload = fulfillmentMethod === "pickup"
-        ? { paymentIntentId, purchaseMode, fulfillmentMethod }
+        ? { paymentIntentId, purchaseMode, fulfillmentMethod, selectedProductIds }
         : showNewAddressForm
-          ? { paymentIntentId, purchaseMode, fulfillmentMethod, newAddress }
-          : { paymentIntentId, purchaseMode, fulfillmentMethod, addressId: selectedAddressId! };
+          ? { paymentIntentId, purchaseMode, fulfillmentMethod, selectedProductIds, newAddress }
+          : { paymentIntentId, purchaseMode, fulfillmentMethod, selectedProductIds, addressId: selectedAddressId! };
 
       const { order } = await apiClient.createOrder(orderPayload, token ?? undefined);
       clearCart();

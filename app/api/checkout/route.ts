@@ -18,6 +18,7 @@ async function POSTHandler(request: NextRequest) {
     const result = await createPaymentIntent(session.userId, {
       purchaseMode: body.purchaseMode,
       fulfillmentMethod: body.fulfillmentMethod,
+      selectedProductIds: body.selectedProductIds,
       addressId: body.addressId,
       newAddress: body.newAddress,
     });

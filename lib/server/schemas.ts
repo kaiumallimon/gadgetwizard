@@ -212,14 +212,20 @@ const checkoutAddressSchema = z.object({
 export const checkoutCreatePaymentIntentSchema = z.object({
   purchaseMode: orderPurchaseModeSchema.default("regular"),
   fulfillmentMethod: z.enum(["delivery", "pickup"]).default("delivery"),
+  selectedProductIds: z.array(z.number().int().positive()).optional(),
   addressId: z.number().int().positive().optional(),
   newAddress: checkoutAddressSchema.optional(),
+});
+
+export const checkoutValidateReservationSchema = z.object({
+  selectedProductIds: z.array(z.number().int().positive()).min(1),
 });
 
 export const createOrderSchema = z.object({
   paymentIntentId: z.string().trim().min(1),
   purchaseMode: orderPurchaseModeSchema.default("regular"),
   fulfillmentMethod: z.enum(["delivery", "pickup"]).default("delivery"),
+  selectedProductIds: z.array(z.number().int().positive()).optional(),
   addressId: z.number().int().positive().optional(),
   newAddress: checkoutAddressSchema.optional(),
 }).refine((data) => {
