@@ -18,8 +18,10 @@ function getTokenFromAuthorizationHeader(request: Request): string | null {
   return token;
 }
 
-function mapNextAuthSessionToAuthSession(session: Awaited<ReturnType<typeof auth>>): AuthSession | null {
-  if (!session?.user?.email || !session.user.name || !session.user.id || !session.user.role) {
+import type { Session } from "next-auth";
+
+function mapNextAuthSessionToAuthSession(session: Session | null): AuthSession | null {
+  if (!session?.user || !session.user.email || !session.user.name || session.user.id === undefined || !session.user.role) {
     return null;
   }
 
