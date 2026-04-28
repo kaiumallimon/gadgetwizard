@@ -36,7 +36,7 @@ const addressSchema = z.object({
 
 type AddressFormData = z.infer<typeof addressSchema>;
 
-type ReservationIssue = {
+type StockIssue = {
   productId: number;
   productName: string;
   requested: number;
@@ -51,7 +51,7 @@ interface CheckoutFormProps {
   fulfillmentMethod: CheckoutFulfillmentMethod;
   isBusinessApproved: boolean;
   initialAddressId?: number;
-  onReservationBlocked?: (message: string, issues: ReservationIssue[]) => void;
+  onStockBlocked?: (message: string, issues: StockIssue[]) => void;
 }
 
 export function CheckoutForm({
@@ -62,7 +62,7 @@ export function CheckoutForm({
   fulfillmentMethod,
   isBusinessApproved,
   initialAddressId,
-  onReservationBlocked,
+  onStockBlocked,
 }: CheckoutFormProps) {
   const router = useRouter();
   const stripe = useStripe();
@@ -111,14 +111,14 @@ export function CheckoutForm({
       : "Delivery charge";
   const selectedProductIds = cart.items.map((item) => item.productId);
 
-  function parseReservationIssues(error: unknown): ReservationIssue[] {
+  function parseStockIssues(error: unknown): StockIssue[] {
     if (!error || typeof error !== "object") return [];
     const details = (error as { details?: unknown }).details;
     if (!details || typeof details !== "object") return [];
     const payload = details as { type?: string; items?: unknown };
-    if (payload.type !== "reservation" || !Array.isArray(payload.items)) return [];
+    if (payload.type !== "stock" || !Array.isArray(payload.items)) return [];
 
-    const issues: ReservationIssue[] = [];
+    const issues: StockIssue[] = [];
     for (const item of payload.items) {
       if (!item || typeof item !== "object") continue;
       const entry = item as {
@@ -186,7 +186,7 @@ export function CheckoutForm({
         }
       }
 
-      await apiClient.validateCheckoutReservation({ selectedProductIds }, token ?? undefined);
+      await apiClient.validateCheckoutStock({ selectedProductIds }, token ?? undefined);
 
       // Confirm Stripe payment
       const { error: stripeError } = await stripe.confirmPayment({
@@ -215,12 +215,12 @@ export function CheckoutForm({
 
       router.push(`/checkout/success?orderId=${order.id}`);
     } catch (error) {
-      const issues = parseReservationIssues(error);
+      const issues = parseStockIssues(error);
       if (issues.length > 0) {
         const message = error instanceof Error
           ? error.message
-          : "Some items are currently reserved by another shopper. Remove them from cart to continue.";
-        onReservationBlocked?.(message, issues);
+          : "Some items are out of stock or have limited availability. Update your cart to continue.";
+        onStockBlocked?.(message, issues);
         setSubmitError(message);
         setSubmitting(false);
         return;

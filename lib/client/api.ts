@@ -625,7 +625,7 @@ export const apiClient = {
     );
   },
 
-  async validateCheckoutReservation(payload: { selectedProductIds: number[] }, token?: string) {
+  async validateCheckoutStock(payload: { selectedProductIds: number[] }, token?: string) {
     return apiFetch<{ success: boolean }>("/api/checkout/validate", {
       method: "POST",
       token,

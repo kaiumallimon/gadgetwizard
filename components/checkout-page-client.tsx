@@ -18,21 +18,21 @@ interface CheckoutPageClientProps {
   isBusinessApproved: boolean;
 }
 
-type ReservationIssue = {
+type StockIssue = {
   productId: number;
   productName: string;
   requested: number;
   available: number;
 };
 
-function parseReservationIssues(error: unknown): ReservationIssue[] {
+function parseStockIssues(error: unknown): StockIssue[] {
   if (!error || typeof error !== "object") return [];
   const details = (error as { details?: unknown }).details;
   if (!details || typeof details !== "object") return [];
   const payload = details as { type?: string; items?: unknown };
-  if (payload.type !== "reservation" || !Array.isArray(payload.items)) return [];
+  if (payload.type !== "stock" || !Array.isArray(payload.items)) return [];
 
-  const issues: ReservationIssue[] = [];
+  const issues: StockIssue[] = [];
   for (const item of payload.items) {
     if (!item || typeof item !== "object") continue;
     const entry = item as {
@@ -73,8 +73,8 @@ export function CheckoutPageClient({
   const [initialAddressId, setInitialAddressId] = useState<number | undefined>(
     savedAddresses.find((a) => a.isDefault)?.id ?? savedAddresses[0]?.id,
   );
-  const [reservationIssues, setReservationIssues] = useState<ReservationIssue[]>([]);
-  const [reservationMessage, setReservationMessage] = useState<string | null>(null);
+  const [stockIssues, setStockIssues] = useState<StockIssue[]>([]);
+  const [stockMessage, setStockMessage] = useState<string | null>(null);
   const [checkoutDisabled, setCheckoutDisabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,13 +128,13 @@ export function CheckoutPageClient({
         }
       } catch (err) {
         if (!active) return;
-        const issues = parseReservationIssues(err);
+        const issues = parseStockIssues(err);
         if (issues.length > 0) {
           const message = err instanceof Error
             ? err.message
-            : "Some items are currently reserved by another shopper. Remove them from cart to continue.";
-          setReservationIssues(issues);
-          setReservationMessage(message);
+            : "Some items are out of stock or have limited availability. Update your cart to continue.";
+          setStockIssues(issues);
+          setStockMessage(message);
           setCheckoutDisabled(true);
           setClientSecret(null);
           setPaymentIntentId(null);
@@ -153,9 +153,9 @@ export function CheckoutPageClient({
     };
   }, [purchaseMode, fulfillmentMethod, savedAddresses, token, checkoutDisabled]);
 
-  function handleReservationBlocked(message: string, issues: ReservationIssue[]) {
-    setReservationIssues(issues);
-    setReservationMessage(message);
+  function handleStockBlocked(message: string, issues: StockIssue[]) {
+    setStockIssues(issues);
+    setStockMessage(message);
     setCheckoutDisabled(true);
   }
 
@@ -173,13 +173,13 @@ export function CheckoutPageClient({
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
           <p className="font-medium text-amber-900">Checkout is temporarily disabled</p>
           <p className="mt-1 text-sm text-amber-700">
-            {reservationMessage ?? "Some items are currently reserved by another shopper."}
+            {stockMessage ?? "Some items are out of stock or have limited availability."}
           </p>
-          {reservationIssues.length > 0 && (
+          {stockIssues.length > 0 && (
             <div className="mt-3 space-y-2 text-sm text-amber-800">
               <p className="font-medium">Remove these items from your cart to continue:</p>
               <ul className="space-y-1">
-                {reservationIssues.map((item) => (
+                {stockIssues.map((item) => (
                   <li key={item.productId}>
                     {item.productName} — requested {item.requested}, available {item.available}
                   </li>
@@ -317,7 +317,7 @@ export function CheckoutPageClient({
           fulfillmentMethod={fulfillmentMethod}
           isBusinessApproved={isBusinessApproved}
           initialAddressId={initialAddressId}
-          onReservationBlocked={handleReservationBlocked}
+          onStockBlocked={handleStockBlocked}
         />
       </Elements>
     </div>

@@ -217,7 +217,7 @@ export const checkoutCreatePaymentIntentSchema = z.object({
   newAddress: checkoutAddressSchema.optional(),
 });
 
-export const checkoutValidateReservationSchema = z.object({
+export const checkoutValidateStockSchema = z.object({
   selectedProductIds: z.array(z.number().int().positive()).min(1),
 });
 
