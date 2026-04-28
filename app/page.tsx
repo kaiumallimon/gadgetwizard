@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BannerShowcase } from "@/components/banner-showcase";
 import { LiveChatWidget } from "@/components/live-chat-widget";
 import { ProductCard } from "@/components/product-card";
+import { ProductScrollRow } from "@/components/storefront/product-scroll-row";
 import { StorefrontHomeSkeleton } from "@/components/storefront/storefront-skeletons";
 import type { Product } from "@/lib/client/types";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
@@ -210,13 +211,7 @@ async function HomeContent() {
               <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">{fallbackTrends.length} products</span>
             </div>
 
-            <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
-              {fallbackTrends.map((product) => (
-                <div key={product.id} className={uniformProductCardWidthClass}>
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
+            <ProductScrollRow items={fallbackTrends} cardWidthClass={uniformProductCardWidthClass} />
           </section>
         )}
 

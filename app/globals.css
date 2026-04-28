@@ -265,6 +265,15 @@ button {
   box-shadow: inset 0 0 0 1px var(--border-soft-accent);
 }
 
+.gw-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.gw-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .dashboard-sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: var(--accent) transparent;

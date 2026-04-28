@@ -96,6 +96,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const displayPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
   const discountAmount = hasDiscount ? Math.max(0, product.originalPrice - displayPrice) : 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
+  const showMetaBadges = hasDiscount || hasWholesale || isLowStock;
   const metaLabel = product.brandName ? `${product.brandName} | ${product.categoryName}` : product.categoryName;
   const isWishlisted = productIds.includes(product.id);
   const canUseWishlist = Boolean(session && session.role === "user");
@@ -159,16 +160,18 @@ export function ProductCard({ product }: ProductCardProps) {
             {hasDiscount && <span className="text-sm font-bold text-red-500 line-through">{format$(product.originalPrice)}</span>}
           </div>
 
-          {(hasDiscount || hasWholesale) && (
-            <div className="flex flex-wrap gap-1">
-              {hasWholesale && (
-                <Badge variant="outline" className="text-muted-foreground">
-                  Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
-                </Badge>
-              )}
-              {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
-            </div>
-          )}
+          <div className="min-h-6">
+            {showMetaBadges ? (
+              <div className="flex flex-wrap gap-1">
+                {hasWholesale && (
+                  <Badge variant="outline" className="text-muted-foreground">
+                    Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
+                  </Badge>
+                )}
+                {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <Button
