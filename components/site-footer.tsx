@@ -37,7 +37,7 @@ export function SiteFooter() {
       </div>
 
       <div className="relative mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
-        <div className="grid gap-8 border-b border-zinc-800/50 pb-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-8 gw-soft-border-dark border-b border-zinc-800/50 pb-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="space-y-4">
             <Link href="/" className="inline-flex items-center">
               <Image
@@ -94,7 +94,7 @@ export function SiteFooter() {
               </p>
             </div>
 
-            <div className="mt-5 border-t border-zinc-700/40 pt-4">
+            <div className="gw-soft-border-dark mt-5 border-t border-zinc-700/40 pt-4">
               <NewsletterSubscribeForm />
             </div>
           </div>
@@ -151,7 +151,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="border-t border-zinc-800/50 bg-zinc-950/80">
+      <div className="border-t border-zinc-800/50 gw-soft-border-dark bg-zinc-950/80">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>© {year} GadgetWizard. All rights reserved.</p>
           <p>Built for secure ecommerce, fast support, and modern account management.</p>
