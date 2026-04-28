@@ -81,11 +81,11 @@ export default async function OrderDetailPage({ params }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="rounded-full">
+            {/* <Button asChild variant="outline" size="sm" className="rounded-full">
               <Link href={`/api/orders/${order.id}/invoice`} target="_blank" rel="noopener noreferrer">
                 <FiDownload className="h-4 w-4" /> Invoice
               </Link>
-            </Button>
+            </Button> */}
             <Button asChild variant="outline" size="sm" className="rounded-full">
               <Link href="/dashboard/orders"><FiArrowLeft className="h-4 w-4" /> Back</Link>
             </Button>

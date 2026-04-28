@@ -57,7 +57,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
           <Button asChild className="rounded-full bg-orange-500 hover:bg-orange-600">
             <Link href="/dashboard/orders">View My Orders</Link>
           </Button>
-          {order && <CheckoutInvoiceDownload order={order} />}
+          {/* {order && <CheckoutInvoiceDownload order={order} />} */}
           <Button asChild variant="outline" className="rounded-full">
             <Link href="/">Continue Shopping</Link>
           </Button>
