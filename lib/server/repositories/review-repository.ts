@@ -163,7 +163,7 @@ export async function deleteReview(id: number): Promise<void> {
 }
 
 export async function recomputeProductRating(productId: number): Promise<void> {
-  const stats = await queryOne<{ avg_rating: number | null; rating_count: number }>(
+  const stats = await queryOne<{ avg_rating: number | string | null; rating_count: number | string }>(
     `SELECT
        AVG(rating) AS avg_rating,
        COUNT(*) AS rating_count
@@ -173,8 +173,11 @@ export async function recomputeProductRating(productId: number): Promise<void> {
     [productId],
   );
 
-  const avgRating = stats?.avg_rating ? Number(stats.avg_rating.toFixed(2)) : 0;
-  const ratingCount = stats?.rating_count ?? 0;
+  const avgRaw = stats?.avg_rating ?? null;
+  const avgValue = typeof avgRaw === "number" ? avgRaw : avgRaw === null ? 0 : Number(avgRaw);
+  const avgRating = Number.isFinite(avgValue) ? Math.round(avgValue * 100) / 100 : 0;
+  const ratingCountRaw = stats?.rating_count ?? 0;
+  const ratingCount = typeof ratingCountRaw === "number" ? ratingCountRaw : Number(ratingCountRaw) || 0;
 
   await execute(
     `UPDATE products
