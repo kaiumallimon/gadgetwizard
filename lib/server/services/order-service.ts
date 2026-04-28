@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import type { PoolConnection } from "mysql2/promise";
 import Stripe from "stripe";
 
 import { getEnv } from "@/lib/server/core/env";
@@ -33,6 +35,14 @@ import {
   type OrderItemRecord,
   type OrderRecord,
 } from "@/lib/server/repositories/order-repository";
+import {
+  attachPaymentIntentToReservationGroup,
+  createReservationsForGroup,
+  getActiveReservedQuantitiesByProductIds,
+  markReservationGroupStatus,
+  markReservationsByPaymentIntent,
+  releaseActiveReservationsForUser,
+} from "@/lib/server/repositories/inventory-reservation-repository";
 import {
   createAddress,
   getAddressById,
@@ -86,6 +96,8 @@ type ResolvedOrderItem = {
   totalPrice: number;
 };
 
+const RESERVATION_TTL_MS = 10 * 60 * 1000;
+
 function resolveCheckoutCartItems(cart: CartItemRecord[], selectedProductIds?: number[]): CartItemRecord[] {
   if (!selectedProductIds || selectedProductIds.length === 0) {
     return cart;
@@ -99,6 +111,54 @@ function resolveCheckoutCartItems(cart: CartItemRecord[], selectedProductIds?: n
   }
 
   return selectedItems;
+}
+
+async function ensureCheckoutStockAvailable(input: {
+  userId: number;
+  items: CartItemRecord[];
+  connection?: PoolConnection;
+}): Promise<void> {
+  const productIds = Array.from(new Set(input.items.map((item) => item.productId)));
+  const reservedByOthers = await getActiveReservedQuantitiesByProductIds({
+    productIds,
+    excludeUserId: input.userId,
+    connection: input.connection,
+  });
+
+  const issues: Array<{
+    productId: number;
+    productName: string;
+    requested: number;
+    available: number;
+    reserved: number;
+    totalStock: number;
+  }> = [];
+
+  for (const item of input.items) {
+    const reserved = reservedByOthers.get(item.productId) ?? 0;
+    const blockedByReservation = reserved > 0;
+    const available = blockedByReservation ? 0 : Math.max(0, item.stock - reserved);
+    if (blockedByReservation || item.quantity > available) {
+      issues.push({
+        productId: item.productId,
+        productName: item.productName,
+        requested: item.quantity,
+        available,
+        reserved,
+        totalStock: item.stock,
+      });
+    }
+  }
+
+  if (issues.length > 0) {
+    throw badRequest(
+      "Some items are currently reserved by another shopper. Remove them from cart to continue.",
+      {
+        type: "reservation",
+        items: issues,
+      },
+    );
+  }
 }
 
 async function resolveShippingAddress(
@@ -308,6 +368,23 @@ export async function createPaymentIntent(
   }
 
   const checkoutItems = resolveCheckoutCartItems(cart.items, input?.selectedProductIds);
+  const reservationGroupId = randomUUID();
+  const reservationExpiresAt = new Date(Date.now() + RESERVATION_TTL_MS);
+
+  await withTransaction(async (connection) => {
+    await releaseActiveReservationsForUser(userId, connection);
+    await ensureCheckoutStockAvailable({ userId, items: checkoutItems, connection });
+    await createReservationsForGroup({
+      reservationGroupId,
+      userId,
+      expiresAt: reservationExpiresAt,
+      items: checkoutItems.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      })),
+      connection,
+    });
+  });
 
   const checkoutContext = await getBusinessCheckoutContext(userId, purchaseMode);
 
@@ -321,28 +398,50 @@ export async function createPaymentIntent(
   const totals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
   const amountInCents = Math.round(totals.total * 100);
 
-  const paymentIntent = await stripe.paymentIntents.create({
-    amount: amountInCents,
-    currency: "usd",
-    automatic_payment_methods: { enabled: true },
-    metadata: {
-      userId: String(userId),
-      purchaseMode,
-      fulfillmentMethod,
-      shippingAmount: String(totals.deliveryCharge),
-      businessAccountId: checkoutContext.approvedAccount ? String(checkoutContext.approvedAccount.id) : "",
-    },
-  });
+  let paymentIntent: Stripe.PaymentIntent;
+  try {
+    paymentIntent = await stripe.paymentIntents.create({
+      amount: amountInCents,
+      currency: "usd",
+      automatic_payment_methods: { enabled: true },
+      metadata: {
+        userId: String(userId),
+        purchaseMode,
+        fulfillmentMethod,
+        shippingAmount: String(totals.deliveryCharge),
+        businessAccountId: checkoutContext.approvedAccount ? String(checkoutContext.approvedAccount.id) : "",
+      },
+    });
+  } catch (error) {
+    await markReservationGroupStatus(reservationGroupId, "released");
+    throw error;
+  }
 
   if (!paymentIntent.client_secret) {
+    await markReservationGroupStatus(reservationGroupId, "released");
     throw new Error("Failed to create payment intent");
   }
+
+  await attachPaymentIntentToReservationGroup(reservationGroupId, paymentIntent.id);
 
   return {
     clientSecret: paymentIntent.client_secret,
     paymentIntentId: paymentIntent.id,
     amount: totals.total,
   };
+}
+
+export async function validateCheckoutReservation(
+  userId: number,
+  input: { selectedProductIds?: number[] },
+): Promise<void> {
+  const cart = await getCartByUserId(userId);
+  if (!cart || cart.items.length === 0) {
+    throw badRequest("Your cart is empty.");
+  }
+
+  const checkoutItems = resolveCheckoutCartItems(cart.items, input.selectedProductIds);
+  await ensureCheckoutStockAvailable({ userId, items: checkoutItems });
 }
 
 export interface CreateOrderInput {
@@ -392,6 +491,8 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
       paidAt: new Date(),
     });
 
+    await markReservationsByPaymentIntent(paymentIntent.id, "fulfilled");
+
     return mapOrderRecord(existing, await getOrderItemsByOrderId(existing.id));
   }
 
@@ -410,62 +511,69 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
     fulfillmentMethod,
   });
 
-  const createdOrder = await withTransaction(async (connection) => {
-    const productIds = Array.from(new Set(checkoutItems.map((item) => item.productId)));
-    const lockedProducts = await lockProductsForCheckout(productIds, connection);
-    const lockedMap = new Map<number, CheckoutProductRow>(
-      lockedProducts.map((product) => [product.id, product]),
-    );
-
-    const items: ResolvedOrderItem[] = [];
-    for (const cartItem of checkoutItems) {
-      const product = lockedMap.get(cartItem.productId);
-      if (!product) {
-        throw badRequest(`${cartItem.productName} is no longer available.`);
-      }
-
-      items.push(
-        buildOrderItemFromLockedProduct({
-          cartItem,
-          product,
-          purchaseMode,
-          canUseBusinessMode: checkoutContext.canUseBusinessMode,
-        }),
+  let createdOrder: OrderRecord;
+  try {
+    createdOrder = await withTransaction(async (connection) => {
+      const productIds = Array.from(new Set(checkoutItems.map((item) => item.productId)));
+      const lockedProducts = await lockProductsForCheckout(productIds, connection);
+      const lockedMap = new Map<number, CheckoutProductRow>(
+        lockedProducts.map((product) => [product.id, product]),
       );
-    }
 
-    for (const item of items) {
-      const decremented = await decrementProductStock(item.productId, item.quantity, connection);
-      if (!decremented) {
-        throw badRequest(`${item.productName} stock changed while checking out. Please refresh your cart and try again.`);
+      const items: ResolvedOrderItem[] = [];
+      for (const cartItem of checkoutItems) {
+        const product = lockedMap.get(cartItem.productId);
+        if (!product) {
+          throw badRequest(`${cartItem.productName} is no longer available.`);
+        }
+
+        items.push(
+          buildOrderItemFromLockedProduct({
+            cartItem,
+            product,
+            purchaseMode,
+            canUseBusinessMode: checkoutContext.canUseBusinessMode,
+          }),
+        );
       }
-    }
 
-    const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
-    const totals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
-    const isWholesale = items.some((item) => item.isWholesaleItem);
+      for (const item of items) {
+        const decremented = await decrementProductStock(item.productId, item.quantity, connection);
+        if (!decremented) {
+          throw badRequest(`${item.productName} stock changed while checking out. Please refresh your cart and try again.`);
+        }
+      }
 
-    const order = await createOrderRepo(
-      {
-        userId: input.userId,
-        purchaseMode,
-        isWholesale,
-        businessAccountId: checkoutContext.approvedAccount?.id ?? null,
-        totalAmount: totals.total,
-        subtotal,
-        shippingAmount: totals.deliveryCharge,
-        stripePaymentIntentId: input.paymentIntentId,
-        stripePaymentStatus: paymentIntent.status,
-        shippingAddressSnapshot: snapshot,
-        items,
-      },
-      connection,
-    );
+      const subtotal = items.reduce((sum, item) => sum + item.totalPrice, 0);
+      const totals = calculateCheckoutTotal({ subtotal, fulfillmentMethod });
+      const isWholesale = items.some((item) => item.isWholesaleItem);
 
-    await clearCartItemsByProductIds(cart.id, checkoutItems.map((item) => item.productId), connection);
+      const order = await createOrderRepo(
+        {
+          userId: input.userId,
+          purchaseMode,
+          isWholesale,
+          businessAccountId: checkoutContext.approvedAccount?.id ?? null,
+          totalAmount: totals.total,
+          subtotal,
+          shippingAmount: totals.deliveryCharge,
+          stripePaymentIntentId: input.paymentIntentId,
+          stripePaymentStatus: paymentIntent.status,
+          shippingAddressSnapshot: snapshot,
+          items,
+        },
+        connection,
+      );
 
-    return order;
-  });
+      await clearCartItemsByProductIds(cart.id, checkoutItems.map((item) => item.productId), connection);
+      await markReservationsByPaymentIntent(paymentIntent.id, "fulfilled", connection);
+
+      return order;
+    });
+  } catch (error) {
+    await markReservationsByPaymentIntent(paymentIntent.id, "released");
+    throw error;
+  }
 
   await upsertOrderPayment({
     orderId: Number(createdOrder.id),

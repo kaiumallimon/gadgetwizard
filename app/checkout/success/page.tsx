@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { FiCheckCircle, FiPackage } from "react-icons/fi";
 
 import { getServerSession } from "@/lib/server/auth/server-session";
-import { getOrderById } from "@/lib/server/repositories/order-repository";
 import { Button } from "@/components/ui/button";
+import { getOrderForUser } from "@/lib/server/services/order-service";
+import { CheckoutInvoiceDownload } from "@/components/checkout-invoice-download";
 
 export const dynamic = "force-dynamic";
 
@@ -21,9 +22,10 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
 
   let order = null;
   if (orderId && Number.isInteger(orderId)) {
-    const found = await getOrderById(orderId);
-    if (found?.user_id === session.userId) {
-      order = found;
+    try {
+      order = await getOrderForUser(orderId, session.userId);
+    } catch {
+      order = null;
     }
   }
 
@@ -55,6 +57,7 @@ export default async function CheckoutSuccessPage({ searchParams }: SuccessPageP
           <Button asChild className="rounded-full bg-orange-500 hover:bg-orange-600">
             <Link href="/dashboard/orders">View My Orders</Link>
           </Button>
+          {order && <CheckoutInvoiceDownload order={order} />}
           <Button asChild variant="outline" className="rounded-full">
             <Link href="/">Continue Shopping</Link>
           </Button>

@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { calculateCheckoutTotal, type CheckoutFulfillmentMethod } from "@/lib/shared/checkout";
 
 const addressSchema = z.object({
@@ -35,6 +36,13 @@ const addressSchema = z.object({
 
 type AddressFormData = z.infer<typeof addressSchema>;
 
+type ReservationIssue = {
+  productId: number;
+  productName: string;
+  requested: number;
+  available: number;
+};
+
 interface CheckoutFormProps {
   cart: Cart;
   savedAddresses: UserAddress[];
@@ -43,6 +51,7 @@ interface CheckoutFormProps {
   fulfillmentMethod: CheckoutFulfillmentMethod;
   isBusinessApproved: boolean;
   initialAddressId?: number;
+  onReservationBlocked?: (message: string, issues: ReservationIssue[]) => void;
 }
 
 export function CheckoutForm({
@@ -53,6 +62,7 @@ export function CheckoutForm({
   fulfillmentMethod,
   isBusinessApproved,
   initialAddressId,
+  onReservationBlocked,
 }: CheckoutFormProps) {
   const router = useRouter();
   const stripe = useStripe();
@@ -101,6 +111,40 @@ export function CheckoutForm({
       : "Delivery charge";
   const selectedProductIds = cart.items.map((item) => item.productId);
 
+  function parseReservationIssues(error: unknown): ReservationIssue[] {
+    if (!error || typeof error !== "object") return [];
+    const details = (error as { details?: unknown }).details;
+    if (!details || typeof details !== "object") return [];
+    const payload = details as { type?: string; items?: unknown };
+    if (payload.type !== "reservation" || !Array.isArray(payload.items)) return [];
+
+    const issues: ReservationIssue[] = [];
+    for (const item of payload.items) {
+      if (!item || typeof item !== "object") continue;
+      const entry = item as {
+        productId?: unknown;
+        productName?: unknown;
+        requested?: unknown;
+        available?: unknown;
+      };
+      if (
+        typeof entry.productId === "number" &&
+        typeof entry.productName === "string" &&
+        typeof entry.requested === "number" &&
+        typeof entry.available === "number"
+      ) {
+        issues.push({
+          productId: entry.productId,
+          productName: entry.productName,
+          requested: entry.requested,
+          available: entry.available,
+        });
+      }
+    }
+
+    return issues;
+  }
+
   function handleAddressChange(field: keyof AddressFormData, value: string | boolean) {
     setNewAddress((prev) => ({ ...prev, [field]: value }));
     setFormErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -142,6 +186,8 @@ export function CheckoutForm({
         }
       }
 
+      await apiClient.validateCheckoutReservation({ selectedProductIds }, token ?? undefined);
+
       // Confirm Stripe payment
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
@@ -169,6 +215,16 @@ export function CheckoutForm({
 
       router.push(`/checkout/success?orderId=${order.id}`);
     } catch (error) {
+      const issues = parseReservationIssues(error);
+      if (issues.length > 0) {
+        const message = error instanceof Error
+          ? error.message
+          : "Some items are currently reserved by another shopper. Remove them from cart to continue.";
+        onReservationBlocked?.(message, issues);
+        setSubmitError(message);
+        setSubmitting(false);
+        return;
+      }
       setSubmitError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
       setSubmitting(false);
     }
@@ -181,27 +237,57 @@ export function CheckoutForm({
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Order Summary</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-2">
-          {cart.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-sm">
-              <span className="text-zinc-700">
-                {item.productName} <span className="text-zinc-400">× {item.quantity}</span>
-              </span>
-              <span className="font-medium text-zinc-900">
-                ${(
-                  (
-                    purchaseMode === "business" &&
-                    isBusinessApproved &&
-                    item.productWholesalePrice !== null &&
-                    item.productWholesaleMinQuantity !== null &&
-                    item.quantity >= item.productWholesaleMinQuantity
-                      ? item.productWholesalePrice
-                      : (item.appliedDiscountedPrice ?? item.unitPrice)
-                  ) * item.quantity
-                ).toLocaleString()}
-              </span>
-            </div>
-          ))}
+        <CardContent className="space-y-3">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Item</TableHead>
+                <TableHead className="text-right">Qty</TableHead>
+                <TableHead className="text-right">Price</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {cart.items.map((item) => {
+                const regularPrice = item.appliedDiscountedPrice ?? item.unitPrice;
+                const isWholesaleItem =
+                  purchaseMode === "business" &&
+                  isBusinessApproved &&
+                  item.productWholesalePrice !== null &&
+                  item.productWholesaleMinQuantity !== null &&
+                  item.quantity >= item.productWholesaleMinQuantity;
+                const unitPrice = isWholesaleItem ? (item.productWholesalePrice ?? regularPrice) : regularPrice;
+                const lineTotal = unitPrice * item.quantity;
+
+                return (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="h-12 w-12 overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
+                          {item.productImages[0] && (
+                            <img
+                              src={item.productImages[0]}
+                              alt={item.productName}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-zinc-900">{item.productName}</p>
+                          {isWholesaleItem && (
+                            <p className="text-xs text-emerald-700">Wholesale price applied</p>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-sm text-zinc-700">{item.quantity}</TableCell>
+                    <TableCell className="text-right text-sm font-medium text-zinc-900">
+                      ${lineTotal.toLocaleString()}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
           <div className="border-t border-zinc-100 pt-2 space-y-1.5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-zinc-600">Items total</span>

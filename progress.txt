@@ -1,5 +1,8 @@
-production/local server migration: 
-24 (upto-date)
+Production server migration: 
+24 (Behind)
 
-latest migration:
-31
+Local Server migration:
+32 (Latest)
+
+Latest migration:
+33

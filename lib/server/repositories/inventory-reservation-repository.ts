@@ -104,6 +104,20 @@ export async function markReservationGroupStatus(
   );
 }
 
+export async function markReservationsByPaymentIntent(
+  paymentIntentId: string,
+  status: ReservationStatus,
+  connection?: PoolConnection,
+): Promise<void> {
+  await executeWithConnection(
+    `UPDATE inventory_reservations
+     SET status = ?
+     WHERE payment_intent_id = ? AND status = 'active'`,
+    [status, paymentIntentId],
+    connection,
+  );
+}
+
 export async function getActiveReservedQuantitiesByProductIds(input: {
   productIds: number[];
   excludeUserId?: number;

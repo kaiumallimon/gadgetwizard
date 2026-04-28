@@ -18,6 +18,47 @@ interface CheckoutPageClientProps {
   isBusinessApproved: boolean;
 }
 
+type ReservationIssue = {
+  productId: number;
+  productName: string;
+  requested: number;
+  available: number;
+};
+
+function parseReservationIssues(error: unknown): ReservationIssue[] {
+  if (!error || typeof error !== "object") return [];
+  const details = (error as { details?: unknown }).details;
+  if (!details || typeof details !== "object") return [];
+  const payload = details as { type?: string; items?: unknown };
+  if (payload.type !== "reservation" || !Array.isArray(payload.items)) return [];
+
+  const issues: ReservationIssue[] = [];
+  for (const item of payload.items) {
+    if (!item || typeof item !== "object") continue;
+    const entry = item as {
+      productId?: unknown;
+      productName?: unknown;
+      requested?: unknown;
+      available?: unknown;
+    };
+    if (
+      typeof entry.productId === "number" &&
+      typeof entry.productName === "string" &&
+      typeof entry.requested === "number" &&
+      typeof entry.available === "number"
+    ) {
+      issues.push({
+        productId: entry.productId,
+        productName: entry.productName,
+        requested: entry.requested,
+        available: entry.available,
+      });
+    }
+  }
+
+  return issues;
+}
+
 export function CheckoutPageClient({
   cart,
   savedAddresses,
@@ -32,6 +73,9 @@ export function CheckoutPageClient({
   const [initialAddressId, setInitialAddressId] = useState<number | undefined>(
     savedAddresses.find((a) => a.isDefault)?.id ?? savedAddresses[0]?.id,
   );
+  const [reservationIssues, setReservationIssues] = useState<ReservationIssue[]>([]);
+  const [reservationMessage, setReservationMessage] = useState<string | null>(null);
+  const [checkoutDisabled, setCheckoutDisabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,6 +110,10 @@ export function CheckoutPageClient({
     async function init() {
       setLoading(true);
       setError(null);
+      if (checkoutDisabled) {
+        setLoading(false);
+        return;
+      }
       try {
         const defaultAddress = savedAddresses.find((a) => a.isDefault) ?? savedAddresses[0];
         const result = await apiClient.createPaymentIntent(
@@ -80,6 +128,18 @@ export function CheckoutPageClient({
         }
       } catch (err) {
         if (!active) return;
+        const issues = parseReservationIssues(err);
+        if (issues.length > 0) {
+          const message = err instanceof Error
+            ? err.message
+            : "Some items are currently reserved by another shopper. Remove them from cart to continue.";
+          setReservationIssues(issues);
+          setReservationMessage(message);
+          setCheckoutDisabled(true);
+          setClientSecret(null);
+          setPaymentIntentId(null);
+          return;
+        }
         setError(err instanceof Error ? err.message : "Failed to initialize payment. Please try again.");
       } finally {
         if (active) setLoading(false);
@@ -91,12 +151,49 @@ export function CheckoutPageClient({
     return () => {
       active = false;
     };
-  }, [purchaseMode, fulfillmentMethod, savedAddresses, token]);
+  }, [purchaseMode, fulfillmentMethod, savedAddresses, token, checkoutDisabled]);
+
+  function handleReservationBlocked(message: string, issues: ReservationIssue[]) {
+    setReservationIssues(issues);
+    setReservationMessage(message);
+    setCheckoutDisabled(true);
+  }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-zinc-200 border-t-orange-500" />
+      </div>
+    );
+  }
+
+  if (checkoutDisabled) {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
+          <p className="font-medium text-amber-900">Checkout is temporarily disabled</p>
+          <p className="mt-1 text-sm text-amber-700">
+            {reservationMessage ?? "Some items are currently reserved by another shopper."}
+          </p>
+          {reservationIssues.length > 0 && (
+            <div className="mt-3 space-y-2 text-sm text-amber-800">
+              <p className="font-medium">Remove these items from your cart to continue:</p>
+              <ul className="space-y-1">
+                {reservationIssues.map((item) => (
+                  <li key={item.productId}>
+                    {item.productName} — requested {item.requested}, available {item.available}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <Link
+          href="/cart"
+          className="inline-flex items-center justify-center rounded-full border border-zinc-300 px-5 py-2 text-sm font-medium text-zinc-700 transition hover:border-zinc-400 hover:bg-zinc-50"
+        >
+          Back to cart
+        </Link>
       </div>
     );
   }
@@ -121,11 +218,12 @@ export function CheckoutPageClient({
           <button
             type="button"
             onClick={() => setPurchaseMode("regular")}
+            disabled={checkoutDisabled}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
               purchaseMode === "regular"
                 ? "border-zinc-900 bg-zinc-900 text-white"
                 : "border-zinc-300 bg-white text-zinc-700"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             Regular
           </button>
@@ -133,7 +231,7 @@ export function CheckoutPageClient({
             <button
               type="button"
               onClick={() => setPurchaseMode("business")}
-              disabled={businessModeDisabled}
+              disabled={businessModeDisabled || checkoutDisabled}
               className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
                 purchaseMode === "business"
                   ? "border-zinc-900 bg-zinc-900 text-white"
@@ -174,22 +272,24 @@ export function CheckoutPageClient({
           <button
             type="button"
             onClick={() => setFulfillmentMethod("delivery")}
+            disabled={checkoutDisabled}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
               fulfillmentMethod === "delivery"
                 ? "border-zinc-900 bg-zinc-900 text-white"
                 : "border-zinc-300 bg-white text-zinc-700"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             Deliver to address
           </button>
           <button
             type="button"
             onClick={() => setFulfillmentMethod("pickup")}
+            disabled={checkoutDisabled}
             className={`rounded-full border px-4 py-1.5 text-sm font-medium ${
               fulfillmentMethod === "pickup"
                 ? "border-zinc-900 bg-zinc-900 text-white"
                 : "border-zinc-300 bg-white text-zinc-700"
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-60`}
           >
             Pickup from showroom
           </button>
@@ -217,6 +317,7 @@ export function CheckoutPageClient({
           fulfillmentMethod={fulfillmentMethod}
           isBusinessApproved={isBusinessApproved}
           initialAddressId={initialAddressId}
+          onReservationBlocked={handleReservationBlocked}
         />
       </Elements>
     </div>
