@@ -13,8 +13,12 @@ interface ProductScrollRowProps {
 
 export function ProductScrollRow({
   items,
-  cardWidthClass = "w-65 min-w-65",
+  cardWidthClass = "w-[calc(100vw-4.5rem)] min-w-[calc(100vw-4.5rem)] md:w-65 md:min-w-65",
 }: ProductScrollRowProps) {
+  if (items.length === 0) {
+    return null;
+  }
+
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -73,25 +77,13 @@ export function ProductScrollRow({
 
   return (
     <div className="group/rail relative">
-      {showControls ? (
-        <>
-          <div
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-linear-to-r from-white via-white/85 to-transparent"
-            aria-hidden
-          />
-          <div
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-linear-to-l from-white via-white/85 to-transparent"
-            aria-hidden
-          />
-        </>
-      ) : null}
 
       {canScrollLeft ? (
         <button
           type="button"
           onClick={() => scrollByAmount("left")}
           aria-label="Scroll left"
-          className="absolute left-2 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-zinc-700 shadow-lg backdrop-blur transition hover:text-zinc-900 hover:shadow-xl opacity-0 group-hover/rail:opacity-100 md:flex"
+          className="absolute left-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-zinc-700 shadow-lg backdrop-blur transition hover:text-zinc-900 hover:shadow-xl opacity-100 md:h-10 md:w-10 md:opacity-0 md:group-hover/rail:opacity-100"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -102,7 +94,7 @@ export function ProductScrollRow({
           type="button"
           onClick={() => scrollByAmount("right")}
           aria-label="Scroll right"
-          className="absolute right-2 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-zinc-700 shadow-lg backdrop-blur transition hover:text-zinc-900 hover:shadow-xl opacity-0 group-hover/rail:opacity-100 md:flex"
+          className="absolute right-2 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/90 text-zinc-700 shadow-lg backdrop-blur transition hover:text-zinc-900 hover:shadow-xl opacity-100 md:h-10 md:w-10 md:opacity-0 md:group-hover/rail:opacity-100"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
