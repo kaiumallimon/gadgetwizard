@@ -30,6 +30,7 @@ import {
     UserRound,
     Users,
     Plus,
+    ExternalLink,
 } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -123,55 +124,42 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         items: [
                             { href: "/admin", label: "Dashboard", icon: Home, exact: true },
                             { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
+                            { href: "/", label: "View Storefront", icon: ExternalLink, exact: true }, // Changed icon for clarity
                         ],
                     },
                     {
                         label: "Catalog",
                         items: [
-                            { href: "/admin/products", label: "Products", icon: Package, exact: true },
-                            { href: "/admin/inventory", label: "Inventory", icon: Boxes, exact: true },
-                            { href: "/admin/categories", label: "Categories", icon: Boxes, exact: true },
-                            { href: "/admin/brands", label: "Brands", icon: Tag, exact: true },
-                        ]
+                            { href: "/admin/products", label: "Products", icon: Package },
+                            { href: "/admin/inventory", label: "Inventory", icon: Boxes },
+                            { href: "/admin/categories", label: "Categories", icon: LayoutGrid }, // Different icon to distinguish from Inventory
+                            { href: "/admin/brands", label: "Brands", icon: Tag },
+                        ],
                     },
                     {
-                        label: "Orders",
+                        label: "Sales & CRM",
                         items: [
                             { href: "/admin/orders", label: "Orders", icon: ClipboardList },
-                            { href: "/admin/live-chat", label: "Live Chat", icon: MessageCircle },
                             { href: "/admin/business-accounts", label: "Business Requests", icon: Building2 },
-                            { href: "/admin/wishlist", label: "Wishlist", icon: Heart },
-                            { href: "/admin/reviews", label: "Reviews", icon: Star },
+                            { href: "/admin/customers", label: "Customers", icon: Users }, // Moved from "Users" group
+                            { href: "/admin/live-chat", label: "Live Chat", icon: MessageCircle },
                         ],
                     },
                     {
-                        label: "Merchandising",
+                        label: "Marketing",
                         items: [
                             { href: "/admin/banners", label: "Banners", icon: Megaphone },
-                            { href: "/admin/faqs", label: "FAQs", icon: CircleHelp, exact: true },
-                            { href: "/admin/newsletter", label: "Newsletter", icon: Mail, exact: true },
+                            { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
+                            { href: "/admin/reviews", label: "Customer Reviews", icon: Star }, // Moved from Orders
+                            { href: "/admin/wishlist", label: "Wishlist Insights", icon: Heart }, // Moved from Orders
                         ],
                     },
                     {
-                        label: "Create New",
+                        label: "Management",
                         items: [
-                            { href: "/admin/products/new", label: "Add Product", icon: Plus },
-                            { href: "/admin/categories/new", label: "Add Category", icon: Plus, exact: true },
-                            { href: "/admin/brands/new", label: "Add Brand", icon: Plus, exact: true },
-                        ],
-                    },
-                    {
-                        label: "Users",
-                        items: [
-                            { href: "/admin/users", label: "Admins", icon: UserRound },
-                            { href: "/admin/customers", label: "Users", icon: Users },
-                        ],
-                    },
-                    {
-                        label: "Platform",
-                        items: [
-                            { href: "/admin/cdn", label: "CDN Management", icon: HardDrive },
-                            { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
+                            { href: "/admin/users", label: "Admin Team", icon: UserRound }, // Specific icon for clarity
+                            { href: "/admin/faqs", label: "Help & FAQs", icon: CircleHelp },
+                            { href: "/admin/cdn", label: "CDN Assets", icon: HardDrive },
                         ],
                     },
                 ],
@@ -180,19 +168,26 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
         return {
             title: "GadgetWizard",
-            subtitle: "Member Dashboard",
+            subtitle: "Customer Dashboard",
             groups: [
                 {
                     label: "Overview",
-                    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutGrid, exact: true }],
+                    items: [
+                        { href: "/dashboard", label: "Dashboard", icon: LayoutGrid, exact: true },
+                        { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
+                    ],
                 },
                 {
-                    label: "Shopping",
+                    label: "My Activity",
                     items: [
-                        { href: "/", label: "Storefront", icon: ShoppingBag, exact: true },
-                        { href: "/cart", label: "My Cart", icon: ShoppingCart },
+                        { href: "/dashboard/orders", label: "Orders", icon: ClipboardList },
                         { href: "/dashboard/wishlist", label: "Wishlist", icon: Heart },
-                        { href: "/dashboard/orders", label: "My Orders", icon: ClipboardList },
+                        { href: "/cart", label: "Cart", icon: ShoppingCart },
+                    ],
+                },
+                {
+                    label: "Settings",
+                    items: [
                         { href: "/dashboard/addresses", label: "Addresses", icon: MapPin },
                         { href: "/dashboard/business-account", label: "Business Account", icon: Building2 },
                     ],
@@ -264,21 +259,17 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             <div className="flex h-full w-full flex-col overflow-hidden">
                 <div className="w-full border-b border-zinc-200">
                     <div className="flex items-center gap-3 px-4 py-4">
-                        {variant === "admin" ? (
-                            <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
-                                <Image
-                                    src="/nameless-logo.svg"
-                                    alt="Admin"
-                                    width={36}
-                                    height={36}
-                                    className="h-8 w-8 object-contain"
-                                />
-                            </div>
-                        ) : (
-                            <div className="grid h-9 w-9 place-items-center rounded-lg bg-linear-to-br from-[#f36523] to-red-500 text-white shadow-sm">
-                                <LayoutGrid className="h-4 w-4" />
-                            </div>
-                        )}
+
+                        <div className="grid h-9 w-9 place-items-center overflow-hidden rounded-lg bg-white shadow-sm ring-1 ring-zinc-200">
+                            <Image
+                                src="/nameless-logo.svg"
+                                alt="Admin"
+                                width={36}
+                                height={36}
+                                className="h-8 w-8 object-contain"
+                            />
+                        </div>
+
                         <div>
                             <p className="text-sm font-semibold text-zinc-900">{nav.title}</p>
                             <p className="text-xs text-zinc-500">{nav.subtitle}</p>
@@ -367,7 +358,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                     <SidebarContent onNavigate={() => setMobileOpen(false)} />
                 </SheetContent>
 
-                <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", isLiveChatRoute ? "overflow-hidden" : "overflow-y-auto") }>
+                <div className={cn("flex min-h-0 min-w-0 flex-1 flex-col", isLiveChatRoute ? "overflow-hidden" : "overflow-y-auto")}>
                     <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/55 px-4 py-4 backdrop-blur">
                         <div className="flex items-center gap-3">
                             <Button
