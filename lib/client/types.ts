@@ -170,6 +170,30 @@ export interface NewsletterSendSummary {
   failedCount: number;
 }
 
+export interface AdminRevenueSnapshot {
+  generatedAt: string;
+  range: {
+    days: number;
+    startDate: string;
+    endDate: string;
+    compareStartDate: string;
+    compareEndDate: string;
+  };
+  summary: {
+    totalRevenue: number;
+    totalOrders: number;
+    totalUnits: number;
+    averageOrderValue: number;
+    revenueGrowthPct: number;
+    orderGrowthPct: number;
+    unitGrowthPct: number;
+  };
+  series: Array<{ date: string; revenue: number; orders: number; units: number }>;
+  byPurchaseMode: Array<{ mode: OrderPurchaseMode; revenue: number; orders: number }>;
+  statusBreakdown: Array<{ status: OrderStatus; orders: number }>;
+  topProducts: Array<{ productId: number; productName: string; revenue: number; units: number }>;
+}
+
 export interface CartItem {
   id: number;
   productId: number;
