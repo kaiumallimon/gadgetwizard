@@ -27,7 +27,13 @@ export function StorefrontMotion({ children }: StorefrontMotionProps) {
       gsap.fromTo(
         scope,
         { autoAlpha: 0, y: 12 },
-        { autoAlpha: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: 0.5,
+          ease: "power2.out",
+          clearProps: "transform,opacity,visibility",
+        },
       );
     }, scope);
 
