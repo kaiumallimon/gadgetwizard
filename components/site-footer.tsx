@@ -28,6 +28,13 @@ const companyLinks = [
   { href: "/dashboard/business-account", label: "Business Account" },
 ];
 
+const socialLinks = [
+  {
+    href: "https://www.facebook.com/profile.php?id=61576441719146",
+    label: "Facebook",
+  },
+];
+
 export function SiteFooter() {
   const year = new Date().getFullYear();
 
@@ -88,12 +95,20 @@ export function SiteFooter() {
               <p className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40">
                 <Phone className="h-4 w-4 text-orange-300" /> +880 1712-345678
               </p>
-              <p className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40">
-                <Headset className="h-4 w-4 text-orange-300" /> support@gadgetwizard.com.au
-              </p>
-              <p className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40">
-                <MapPin className="h-4 w-4 text-orange-300" /> Dhaka, Bangladesh
-              </p>
+              <a
+                href="mailto:info@gadgetwizard.com.au"
+                className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40 transition hover:text-orange-300"
+              >
+                <Headset className="h-4 w-4 text-orange-300" /> info@gadgetwizard.com.au
+              </a>
+              <a
+                href="https://www.bing.com/maps/search?v=2&pc=FACEBK&mid=8100&mkt=en-US&fbclid=IwY2xjawRdiW5leHRuA2FlbQIxMABicmlkETFBSkFtYjYybnZtV0VFZlc1c3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHk09YNnqMD0LrYO9aVhIlaxJJ-n-_6lkFeJL7X7dfT8tMuIThqX2dUZTMwq2_aem_pdaOkZ0Akan4XbIWvHlrWQ&FORM=FBKPL1&q=46+Railway+Pde%2C+Sydney%2C+NSW%2C+Australia%2C+2195&cp=-33.919226%7E151.075355&lvl=16.4&style=r"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40 transition hover:text-orange-300"
+              >
+                <MapPin className="h-4 w-4 text-orange-300" /> 46 Railway Pde, Sydney, NSW, Australia, 2195
+              </a>
             </div>
 
             <div className="gw-soft-border-dark mt-5 border-t border-zinc-700/40 pt-4">
@@ -102,7 +117,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="grid gap-8 pt-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-8 pt-8 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Quick Shop</p>
             <ul className="mt-3 space-y-2 text-sm">
@@ -137,6 +152,24 @@ export function SiteFooter() {
                   <Link href={item.href} className="text-zinc-300 transition hover:pl-1 hover:text-orange-300">
                     {item.label}
                   </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-500">Social</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {socialLinks.map((item) => (
+                <li key={item.label}>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-zinc-300 transition hover:pl-1 hover:text-orange-300"
+                  >
+                    {item.label}
+                  </a>
                 </li>
               ))}
             </ul>

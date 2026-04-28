@@ -214,10 +214,10 @@ async function GETHandler(
     const leftLines = [order.shippingAddressSnapshot.fullName, ...addressLines];
     const rightLines = [
       "Gadget Wizard Pty Ltd",
-      "123 Main Street",
-      "Sydney, NSW 2000",
+      "46 Railway Pde",
+      "Sydney, NSW 2195",
       "Australia",
-      "support@gadgetwizard.com",
+      "info@gadgetwizard.com.au",
     ];
 
     const lineHeight = 12;

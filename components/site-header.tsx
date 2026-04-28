@@ -444,7 +444,7 @@ export function SiteHeader() {
                         </p>
                         <p className="inline-flex items-center gap-2">
                           <FiMail className="h-4 w-4 text-zinc-500" />
-                          support@gadgetwizard.shop
+                          info@gadgetwizard.com.au
                         </p>
                         <p className="inline-flex items-center gap-2">
                           <FiHeadphones className="h-4 w-4 text-zinc-500" />
@@ -454,7 +454,7 @@ export function SiteHeader() {
 
                       <p className="mt-4 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-500">Social</p>
                       <div className="mt-2 flex items-center gap-3">
-                        <a href="https://www.facebook.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Facebook">
+                        <a href="https://www.facebook.com/profile.php?id=61576441719146" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Facebook">
                           <FiFacebook className="h-4 w-4" />
                         </a>
                         <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Instagram">
