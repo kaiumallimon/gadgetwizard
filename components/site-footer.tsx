@@ -6,24 +6,26 @@ import { NewsletterSubscribeForm } from "@/components/newsletter-subscribe-form"
 
 const quickShopLinks = [
   { href: "/", label: "Home" },
-  { href: "/faqs", label: "FAQs" },
-  { href: "/cart", label: "Cart" },
-  { href: "/?auth=login", label: "Sign In" },
-  { href: "/?auth=signup", label: "Create Account" },
+  { href: "/categories", label: "Categories" },
+  { href: "/new-arrivals", label: "New Arrivals" },
+  { href: "/best-sellers", label: "Best Sellers" },
+  { href: "/offers", label: "Offers" },
 ];
 
 const customerCareLinks = [
+  { href: "/faqs", label: "FAQs" },
   { href: "/forgot-password", label: "Password Help" },
   { href: "/dashboard", label: "User Dashboard" },
-  { href: "/admin", label: "Admin Console" },
-  { href: "/admin/activity", label: "Order Activity" },
+  { href: "/dashboard/orders", label: "Order Tracking" },
+  { href: "/wishlist", label: "Wishlist" },
 ];
 
 const companyLinks = [
   { href: "/about-us", label: "About GadgetWizard" },
   { href: "/privacy-policy", label: "Privacy Policy" },
   { href: "/terms-and-conditions", label: "Terms & Conditions" },
-  { href: "/", label: "Refund Guidelines" },
+  { href: "/brands", label: "Brand Directory" },
+  { href: "/dashboard/business-account", label: "Business Account" },
 ];
 
 export function SiteFooter() {
