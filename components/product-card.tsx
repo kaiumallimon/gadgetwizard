@@ -121,8 +121,8 @@ export function ProductCard({ product }: ProductCardProps) {
           </div>
 
           {product.stock === 0 && (
-            <div className="absolute inset-0 grid place-items-center bg-zinc-950/55 backdrop-blur-[1px]">
-              <span className="rounded-full border border-white/30 bg-zinc-950/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white">
+            <div className="absolute inset-0 grid place-items-center bg-zinc-950/35">
+              <span className="rounded-full bg-primary/30 backdrop-blur-md px-3 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-white">
                 Out Of Stock
               </span>
             </div>
