@@ -174,7 +174,7 @@ export default async function HomePage() {
                           {brand.imageUrl ? (
                             <img src={brand.imageUrl} alt={brand.name} className="h-full w-full object-contain" />
                           ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
+                            <div className="flex h-full w-full rounded-md items-center justify-center bg-linear-to-br from-zinc-100 to-zinc-200 text-2xl font-semibold text-zinc-600">
                               {brand.name.slice(0, 1).toUpperCase()}
                             </div>
                           )}
