@@ -1,0 +1,5 @@
+import { ProductDetailSkeleton } from "@/components/storefront/storefront-skeletons";
+
+export default function Loading() {
+  return <ProductDetailSkeleton />;
+}

@@ -1,10 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
+import { Suspense } from "react";
 import { Headset, ShieldCheck, Truck, Warehouse, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 
 import { BannerShowcase } from "@/components/banner-showcase";
 import { LiveChatWidget } from "@/components/live-chat-widget";
 import { ProductCard } from "@/components/product-card";
+import { StorefrontHomeSkeleton } from "@/components/storefront/storefront-skeletons";
 import type { Product } from "@/lib/client/types";
 import { getPublicBanners } from "@/lib/server/services/banner-service";
 import { getPublicBrands } from "@/lib/server/services/brand-service";
@@ -12,7 +14,15 @@ import { getPublicProducts } from "@/lib/server/services/product-service";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default function HomePage() {
+  return (
+    <Suspense fallback={<StorefrontHomeSkeleton />}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+async function HomeContent() {
   const [banners, brands, productPool] = await Promise.all([
     getPublicBanners(),
     getPublicBrands(),

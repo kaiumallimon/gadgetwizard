@@ -5,6 +5,7 @@ import { Suspense, useEffect } from "react";
 
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { StorefrontMotion } from "@/components/storefront/storefront-motion";
 
 interface LayoutChromeProps {
   children: React.ReactNode;
@@ -40,7 +41,9 @@ export function LayoutChrome({ children }: LayoutChromeProps) {
       <Suspense fallback={null}>
         <SiteHeader />
       </Suspense>
-      <main className="flex-1">{children}</main>
+      <main className="flex-1">
+        <StorefrontMotion>{children}</StorefrontMotion>
+      </main>
       <SiteFooter />
     </div>
   );
