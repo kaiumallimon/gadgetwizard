@@ -151,17 +151,16 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
 
-        <div className="space-y-2 rounded-xl border border-zinc-100 bg-zinc-50/65 p-3">
+        <div className="space-y-2 rounded-xl px-2 py-1">
           <div className="flex items-center gap-2">
             <span className="text-xl font-bold tracking-tight text-zinc-950">
               {format$(displayPrice)}
             </span>
-            {hasDiscount && <span className="text-xs font-semibold text-red-500 line-through">{format$(product.originalPrice)}</span>}
+            {hasDiscount && <span className="text-sm font-bold text-red-500 line-through">{format$(product.originalPrice)}</span>}
           </div>
 
           {(hasDiscount || hasWholesale) && (
             <div className="flex flex-wrap gap-1">
-              {hasDiscount && <Badge variant="secondary" className="bg-emerald-100 text-emerald-700">Deal</Badge>}
               {hasWholesale && (
                 <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                   Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
