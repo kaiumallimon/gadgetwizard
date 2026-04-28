@@ -113,7 +113,7 @@ export function BannerShowcase({ banners }: BannerShowcaseProps) {
               type="button"
               aria-label={`Go to banner ${index + 1}`}
               onClick={() => setCurrentIndex(index)}
-              className={`h-2.5 rounded-full transition-all ${index === currentIndex ? "w-6 bg-(--accent)" : "w-2.5 bg-white/75"}`}
+              className={`h-2.5 rounded-full transition-all ${index === currentIndex ? "w-6 bg-accent" : "w-2.5 bg-white/75"}`}
             />
           ))}
         </div>

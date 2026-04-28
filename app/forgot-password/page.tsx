@@ -8,6 +8,7 @@ import { apiClient } from "@/lib/client/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ArrowLeft } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -32,8 +33,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-8 sm:px-6">
-      <Card className="w-full">
+    <div className="mx-auto flex w-full max-w-md flex-1 items-center px-4 py-8 md:py-32 sm:px-6">
+      <Card className="w-full shadow-none">
         <CardHeader>
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-500">Password Reset</p>
           <CardTitle className="text-3xl">Forgot your password?</CardTitle>
@@ -60,9 +61,14 @@ export default function ForgotPasswordPage() {
           {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-          <Button asChild variant="ghost" className="mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900">
-            <Link href="/?auth=login">Back to login</Link>
+          <div className="w-full flex mx-auto justify-center items-center">
+            <Button asChild variant="ghost" className="mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900">
+            <Link href="/?auth=login">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to login
+            </Link>
           </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
