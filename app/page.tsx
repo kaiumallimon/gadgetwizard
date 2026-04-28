@@ -32,37 +32,29 @@ async function HomeContent() {
 
   const brandHighlights = brands.filter((brand) => brand.isFeatured).slice(0, 24);
   const marqueeBrands = brandHighlights;
-  const newTrends = productPool.items.filter((item) => item.isNewArrival || item.isTrending).slice(0, 6);
-  const featuredGrid = productPool.items.filter((item) => item.isFeatured || item.isBestSeller).slice(0, 8);
-  const fallbackTrends = newTrends.length > 0 ? newTrends : productPool.items.slice(0, 6);
-  const fallbackFeatured = featuredGrid.length > 0 ? featuredGrid : productPool.items.slice(0, 8);
+  const featuredProducts = productPool.items.filter((item) => item.isFeatured).slice(0, 8);
+  const newArrivalProducts = productPool.items.filter((item) => item.isNewArrival).slice(0, 8);
+  const trendingProducts = productPool.items.filter((item) => item.isTrending).slice(0, 6);
   const bestSellerProducts = productPool.items.filter((item) => item.isBestSeller).slice(0, 8);
   const topRatedProducts = productPool.items.filter((item) => item.isTopRated).slice(0, 8);
-  const newArrivalProducts = productPool.items.filter((item) => item.isNewArrival).slice(0, 8);
   const freeDeliveryProducts = productPool.items.filter((item) => item.isFreeDelivery).slice(0, 8);
-  const limitedStockProducts = productPool.items.filter((item) => item.isLimitedStock).slice(0, 8);
+  const officialWarrantyProducts = productPool.items.filter((item) => item.isOfficialWarranty).slice(0, 8);
   const uniformProductCardWidthClass = "w-65 min-w-65";
 
-  const curatedProductSections: Array<{
+  const homepageProductSections: Array<{
     key: string;
     titleLead: string;
-    titleAccent: string;
+    titleAccent?: string;
     subtitle: string;
     items: Product[];
+    layout: "grid" | "scroll";
   }> = [
     {
-      key: "best-sellers",
-      titleLead: "Best",
-      titleAccent: "Sellers",
-      subtitle: "Most purchased products customers are choosing this week.",
-      items: bestSellerProducts,
-    },
-    {
-      key: "top-rated",
-      titleLead: "Top",
-      titleAccent: "Rated",
-      subtitle: "Highly rated picks trusted by verified shoppers.",
-      items: topRatedProducts,
+      key: "featured",
+      titleLead: "Featured",
+      subtitle: "Handpicked products with strong value and customer demand.",
+      items: featuredProducts,
+      layout: "grid",
     },
     {
       key: "new-arrivals",
@@ -70,6 +62,30 @@ async function HomeContent() {
       titleAccent: "Arrivals",
       subtitle: "Freshly listed items just added to the storefront.",
       items: newArrivalProducts,
+      layout: "grid",
+    },
+    {
+      key: "trending",
+      titleLead: "Trending",
+      subtitle: "Top trends shoppers are viewing right now.",
+      items: trendingProducts,
+      layout: "scroll",
+    },
+    {
+      key: "top-rated",
+      titleLead: "Top",
+      titleAccent: "Rated",
+      subtitle: "Highly rated picks trusted by verified shoppers.",
+      items: topRatedProducts,
+      layout: "grid",
+    },
+    {
+      key: "best-seller",
+      titleLead: "Best",
+      titleAccent: "Seller",
+      subtitle: "Most purchased products customers are choosing this week.",
+      items: bestSellerProducts,
+      layout: "grid",
     },
     {
       key: "free-delivery",
@@ -77,16 +93,18 @@ async function HomeContent() {
       titleAccent: "Delivery",
       subtitle: "Save more with products eligible for free delivery.",
       items: freeDeliveryProducts,
+      layout: "grid",
     },
     {
-      key: "limited-stock",
-      titleLead: "Limited",
-      titleAccent: "Stock",
-      subtitle: "Low-inventory products that may sell out soon.",
-      items: limitedStockProducts,
+      key: "official-warranty",
+      titleLead: "Official",
+      titleAccent: "Warranty",
+      subtitle: "Products backed by official warranty coverage.",
+      items: officialWarrantyProducts,
+      layout: "grid",
     },
   ];
-  const visibleCuratedProductSections = curatedProductSections.filter((section) => section.items.length > 0);
+  const visibleHomepageProductSections = homepageProductSections.filter((section) => section.items.length > 0);
 
   const serviceHighlights: Array<{ title: string; note: string; icon: LucideIcon }> = [
     { title: "Free Shipping", note: "Free Shipping on all orders over $100", icon: Truck },
@@ -199,51 +217,23 @@ async function HomeContent() {
           )}
         </section>
 
-        {fallbackTrends.length > 0 && (
-          <section className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <h2 className="text-4xl font-semibold text-zinc-900">
-                  New <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Trends</span>
-                </h2>
-                <p className="mt-2 text-sm text-zinc-500">Swipe to explore the latest arrivals and trending picks.</p>
-              </div>
-              <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">{fallbackTrends.length} products</span>
-            </div>
-
-            <ProductScrollRow items={fallbackTrends} cardWidthClass={uniformProductCardWidthClass} />
-          </section>
-        )}
-
-        {fallbackFeatured.length > 0 && (
-          <section className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-4xl font-semibold text-zinc-900">
-                  Featured <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">Products</span>
-                </h2>
-                <p className="mt-2 text-sm text-zinc-500">Handpicked products with strong value and customer demand.</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
-              {fallbackFeatured.map((product) => (
-                <div key={product.id} className={uniformProductCardWidthClass}>
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {visibleCuratedProductSections.map((section) => (
+        {visibleHomepageProductSections.map((section) => (
           <section key={section.key} className="space-y-4 rounded-2xl bg-white p-5 sm:p-7">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-4xl font-semibold text-zinc-900">
-                  {section.titleLead}{" "}
-                  <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">
-                    {section.titleAccent}
-                  </span>
+                  {section.titleAccent ? (
+                    <>
+                      {section.titleLead}{" "}
+                      <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">
+                        {section.titleAccent}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="bg-linear-to-r from-(--accent) via-orange-400 to-amber-400 bg-clip-text text-transparent">
+                      {section.titleLead}
+                    </span>
+                  )}
                 </h2>
                 <p className="mt-2 text-sm text-zinc-500">{section.subtitle}</p>
               </div>
@@ -252,13 +242,17 @@ async function HomeContent() {
               </span>
             </div>
 
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
-              {section.items.map((product) => (
-                <div key={`${section.key}-${product.id}`} className={uniformProductCardWidthClass}>
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
+            {section.layout === "scroll" ? (
+              <ProductScrollRow items={section.items} cardWidthClass={uniformProductCardWidthClass} />
+            ) : (
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(16.25rem,16.25rem))] justify-start gap-4">
+                {section.items.map((product) => (
+                  <div key={`${section.key}-${product.id}`} className={uniformProductCardWidthClass}>
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            )}
           </section>
         ))}
 
