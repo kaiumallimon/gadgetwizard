@@ -730,18 +730,24 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
             )}
           </div>
 
-          {!showAdditional && (
-            <div className="col-span-full flex justify-center pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-dashed"
-                onClick={() => setShowAdditional(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" /> Add Additional Information
-              </Button>
-            </div>
-          )}
+          <div className="col-span-full flex justify-center pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-dashed"
+              onClick={() => setShowAdditional(!showAdditional)}
+            >
+              {showAdditional ? (
+                <>
+                  <X className="mr-2 h-4 w-4" /> Hide Additional Information
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" /> Add Additional Information
+                </>
+              )}
+            </Button>
+          </div>
 
           {showAdditional && (
             <>
