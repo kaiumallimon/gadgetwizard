@@ -789,6 +789,10 @@ export const apiClient = {
     );
   },
 
+  async adminGetPaidOrdersCount(token?: string) {
+    return apiFetch<{ count: number }>("/api/admin/orders/paid-count", { token });
+  },
+
   async adminGetOrder(id: number, token?: string) {
     return apiFetch<{ item: Order }>(`/api/admin/orders/${id}`, { token });
   },

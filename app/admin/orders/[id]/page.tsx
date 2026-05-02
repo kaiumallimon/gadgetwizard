@@ -54,6 +54,9 @@ export default async function AdminOrderDetailPage({ params }: Props) {
 
   const shippingAddress = order.shippingAddressSnapshot;
   const totalItemQuantity = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const hasRefundedItems = order.items.some((item) => item.refundedQuantity > 0);
+  const hasDeliveredItems = order.items.some((item) => item.deliveredQuantity > 0);
+  const isPartialDelivery = hasRefundedItems && hasDeliveredItems;
 
   return (
     <div className="space-y-6">
@@ -68,6 +71,16 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <Badge variant="outline" className={MODE_BADGE[order.purchaseMode] ?? MODE_BADGE.regular}>
               {order.purchaseMode.toUpperCase()}
             </Badge>
+            {isPartialDelivery && (
+              <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-700">
+                Partial delivery
+              </Badge>
+            )}
+            {hasRefundedItems && (
+              <Badge variant="outline" className="border-sky-200 bg-sky-50 text-sky-700">
+                Refund issued
+              </Badge>
+            )}
             {order.isWholesale && (
               <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
                 WHOLESALE

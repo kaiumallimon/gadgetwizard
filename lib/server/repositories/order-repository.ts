@@ -299,20 +299,32 @@ export async function listOrders(filter: ListOrdersFilter): Promise<{ rows: Orde
   return { rows, total };
 }
 
+export async function countOrdersByStatus(status: OrderStatus): Promise<number> {
+  const row = await queryOne<{ total: number }>(
+    "SELECT COUNT(*) AS total FROM orders WHERE status = ?",
+    [status],
+  );
+
+  return row?.total ?? 0;
+}
+
 export async function updateOrderStatus(
   orderId: number,
   status: OrderStatus,
   notes?: string,
+  connection?: PoolConnection,
 ): Promise<void> {
   if (notes !== undefined) {
-    await execute(
+    await executeWithConnection(
       `UPDATE orders SET status = ?, notes = ?, updated_at = NOW() WHERE id = ?`,
       [status, notes, orderId],
+      connection,
     );
   } else {
-    await execute(
+    await executeWithConnection(
       `UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?`,
       [status, orderId],
+      connection,
     );
   }
 }

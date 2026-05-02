@@ -253,6 +253,9 @@ export function AdminOrdersManager({
             const statusLabel = ORDER_STATUSES.find((s) => s.value === order.status)?.label ?? order.status;
             const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
             const selectedStatus = localStatus[order.id] ?? order.status;
+            const hasRefundedItems = order.items.some((item) => item.refundedQuantity > 0);
+            const hasDeliveredItems = order.items.some((item) => item.deliveredQuantity > 0);
+            const isPartialDelivery = hasRefundedItems && hasDeliveredItems;
 
             return (
               <Card key={order.id}>
@@ -267,6 +270,16 @@ export function AdminOrdersManager({
                         <span className="inline-flex rounded-full border border-zinc-200 bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-700">
                           {order.purchaseMode.toUpperCase()}
                         </span>
+                        {isPartialDelivery && (
+                          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            Partial delivery
+                          </span>
+                        )}
+                        {hasRefundedItems && (
+                          <span className="inline-flex rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700">
+                            Refund issued
+                          </span>
+                        )}
                         {order.isWholesale && (
                           <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
                             WHOLESALE

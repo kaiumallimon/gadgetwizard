@@ -71,6 +71,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
     const { user, clearAuth } = useAuthStore();
     const [mobileOpen, setMobileOpen] = useState(false);
     const [chatUnreadCount, setChatUnreadCount] = useState(0);
+    const [paidOrdersCount, setPaidOrdersCount] = useState(0);
     const isLiveChatRoute = variant === "admin" && pathname === "/admin/live-chat";
 
     const refreshChatUnreadCount = useCallback(async () => {
@@ -86,12 +87,30 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         }
     }, [variant]);
 
+    const refreshPaidOrdersCount = useCallback(async () => {
+        if (variant !== "admin") {
+            return;
+        }
+
+        try {
+            const response = await apiClient.adminGetPaidOrdersCount();
+            setPaidOrdersCount(response.count);
+        } catch {
+            setPaidOrdersCount(0);
+        }
+    }, [variant]);
+
     useEffect(() => {
         if (variant !== "admin") {
             return;
         }
 
         void refreshChatUnreadCount();
+        void refreshPaidOrdersCount();
+
+        const paidOrdersInterval = window.setInterval(() => {
+            void refreshPaidOrdersCount();
+        }, 60_000);
 
         const stream = new EventSource("/api/chat/stream");
 
@@ -112,8 +131,9 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
 
         return () => {
             stream.close();
+            window.clearInterval(paidOrdersInterval);
         };
-    }, [refreshChatUnreadCount, variant]);
+    }, [refreshChatUnreadCount, refreshPaidOrdersCount, variant]);
 
     const nav = useMemo(() => {
         if (variant === "admin") {
@@ -289,6 +309,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                 {group.items.map((item) => {
                                     const Icon = item.icon;
                                     const showChatBadge = variant === "admin" && item.href === "/admin/live-chat" && chatUnreadCount > 0;
+                                    const showPaidOrdersBadge = variant === "admin" && item.href === "/admin/orders" && paidOrdersCount > 0;
                                     return (
                                         <Link
                                             key={item.href}
@@ -307,6 +328,12 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                                 <span className="ml-auto inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
                                                     <span className="h-2 w-2 rounded-full bg-orange-500" />
                                                     <span>{chatUnreadCount > 99 ? "99+" : chatUnreadCount}</span>
+                                                </span>
+                                            ) : null}
+                                            {showPaidOrdersBadge ? (
+                                                <span className="ml-auto inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                                                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                                                    <span>{paidOrdersCount > 99 ? "99+" : paidOrdersCount}</span>
                                                 </span>
                                             ) : null}
                                         </Link>

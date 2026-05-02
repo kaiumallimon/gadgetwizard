@@ -19,6 +19,7 @@ import type {
 } from "@/lib/client/types";
 import {
   clearCartItemsByProductIds,
+  countOrdersByStatus,
   createOrder as createOrderRepo,
   decrementProductStock,
   findOrderByPaymentIntent,
@@ -649,6 +650,10 @@ export async function getAdminOrders(filter: ListOrdersFilter): Promise<{
   };
 }
 
+export async function getAdminOrderStatusCount(status: OrderStatus): Promise<number> {
+  return countOrdersByStatus(status);
+}
+
 export async function updateAdminOrderStatus(
   orderId: number,
   status: OrderStatus,
@@ -816,6 +821,7 @@ export async function applyAdminOrderPartialFulfillment(input: {
       amount: refundAmount,
       reason: input.reason ?? null,
     }, connection);
+    await updateOrderStatus(order.id, "delivered", undefined, connection);
   });
 
   const updatedOrder = await getAdminOrderById(order.id);
