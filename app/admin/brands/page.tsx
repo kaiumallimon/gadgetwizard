@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminBrands } from "@/lib/server/services/brand-service";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,9 @@ export default async function AdminBrandsPage() {
             <p className="mt-2 text-sm text-zinc-600">Update brand names, logos, sort order, and active status.</p>
           </div>
           <Button asChild>
-            <Link href="/admin/brands/new">Add Brand</Link>
+            <Link href="/admin/brands/new">
+            <Plus className="w-4 h-4"/>
+            Add Brand</Link>
           </Button>
         </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">

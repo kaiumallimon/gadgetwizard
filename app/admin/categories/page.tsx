@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminCategories } from "@/lib/server/services/category-service";
+import { BookOpen, LayoutDashboard } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -34,8 +35,10 @@ export default async function AdminCategoriesPage() {
             <h1 className="mt-1 text-3xl font-semibold text-zinc-900">Category Management</h1>
             <p className="mt-2 text-sm text-zinc-600">Review stats, update categories, pin header items, and choose storefront featured categories.</p>
           </div>
-          <Button asChild variant="outline">
-            <Link href="/admin/categories/new">Open Add Category Page</Link>
+          <Button asChild>
+            <Link href="/admin/categories/new">
+            <LayoutDashboard className="w-4 h-4"/>
+             Open Add Category Page</Link>
           </Button>
         </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">

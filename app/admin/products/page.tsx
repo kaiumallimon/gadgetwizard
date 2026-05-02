@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminProducts } from "@/lib/server/services/product-service";
+import { Plus } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -56,7 +57,10 @@ export default async function AdminProductsPage() {
             </p>
           </div>
           <Button asChild>
-            <Link href="/admin/products/new">Add Product</Link>
+            <Link href="/admin/products/new"> 
+            <Plus className="w-4 h-4"/>
+            
+            Add Product</Link>
           </Button>
         </div>
         <div className="mt-3 border-t border-zinc-200 pt-2">
