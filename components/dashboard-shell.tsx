@@ -329,8 +329,9 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                                 </span>
                                             ) : null}
                                             {showPaidOrdersBadge ? (
-                                                <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
-                                                    {paidOrdersCount > 99 ? "99+" : paidOrdersCount}
+                                                <span className="ml-auto inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-semibold text-orange-700">
+                                                    <span className="h-2 w-2 rounded-full bg-orange-500" />
+                                                    <span>{paidOrdersCount > 99 ? "99+" : paidOrdersCount}</span>
                                                 </span>
                                             ) : null}
                                         </Link>

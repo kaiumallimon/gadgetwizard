@@ -497,7 +497,7 @@ export function LiveChatWidget({
   }
 
   const panelContent = (
-    <div className="flex h-screen min-h-0 flex-col rounded-[22px] bg-white">
+    <div className="flex h-full min-h-0 flex-col rounded-[22px] bg-white">
       <div className="border-b border-zinc-200 bg-white/95 px-3 py-2 backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <div className="inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 px-2 py-1 text-xs font-semibold text-zinc-800">
