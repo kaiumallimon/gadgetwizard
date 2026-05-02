@@ -16,8 +16,8 @@ const A4_WIDTH = 595;
 const A4_HEIGHT = 842;
 const PAGE_MARGIN = 40;
 
-function money(value: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", {
+function money(value: number, currency = "AUD"): string {
+  return new Intl.NumberFormat("en-AU", {
     style: "currency",
     currency,
   }).format(value);
@@ -87,7 +87,7 @@ async function GETHandler(
       getOrderPaymentForUser(orderId, session.userId),
     ]);
 
-    const effectiveCurrency = payment?.currency ?? "USD";
+    const effectiveCurrency = payment?.currency ?? "AUD";
 
     const doc = await PDFDocument.create();
     const fontRegular = await doc.embedFont(StandardFonts.Helvetica);

@@ -20,7 +20,7 @@ interface ProductCardProps {
 }
 
 function format$(value: number): string {
-  return `$${value.toLocaleString()}`;
+  return `A$${value.toLocaleString()}`;
 }
 
 export function ProductCard({ product }: ProductCardProps) {

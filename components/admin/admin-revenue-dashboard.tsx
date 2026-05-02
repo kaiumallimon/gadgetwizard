@@ -63,9 +63,9 @@ const STATUS_COLORS: Record<OrderStatus, string> = {
 };
 
 function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-AU", {
     style: "currency",
-    currency: "USD",
+    currency: "AUD",
   }).format(value);
 }
 

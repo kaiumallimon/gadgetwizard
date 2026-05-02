@@ -162,9 +162,9 @@ export default async function OrderDetailPage({ params }: Props) {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-zinc-700">${item.unitPrice.toLocaleString()}</TableCell>
+                    <TableCell className="text-zinc-700">A${item.unitPrice.toLocaleString()}</TableCell>
                     <TableCell className="text-zinc-700">{item.quantity}</TableCell>
-                    <TableCell className="text-right font-semibold text-zinc-900">${item.totalPrice.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-semibold text-zinc-900">A${item.totalPrice.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -174,18 +174,18 @@ export default async function OrderDetailPage({ params }: Props) {
           <div className="ml-auto w-full max-w-sm space-y-1 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm">
             <div className="flex justify-between text-zinc-600">
               <span>Subtotal</span>
-              <span>${order.subtotal.toLocaleString()}</span>
+              <span>A${order.subtotal.toLocaleString()}</span>
             </div>
             {order.shippingAmount > 0 && (
               <div className="flex justify-between text-zinc-600">
                 <span>Shipping</span>
-                <span>${order.shippingAmount.toLocaleString()}</span>
+                <span>A${order.shippingAmount.toLocaleString()}</span>
               </div>
             )}
             <div className="border-t border-zinc-200 pt-2" />
             <div className="flex justify-between font-semibold text-zinc-900">
               <span>Total</span>
-              <span className="text-emerald-700">${order.totalAmount.toLocaleString()}</span>
+              <span className="text-emerald-700">A${order.totalAmount.toLocaleString()}</span>
             </div>
           </div>
         </CardContent>
