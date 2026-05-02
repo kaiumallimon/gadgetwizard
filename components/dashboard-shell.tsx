@@ -87,30 +87,13 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
         }
     }, [variant]);
 
-    const refreshPaidOrdersCount = useCallback(async () => {
-        if (variant !== "admin") {
-            return;
-        }
-
-        try {
-            const response = await apiClient.adminGetPaidOrdersCount();
-            setPaidOrdersCount(response.count);
-        } catch {
-            setPaidOrdersCount(0);
-        }
-    }, [variant]);
-
     useEffect(() => {
         if (variant !== "admin") {
             return;
         }
 
         void refreshChatUnreadCount();
-        void refreshPaidOrdersCount();
-
-        const paidOrdersInterval = window.setInterval(() => {
-            void refreshPaidOrdersCount();
-        }, 60_000);
+        const paidOrdersStream = new EventSource("/api/admin/orders/paid-count/stream");
 
         const stream = new EventSource("/api/chat/stream");
 
@@ -129,11 +112,26 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
             // best-effort live updates; the next successful refresh will correct the badge
         };
 
+        paidOrdersStream.onmessage = (event) => {
+            try {
+                const payload = JSON.parse(event.data) as { count?: number };
+                if (typeof payload.count === "number") {
+                    setPaidOrdersCount(payload.count);
+                }
+            } catch {
+                // ignore malformed payloads
+            }
+        };
+
+        paidOrdersStream.onerror = () => {
+            paidOrdersStream.close();
+        };
+
         return () => {
             stream.close();
-            window.clearInterval(paidOrdersInterval);
+            paidOrdersStream.close();
         };
-    }, [refreshChatUnreadCount, refreshPaidOrdersCount, variant]);
+    }, [refreshChatUnreadCount, variant]);
 
     const nav = useMemo(() => {
         if (variant === "admin") {
@@ -331,9 +329,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                                                 </span>
                                             ) : null}
                                             {showPaidOrdersBadge ? (
-                                                <span className="ml-auto inline-flex min-w-6 items-center justify-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
-                                                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                                                    <span>{paidOrdersCount > 99 ? "99+" : paidOrdersCount}</span>
+                                                <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                                                    {paidOrdersCount > 99 ? "99+" : paidOrdersCount}
                                                 </span>
                                             ) : null}
                                         </Link>
