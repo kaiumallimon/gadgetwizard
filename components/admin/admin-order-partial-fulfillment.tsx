@@ -73,11 +73,6 @@ export function AdminOrderPartialFulfillment({ order }: AdminOrderPartialFulfill
   }
 
   async function handleSubmit() {
-    if (!token) {
-      window.alert("Please sign in again to continue.");
-      return;
-    }
-
     setSubmitting(true);
     try {
       const payload = {

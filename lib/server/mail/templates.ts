@@ -150,8 +150,8 @@ export function renderOrderPartialFulfillmentEmail(input: {
         <thead>
           <tr>
             <th align="left" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Item</th>
-            <th align="center" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Delivered</th>
-            <th align="center" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Refunded</th>
+            <th align="center" style="padding:6px 10px;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Delivered</th>
+            <th align="center" style="padding:6px 10px;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Refunded</th>
             <th align="right" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Refund</th>
           </tr>
         </thead>
