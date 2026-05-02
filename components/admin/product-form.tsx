@@ -665,7 +665,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
           <Field label="Brand" required>
             <Select
               value={brandId || ""}
-              onValueChange={(value) => setBrandId(value)}
+              onValueChange={(value) => setBrandId(value ?? "")}
             >
               <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
                 <SelectValue placeholder="Select a brand" />

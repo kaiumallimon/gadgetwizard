@@ -31,6 +31,7 @@ import {
     Users,
     Plus,
     ExternalLink,
+    Activity,
 } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -123,7 +124,8 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Overview",
                         items: [
                             { href: "/admin", label: "Dashboard", icon: Home, exact: true },
-                            { href: "/admin/activity", label: "System Monitoring", icon: BarChart3 },
+                            { href: "/admin/revenue", label: "Revenue Insights", icon: BarChart3 },
+                            { href: "/admin/activity", label: "System Monitoring", icon: Activity },
                             { href: "/", label: "View Storefront", icon: ExternalLink, exact: true }, // Changed icon for clarity
                         ],
                     },

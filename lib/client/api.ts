@@ -20,6 +20,7 @@ import type {
   ChatConversation,
   ChatConversationSourceType,
   ChatMessage,
+  AdminRevenueSnapshot,
 } from "@/lib/client/types";
 import type { CheckoutFulfillmentMethod } from "@/lib/shared/checkout";
 
@@ -765,6 +766,12 @@ export const apiClient = {
   },
 
   // Admin orders
+  async adminGetRevenue(range: string = "30d", token?: string) {
+    const query = new URLSearchParams();
+    query.set("range", range);
+    return apiFetch<{ snapshot: AdminRevenueSnapshot }>(`/api/admin/revenue?${query.toString()}`, { token });
+  },
+
   async adminGetOrders(params: {
     page?: number;
     pageSize?: number;

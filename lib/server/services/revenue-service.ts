@@ -9,6 +9,7 @@ import {
 
 const REVENUE_STATUSES: OrderStatus[] = ["paid", "processing", "shipped", "delivered"];
 const RANGE_DAYS_BY_KEY: Record<string, number> = {
+  "1d": 1,
   "7d": 7,
   "30d": 30,
   "90d": 90,
