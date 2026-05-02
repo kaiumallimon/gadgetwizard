@@ -170,15 +170,20 @@ function Field({
   children,
   className,
   labelClassName,
+  required,
 }: {
   label: ReactNode;
   children: ReactNode;
   className?: string;
   labelClassName?: string;
+  required?: boolean;
 }) {
   return (
     <label className={`flex flex-col gap-1 ${className ?? ""}`.trim()}>
-      <span className={`text-xs transition-colors ${labelClassName ?? "font-medium"}`}>{label}</span>
+      <span className={`text-xs transition-colors ${labelClassName ?? "font-medium"}`}>
+        {label}
+        {required && <span className="text-red-600 ml-0.5">*</span>}
+      </span>
       {children}
     </label>
   );
@@ -235,6 +240,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const createSkuTokenValue = useMemo(() => createSkuToken(), []);
   const currencyHint = mode === "create" ? " ($)" : "";
 
+  const [showAdditional, setShowAdditional] = useState(mode === "edit");
   const [name, setName] = useState(initialProduct?.name ?? "");
   const slug = useMemo(() => slugify(name), [name]);
   const generatedSku = useMemo(() => {
@@ -433,8 +439,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
     const parsedReturnWindowDays = returnWindowDays.trim() ? Number(returnWindowDays) : null;
     const parsedWeightGrams = weightGrams.trim() ? Number(weightGrams) : null;
 
-    if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || images.length === 0) {
-      toast.error("Name, price, stock, category, and at least one uploaded image are required.");
+    if (!name.trim() || !Number.isFinite(parsedPrice) || !Number.isFinite(parsedStock) || !parsedCategoryId || !parsedBrandId || images.length === 0) {
+      toast.error("Name, price, stock, category, brand, and at least one uploaded image are required.");
       return;
     }
 
@@ -605,10 +611,12 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
           <CardTitle>{mode === "create" ? "Create Product" : "Update Product"}</CardTitle>
           <CardDescription>Use rich content for descriptions and structured key/value specifications.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2">
+        <CardContent className="grid gap-4 md:grid-cols-2">
+          {/* Required Core Fields */}
           <Field
             label={`Product Name (${name.length}/${PRODUCT_FIELD_LIMITS.name})`}
             labelClassName={getLimitLabelClass(name.length, PRODUCT_FIELD_LIMITS.name)}
+            required
           >
             <Input
               value={name}
@@ -617,57 +625,8 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               placeholder="Product name"
             />
           </Field>
-          <Field label="Slug">
-            <Input value={slug} placeholder="Auto-generated from product name" readOnly disabled />
-          </Field>
-          <Field
-            label={`Short Description (${shortDescription.length}/${PRODUCT_FIELD_LIMITS.shortDescription})`}
-            labelClassName={getLimitLabelClass(shortDescription.length, PRODUCT_FIELD_LIMITS.shortDescription)}
-          >
-            <Input
-              value={shortDescription}
-              maxLength={PRODUCT_FIELD_LIMITS.shortDescription}
-              onChange={(event) => setShortDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.shortDescription))}
-              placeholder="Short description (optional)"
-            />
-          </Field>
-          <Field label={`Original Price${currencyHint}`}>
-            <Input type="number" min={0} step="0.01" value={price} onChange={(event) => setPrice(event.target.value)} placeholder={mode === "create" ? "Original price in $(e.g. 199.99)" : "Original price"} />
-          </Field>
-          <Field label={`Discounted Price${currencyHint}`}>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={discountedPrice}
-              onChange={(event) => setDiscountedPrice(event.target.value)}
-              placeholder={mode === "create" ? "Discounted price in $(optional)" : "Discounted price (optional)"}
-            />
-          </Field>
-          <Field label={`Wholesale Price${currencyHint}`}>
-            <Input
-              type="number"
-              min={0}
-              step="0.01"
-              value={wholesalePrice}
-              onChange={(event) => setWholesalePrice(event.target.value)}
-              placeholder={mode === "create" ? "Wholesale price in $(optional)" : "Wholesale price (optional)"}
-            />
-          </Field>
-          <Field label="Wholesale Trigger Quantity">
-            <Input
-              type="number"
-              min={2}
-              step="1"
-              value={wholesaleMinQuantity}
-              onChange={(event) => setWholesaleMinQuantity(event.target.value)}
-              placeholder="Quantity where wholesale pricing starts"
-            />
-          </Field>
-          <Field label="Stock">
-            <Input type="number" min={0} value={stock} onChange={(event) => setStock(event.target.value)} placeholder="Stock" />
-          </Field>
-          <Field label="Category">
+
+          <Field label="Category" required>
             <Select value={categoryId} onValueChange={(value) => setCategoryId(value ?? "")}>
               <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
                 <SelectValue />
@@ -681,16 +640,37 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               </SelectContent>
             </Select>
           </Field>
-          <Field label="Brand">
+
+          <Field label={`Original Price${currencyHint}`} required>
+            <Input
+              type="number"
+              min={0}
+              step="0.01"
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              placeholder={mode === "create" ? "Original price in $(e.g. 199.99)" : "Original price"}
+            />
+          </Field>
+
+          <Field label="Stock" required>
+            <Input
+              type="number"
+              min={0}
+              value={stock}
+              onChange={(event) => setStock(event.target.value)}
+              placeholder="Stock"
+            />
+          </Field>
+
+          <Field label="Brand" required>
             <Select
-              value={brandId || "none"}
-              onValueChange={(value) => setBrandId(!value || value === "none" ? "" : value)}
+              value={brandId || ""}
+              onValueChange={(value) => setBrandId(value)}
             >
               <SelectTrigger className="h-10 w-full rounded-md border border-zinc-200 bg-white px-3 text-sm text-zinc-900">
-                <SelectValue />
+                <SelectValue placeholder="Select a brand" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">No brand</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem key={brand.id} value={String(brand.id)}>
                     {brand.name}
@@ -699,140 +679,13 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               </SelectContent>
             </Select>
           </Field>
-          <Field label="SKU">
-            <Input value={generatedSku} placeholder="Auto-generated unique SKU (GWIZ)" readOnly disabled />
-          </Field>
-          <Field
-            label={`Model Number (${modelNumber.length}/${PRODUCT_FIELD_LIMITS.modelNumber})`}
-            labelClassName={getLimitLabelClass(modelNumber.length, PRODUCT_FIELD_LIMITS.modelNumber)}
-          >
-            <Input
-              value={modelNumber}
-              maxLength={PRODUCT_FIELD_LIMITS.modelNumber}
-              onChange={(event) => setModelNumber(clampText(event.target.value, PRODUCT_FIELD_LIMITS.modelNumber))}
-              placeholder="Model number (optional)"
-            />
-          </Field>
-          <Field
-            label={`Color (${color.length}/${PRODUCT_FIELD_LIMITS.color})`}
-            labelClassName={getLimitLabelClass(color.length, PRODUCT_FIELD_LIMITS.color)}
-          >
-            <Input
-              value={color}
-              maxLength={PRODUCT_FIELD_LIMITS.color}
-              onChange={(event) => setColor(clampText(event.target.value, PRODUCT_FIELD_LIMITS.color))}
-              placeholder="Color (optional)"
-            />
-          </Field>
-          <Field label="Warranty Months">
-            <Input
-              type="number"
-              min={0}
-              value={warrantyMonths}
-              onChange={(event) => setWarrantyMonths(event.target.value)}
-              placeholder="Warranty months"
-            />
-          </Field>
-          <Field label="Return Window (Days)">
-            <Input
-              type="number"
-              min={0}
-              value={returnWindowDays}
-              onChange={(event) => setReturnWindowDays(event.target.value)}
-              placeholder="Return window (days)"
-            />
-          </Field>
-          <Field label="Weight (Grams)">
-            <Input
-              type="number"
-              min={0}
-              value={weightGrams}
-              onChange={(event) => setWeightGrams(event.target.value)}
-              placeholder="Weight (grams)"
-            />
-          </Field>
-          <Field
-            label={`Tags (${parsedTags.length}/${TAG_LIMITS.maxTags}, each <= ${TAG_LIMITS.maxTagLength} chars)`}
-            labelClassName={
-              parsedTags.length >= TAG_LIMITS.maxTags || maxTagLength >= TAG_LIMITS.maxTagLength
-                ? "font-semibold text-red-600 motion-safe:animate-pulse"
-                : parsedTags.length >= Math.floor(TAG_LIMITS.maxTags * 0.75) || maxTagLength >= Math.floor(TAG_LIMITS.maxTagLength * 0.85)
-                  ? "font-semibold text-orange-600"
-                  : "font-medium text-zinc-700"
-            }
-          >
-            <Input
-              value={tagsInput}
-              onChange={(event) => setTagsInput(clampTagsInput(event.target.value))}
-              placeholder="Tags (comma separated)"
-            />
-          </Field>
-          <Field
-            label={`SEO Title (${metaTitle.length}/${PRODUCT_FIELD_LIMITS.metaTitle})`}
-            labelClassName={getLimitLabelClass(metaTitle.length, PRODUCT_FIELD_LIMITS.metaTitle)}
-          >
-            <Input
-              value={metaTitle}
-              maxLength={PRODUCT_FIELD_LIMITS.metaTitle}
-              onChange={(event) => setMetaTitle(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaTitle))}
-              placeholder="SEO title (optional)"
-            />
-          </Field>
-          <Field
-            label={`SEO Description (${metaDescription.length}/${PRODUCT_FIELD_LIMITS.metaDescription})`}
-            className="col-span-full"
-            labelClassName={getLimitLabelClass(metaDescription.length, PRODUCT_FIELD_LIMITS.metaDescription)}
-          >
-            <Textarea
-              value={metaDescription}
-              maxLength={PRODUCT_FIELD_LIMITS.metaDescription}
-              onChange={(event) => setMetaDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaDescription))}
-              className="min-h-22.5"
-              placeholder="SEO description (optional)"
-            />
-          </Field>
-          <Field
-            label={`Highlight Points (${highlightLines.length}/${HIGHLIGHT_LIMITS.maxLines}, each <= ${HIGHLIGHT_LIMITS.maxLineLength} chars)`}
-            className="col-span-full"
-            labelClassName={
-              highlightLines.length >= HIGHLIGHT_LIMITS.maxLines || maxHighlightLineLength >= HIGHLIGHT_LIMITS.maxLineLength
-                ? "font-semibold text-red-600 motion-safe:animate-pulse"
-                : highlightLines.length >= Math.floor(HIGHLIGHT_LIMITS.maxLines * 0.75) || maxHighlightLineLength >= Math.floor(HIGHLIGHT_LIMITS.maxLineLength * 0.85)
-                  ? "font-semibold text-orange-600"
-                  : "font-medium text-zinc-700"
-            }
-          >
-            <Textarea
-              value={highlightPointsInput}
-              onChange={(event) => setHighlightPointsInput(clampHighlightPointsInput(event.target.value))}
-              className="min-h-25"
-              placeholder="Highlight points (one per line)"
-            />
-          </Field>
 
-          <div className="col-span-full grid gap-2 rounded-md border border-zinc-200 p-3 md:grid-cols-2 xl:grid-cols-3">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isFeatured} onChange={(event) => setIsFeatured(event.target.checked)} /> Featured</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isNewArrival} onChange={(event) => setIsNewArrival(event.target.checked)} /> New Arrival</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isBestSeller} onChange={(event) => setIsBestSeller(event.target.checked)} /> Best Seller</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isTopRated} onChange={(event) => setIsTopRated(event.target.checked)} /> Top Rated</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isTrending} onChange={(event) => setIsTrending(event.target.checked)} /> Trending</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isLimitedStock} onChange={(event) => setIsLimitedStock(event.target.checked)} /> Limited Stock</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isFreeDelivery} onChange={(event) => setIsFreeDelivery(event.target.checked)} /> Free Delivery</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isCashOnDelivery} onChange={(event) => setIsCashOnDelivery(event.target.checked)} /> Cash On Delivery</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isEmiAvailable} onChange={(event) => setIsEmiAvailable(event.target.checked)} /> EMI Available</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isOfficialWarranty} onChange={(event) => setIsOfficialWarranty(event.target.checked)} /> Official Warranty</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isExchangeAvailable} onChange={(event) => setIsExchangeAvailable(event.target.checked)} /> Exchange Available</label>
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={isPreorder} onChange={(event) => setIsPreorder(event.target.checked)} /> Preorder</label>
-          </div>
-
-          <label className="col-span-full flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
-            <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
-            Active product
-          </label>
-
+          {/* Product Images - Required Section */}
           <div className="col-span-full space-y-3 rounded-md border border-zinc-200 p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-medium text-zinc-900">Product Images (CDN Upload)</p>
+              <p className="text-sm font-medium text-zinc-900">
+                Product Images (CDN Upload) <span className="text-red-600 ml-0.5">*</span>
+              </p>
               <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-zinc-200 px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50">
                 <Upload className="h-3.5 w-3.5" />
                 {uploadingImage ? "Uploading..." : "Upload Image"}
@@ -859,7 +712,11 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
                   <article key={`${imageUrl}-${index}`} className="overflow-hidden rounded-md border border-zinc-200">
                     <div className="relative h-32 w-full bg-zinc-50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={imageUrl} alt={`Product image ${index + 1}`} className="h-full w-full object-contain" />
+                      <img
+                        src={imageUrl}
+                        alt={`Product image ${index + 1}`}
+                        className="h-full w-full object-contain"
+                      />
                     </div>
                     <div className="flex items-center justify-between gap-2 border-t border-zinc-200 p-2">
                       <p className="line-clamp-1 text-xs text-zinc-500">Image {index + 1}</p>
@@ -872,82 +729,406 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Rich Description</CardTitle>
-          <CardDescription>Blog-like description area with headings, lists, links, and formatting controls.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <RichTextEditor
-            value={description}
-            onChange={setDescription}
-            onImageUpload={handleDescriptionImageUpload}
-          />
-        </CardContent>
-      </Card>
+          {!showAdditional && (
+            <div className="col-span-full flex justify-center pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full border-dashed"
+                onClick={() => setShowAdditional(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Additional Information
+              </Button>
+            </div>
+          )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Specifications</CardTitle>
-          <CardDescription>
-            Organize technical details into titled sections like Display and Processor.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {specGroups.map((group, groupIndex) => (
-            <div key={`group-${groupIndex}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
-              <div className="flex items-end gap-2">
-                <label className="flex-1 space-y-1">
-                  <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Section Title</span>
-                  <Input
-                    value={group.title}
-                    onChange={(event) => updateSpecGroup(groupIndex, { title: event.target.value })}
-                    placeholder="Section title (e.g., Display)"
-                  />
-                </label>
-                <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecGroup(groupIndex)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+          {showAdditional && (
+            <>
+              <div className="col-span-full border-t border-zinc-200 pt-4">
+                <h3 className="text-sm font-semibold text-zinc-900">Additional Information</h3>
               </div>
 
-              {group.rows.map((row, rowIndex) => (
-                <div key={`row-${groupIndex}-${rowIndex}`} className="flex items-end gap-2 md:grid md:grid-cols-[1fr_1fr_auto]">
-                  <label className="flex-1 space-y-1">
-                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Key</span>
-                    <Input
-                      value={row.key}
-                      onChange={(event) => updateSpecRow(groupIndex, rowIndex, { key: event.target.value })}
-                      placeholder="Key"
-                    />
-                  </label>
-                  <label className="flex-1 space-y-1">
-                    <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Value</span>
-                    <Input
-                      value={row.value}
-                      onChange={(event) => updateSpecRow(groupIndex, rowIndex, { value: event.target.value })}
-                      placeholder="Value"
-                    />
-                  </label>
-                  <Button type="button" variant="destructive" size="icon" onClick={() => removeSpecRow(groupIndex, rowIndex)}>
-                    <Trash2 className="h-4 w-4" />
+              <Field label="Slug">
+                <Input value={slug} placeholder="Auto-generated from product name" readOnly disabled />
+              </Field>
+
+              <Field
+                label={`Short Description (${shortDescription.length}/${PRODUCT_FIELD_LIMITS.shortDescription})`}
+                labelClassName={getLimitLabelClass(shortDescription.length, PRODUCT_FIELD_LIMITS.shortDescription)}
+              >
+                <Input
+                  value={shortDescription}
+                  maxLength={PRODUCT_FIELD_LIMITS.shortDescription}
+                  onChange={(event) =>
+                    setShortDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.shortDescription))
+                  }
+                  placeholder="Short description (optional)"
+                />
+              </Field>
+
+              <Field label={`Discounted Price${currencyHint}`}>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={discountedPrice}
+                  onChange={(event) => setDiscountedPrice(event.target.value)}
+                  placeholder={
+                    mode === "create" ? "Discounted price in $(optional)" : "Discounted price (optional)"
+                  }
+                />
+              </Field>
+
+              <Field label={`Wholesale Price${currencyHint}`}>
+                <Input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={wholesalePrice}
+                  onChange={(event) => setWholesalePrice(event.target.value)}
+                  placeholder={mode === "create" ? "Wholesale price in $(optional)" : "Wholesale price (optional)"}
+                />
+              </Field>
+
+              <Field label="Wholesale Trigger Quantity">
+                <Input
+                  type="number"
+                  min={2}
+                  step="1"
+                  value={wholesaleMinQuantity}
+                  onChange={(event) => setWholesaleMinQuantity(event.target.value)}
+                  placeholder="Quantity where wholesale pricing starts"
+                />
+              </Field>
+
+              <Field label="SKU">
+                <Input value={generatedSku} placeholder="Auto-generated unique SKU (GWIZ)" readOnly disabled />
+              </Field>
+
+              <Field
+                label={`Model Number (${modelNumber.length}/${PRODUCT_FIELD_LIMITS.modelNumber})`}
+                labelClassName={getLimitLabelClass(modelNumber.length, PRODUCT_FIELD_LIMITS.modelNumber)}
+              >
+                <Input
+                  value={modelNumber}
+                  maxLength={PRODUCT_FIELD_LIMITS.modelNumber}
+                  onChange={(event) => setModelNumber(clampText(event.target.value, PRODUCT_FIELD_LIMITS.modelNumber))}
+                  placeholder="Model number (optional)"
+                />
+              </Field>
+
+              <Field
+                label={`Color (${color.length}/${PRODUCT_FIELD_LIMITS.color})`}
+                labelClassName={getLimitLabelClass(color.length, PRODUCT_FIELD_LIMITS.color)}
+              >
+                <Input
+                  value={color}
+                  maxLength={PRODUCT_FIELD_LIMITS.color}
+                  onChange={(event) => setColor(clampText(event.target.value, PRODUCT_FIELD_LIMITS.color))}
+                  placeholder="Color (optional)"
+                />
+              </Field>
+
+              <Field label="Warranty Months">
+                <Input
+                  type="number"
+                  min={0}
+                  value={warrantyMonths}
+                  onChange={(event) => setWarrantyMonths(event.target.value)}
+                  placeholder="Warranty months"
+                />
+              </Field>
+
+              <Field label="Return Window (Days)">
+                <Input
+                  type="number"
+                  min={0}
+                  value={returnWindowDays}
+                  onChange={(event) => setReturnWindowDays(event.target.value)}
+                  placeholder="Return window (days)"
+                />
+              </Field>
+
+              <Field label="Weight (Grams)">
+                <Input
+                  type="number"
+                  min={0}
+                  value={weightGrams}
+                  onChange={(event) => setWeightGrams(event.target.value)}
+                  placeholder="Weight (grams)"
+                />
+              </Field>
+
+              <Field
+                label={`Tags (${parsedTags.length}/${TAG_LIMITS.maxTags}, each <= ${TAG_LIMITS.maxTagLength} chars)`}
+                labelClassName={
+                  parsedTags.length >= TAG_LIMITS.maxTags || maxTagLength >= TAG_LIMITS.maxTagLength
+                    ? "font-semibold text-red-600 motion-safe:animate-pulse"
+                    : parsedTags.length >= Math.floor(TAG_LIMITS.maxTags * 0.75) ||
+                        maxTagLength >= Math.floor(TAG_LIMITS.maxTagLength * 0.85)
+                      ? "font-semibold text-orange-600"
+                      : "font-medium text-zinc-700"
+                }
+              >
+                <Input
+                  value={tagsInput}
+                  onChange={(event) => setTagsInput(clampTagsInput(event.target.value))}
+                  placeholder="Tags (comma separated)"
+                />
+              </Field>
+
+              <Field
+                label={`SEO Title (${metaTitle.length}/${PRODUCT_FIELD_LIMITS.metaTitle})`}
+                labelClassName={getLimitLabelClass(metaTitle.length, PRODUCT_FIELD_LIMITS.metaTitle)}
+              >
+                <Input
+                  value={metaTitle}
+                  maxLength={PRODUCT_FIELD_LIMITS.metaTitle}
+                  onChange={(event) => setMetaTitle(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaTitle))}
+                  placeholder="SEO title (optional)"
+                />
+              </Field>
+
+              <Field
+                label={`SEO Description (${metaDescription.length}/${PRODUCT_FIELD_LIMITS.metaDescription})`}
+                className="col-span-full"
+                labelClassName={getLimitLabelClass(metaDescription.length, PRODUCT_FIELD_LIMITS.metaDescription)}
+              >
+                <Textarea
+                  value={metaDescription}
+                  maxLength={PRODUCT_FIELD_LIMITS.metaDescription}
+                  onChange={(event) =>
+                    setMetaDescription(clampText(event.target.value, PRODUCT_FIELD_LIMITS.metaDescription))
+                  }
+                  className="min-h-22.5"
+                  placeholder="SEO description (optional)"
+                />
+              </Field>
+
+              <Field
+                label={`Highlight Points (${highlightLines.length}/${HIGHLIGHT_LIMITS.maxLines}, each <= ${HIGHLIGHT_LIMITS.maxLineLength} chars)`}
+                className="col-span-full"
+                labelClassName={
+                  highlightLines.length >= HIGHLIGHT_LIMITS.maxLines ||
+                  maxHighlightLineLength >= HIGHLIGHT_LIMITS.maxLineLength
+                    ? "font-semibold text-red-600 motion-safe:animate-pulse"
+                    : highlightLines.length >= Math.floor(HIGHLIGHT_LIMITS.maxLines * 0.75) ||
+                        maxHighlightLineLength >= Math.floor(HIGHLIGHT_LIMITS.maxLineLength * 0.85)
+                      ? "font-semibold text-orange-600"
+                      : "font-medium text-zinc-700"
+                }
+              >
+                <Textarea
+                  value={highlightPointsInput}
+                  onChange={(event) => setHighlightPointsInput(clampHighlightPointsInput(event.target.value))}
+                  className="min-h-25"
+                  placeholder="Highlight points (one per line)"
+                />
+              </Field>
+
+              <div className="col-span-full grid gap-2 rounded-md border border-zinc-200 p-3 md:grid-cols-2 xl:grid-cols-3">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isFeatured}
+                    onChange={(event) => setIsFeatured(event.target.checked)}
+                  />{" "}
+                  Featured
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isNewArrival}
+                    onChange={(event) => setIsNewArrival(event.target.checked)}
+                  />{" "}
+                  New Arrival
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isBestSeller}
+                    onChange={(event) => setIsBestSeller(event.target.checked)}
+                  />{" "}
+                  Best Seller
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isTopRated}
+                    onChange={(event) => setIsTopRated(event.target.checked)}
+                  />{" "}
+                  Top Rated
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isTrending}
+                    onChange={(event) => setIsTrending(event.target.checked)}
+                  />{" "}
+                  Trending
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isLimitedStock}
+                    onChange={(event) => setIsLimitedStock(event.target.checked)}
+                  />{" "}
+                  Limited Stock
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isFreeDelivery}
+                    onChange={(event) => setIsFreeDelivery(event.target.checked)}
+                  />{" "}
+                  Free Delivery
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isCashOnDelivery}
+                    onChange={(event) => setIsCashOnDelivery(event.target.checked)}
+                  />{" "}
+                  Cash On Delivery
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isEmiAvailable}
+                    onChange={(event) => setIsEmiAvailable(event.target.checked)}
+                  />{" "}
+                  EMI Available
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isOfficialWarranty}
+                    onChange={(event) => setIsOfficialWarranty(event.target.checked)}
+                  />{" "}
+                  Official Warranty
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isExchangeAvailable}
+                    onChange={(event) => setIsExchangeAvailable(event.target.checked)}
+                  />{" "}
+                  Exchange Available
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={isPreorder}
+                    onChange={(event) => setIsPreorder(event.target.checked)}
+                  />{" "}
+                  Preorder
+                </label>
+              </div>
+
+              <label className="col-span-full flex items-center gap-2 rounded-md border border-zinc-200 px-3 py-2 text-sm">
+                <input type="checkbox" checked={isActive} onChange={(event) => setIsActive(event.target.checked)} />
+                Active product
+              </label>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {showAdditional && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle>Rich Description</CardTitle>
+              <CardDescription>
+                Blog-like description area with headings, lists, links, and formatting controls.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RichTextEditor
+                value={description}
+                onChange={setDescription}
+                onImageUpload={handleDescriptionImageUpload}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Specifications</CardTitle>
+              <CardDescription>
+                Organize technical details into titled sections like Display and Processor.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {specGroups.map((group, groupIndex) => (
+                <div key={`group-${groupIndex}`} className="space-y-3 rounded-md border border-zinc-200 p-3">
+                  <div className="flex items-end gap-2">
+                    <label className="flex-1 space-y-1">
+                      <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">
+                        Section Title
+                      </span>
+                      <Input
+                        value={group.title}
+                        onChange={(event) => updateSpecGroup(groupIndex, { title: event.target.value })}
+                        placeholder="Section title (e.g., Display)"
+                      />
+                    </label>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeSpecGroup(groupIndex)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  {group.rows.map((row, rowIndex) => (
+                    <div
+                      key={`row-${groupIndex}-${rowIndex}`}
+                      className="flex items-end gap-2 md:grid md:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <label className="flex-1 space-y-1">
+                        <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Key</span>
+                        <Input
+                          value={row.key}
+                          onChange={(event) => updateSpecRow(groupIndex, rowIndex, { key: event.target.value })}
+                          placeholder="Key"
+                        />
+                      </label>
+                      <label className="flex-1 space-y-1">
+                        <span className="text-xs font-medium uppercase tracking-[0.12em] text-zinc-500">Value</span>
+                        <Input
+                          value={row.value}
+                          onChange={(event) => updateSpecRow(groupIndex, rowIndex, { value: event.target.value })}
+                          placeholder="Value"
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeSpecRow(groupIndex, rowIndex)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+
+                  <Button type="button" variant="outline" onClick={() => addSpecRow(groupIndex)}>
+                    <Plus className="h-4 w-4" /> Add Entry
                   </Button>
                 </div>
               ))}
 
-              <Button type="button" variant="outline" onClick={() => addSpecRow(groupIndex)}>
-                <Plus className="h-4 w-4" /> Add Entry
+              <Button type="button" variant="outline" onClick={addSpecGroup}>
+                <Plus className="h-4 w-4" /> Add Specification Section
               </Button>
-            </div>
-          ))}
-
-          <Button type="button" variant="outline" onClick={addSpecGroup}>
-            <Plus className="h-4 w-4" /> Add Specification Section
-          </Button>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={busy}>
