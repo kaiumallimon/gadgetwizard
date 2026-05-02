@@ -11,6 +11,8 @@ export interface OrderItemRecord {
   product_sku: string | null;
   product_image_url: string | null;
   quantity: number;
+  delivered_quantity: number;
+  refunded_quantity: number;
   is_wholesale_item: number;
   unit_price: number;
   wholesale_unit_price: number | null;
@@ -311,6 +313,22 @@ export async function updateOrderStatus(
     await execute(
       `UPDATE orders SET status = ?, updated_at = NOW() WHERE id = ?`,
       [status, orderId],
+    );
+  }
+}
+
+export async function updateOrderItemFulfillment(
+  orderId: number,
+  updates: Array<{ orderItemId: number; deliveredQuantity: number; refundedQuantity: number }>,
+  connection?: PoolConnection,
+): Promise<void> {
+  for (const update of updates) {
+    await executeWithConnection(
+      `UPDATE order_items
+       SET delivered_quantity = ?, refunded_quantity = ?
+       WHERE id = ? AND order_id = ?`,
+      [update.deliveredQuantity, update.refundedQuantity, update.orderItemId, orderId],
+      connection,
     );
   }
 }

@@ -6,7 +6,8 @@ import { requireRole } from "@/lib/server/auth/guards";
 import { handleRouteError, jsonResponse, noStoreHeaders } from "@/lib/server/core/http";
 import { badRequest } from "@/lib/server/core/errors";
 import { parseJsonBody } from "@/lib/server/core/validation";
-import { getAdminOrderById, updateAdminOrderStatus } from "@/lib/server/services/order-service";
+import { adminOrderPartialFulfillmentSchema } from "@/lib/server/schemas";
+import { applyAdminOrderPartialFulfillment, getAdminOrderById, updateAdminOrderStatus } from "@/lib/server/services/order-service";
 import type { OrderStatus } from "@/lib/client/types";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,36 @@ async function PUTHandler(
   }
 }
 
+async function POSTHandler(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await requireRole(request, ["admin"]);
+    const { id } = await params;
+    const orderId = Number(id);
+    if (!Number.isInteger(orderId) || orderId <= 0) {
+      throw badRequest("Invalid order ID");
+    }
+
+    const body = await parseJsonBody(request, adminOrderPartialFulfillmentSchema);
+    const result = await applyAdminOrderPartialFulfillment({
+      orderId,
+      adminUserId: session.userId,
+      items: body.items,
+      reason: body.reason,
+    });
+
+    return jsonResponse({
+      item: result.order,
+      refund: result.refund,
+      emailSent: result.emailSent,
+    }, 200, noStoreHeaders());
+  } catch (error) {
+    return handleRouteError(error);
+  }
+}
+
 async function GETHandler(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -60,3 +91,4 @@ async function GETHandler(
 
 export const GET = withRouteAudit(GETHandler);
 export const PUT = withRouteAudit(PUTHandler);
+export const POST = withRouteAudit(POSTHandler);

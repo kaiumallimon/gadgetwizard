@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { getEnv } from "@/lib/server/core/env";
 import { badRequest, notFound } from "@/lib/server/core/errors";
 import { withTransaction } from "@/lib/server/core/db";
+import { renderOrderPartialFulfillmentEmail } from "@/lib/server/mail/templates";
+import { assertSmtpConfigured, sendSmtpMail, verifySmtpTransport } from "@/lib/server/mail/smtp";
 import {
   calculateCheckoutTotal,
   getShowroomPickupSnapshot,
@@ -28,6 +30,7 @@ import {
   lockProductsForCheckout,
   toOrderItemImageFromProductRow,
   updateOrderStatus,
+  updateOrderItemFulfillment,
   type CheckoutProductRow,
   type ListOrdersFilter,
   type OrderItemRecord,
@@ -43,6 +46,7 @@ import {
   type OrderPaymentRecord,
   upsertOrderPayment,
 } from "@/lib/server/repositories/order-payment-repository";
+import { createOrderRefund } from "@/lib/server/repositories/order-refund-repository";
 import { getBusinessAccountById } from "@/lib/server/repositories/business-account-repository";
 import { getCartByUserId, type CartItemRecord } from "@/lib/server/repositories/cart-repository";
 import { getBusinessCheckoutContext } from "@/lib/server/services/business-account-service";
@@ -200,6 +204,10 @@ async function resolveShippingAddress(
 
 function centsToAmount(value: number | null | undefined): number {
   return Number(((value ?? 0) / 100).toFixed(2));
+}
+
+function amountToCents(value: number): number {
+  return Math.round(value * 100);
 }
 
 function resolveRegularUnitPrice(input: { unitPrice: number; appliedDiscountedPrice: number | null }): number {
@@ -657,6 +665,201 @@ export async function updateAdminOrderStatus(
   return mapOrderRecord(updated, items);
 }
 
+function buildPartialFulfillmentText(input: {
+  name: string;
+  orderId: number;
+  refundAmount: number;
+  items: Array<{
+    productName: string;
+    deliveredQuantity: number;
+    refundedQuantity: number;
+    refundTotal: number;
+  }>;
+  orderUrl?: string;
+}): string {
+  const lines: string[] = [
+    `Hello ${input.name},`,
+    "",
+    `We could only fulfill part of your order #${input.orderId}.`,
+    `Refund total: A$${input.refundAmount.toFixed(2)}`,
+    "",
+    "Item summary:",
+  ];
+
+  for (const item of input.items) {
+    lines.push(
+      `- ${item.productName}: delivered ${item.deliveredQuantity}, refunded ${item.refundedQuantity}, refund A$${item.refundTotal.toFixed(2)}`,
+    );
+  }
+
+  lines.push("", "We apologize for the inconvenience.");
+
+  if (input.orderUrl) {
+    lines.push("", `View your order: ${input.orderUrl}`);
+  }
+
+  return lines.join("\n");
+}
+
+export async function applyAdminOrderPartialFulfillment(input: {
+  orderId: number;
+  adminUserId: number;
+  items: Array<{ orderItemId: number; deliveredQuantity: number }>;
+  reason?: string;
+}): Promise<{ order: Order; refund: { amount: number; currency: string; stripeRefundId: string }; emailSent: boolean }> {
+  assertSmtpConfigured();
+  try {
+    await verifySmtpTransport();
+  } catch {
+    throw badRequest("SMTP verification failed. Check SMTP settings and retry.");
+  }
+
+  const order = await getOrderById(input.orderId);
+  if (!order) throw notFound("Order not found");
+  if (!order.stripe_payment_intent_id) {
+    throw badRequest("This order is missing a Stripe payment intent.");
+  }
+
+  if (order.status === "pending_payment" || order.status === "cancelled" || order.status === "refunded") {
+    throw badRequest("This order cannot be partially fulfilled in its current status.");
+  }
+
+  const itemRows = await getOrderItemsByOrderId(order.id);
+  if (itemRows.length === 0) {
+    throw badRequest("Order does not contain any items.");
+  }
+
+  const inputMap = new Map<number, { orderItemId: number; deliveredQuantity: number }>();
+  for (const item of input.items) {
+    if (inputMap.has(item.orderItemId)) {
+      throw badRequest("Duplicate order item IDs are not allowed.");
+    }
+    inputMap.set(item.orderItemId, item);
+  }
+
+  if (inputMap.size !== itemRows.length) {
+    throw badRequest("All order items must be included for partial fulfillment.");
+  }
+
+  const updates: Array<{ orderItemId: number; deliveredQuantity: number; refundedQuantity: number }> = [];
+  const refundItems: Array<{
+    productName: string;
+    deliveredQuantity: number;
+    refundedQuantity: number;
+    refundTotal: number;
+  }> = [];
+  let refundCents = 0;
+
+  for (const row of itemRows) {
+    if (row.delivered_quantity > 0 || row.refunded_quantity > 0) {
+      throw badRequest("This order already has fulfillment adjustments.");
+    }
+
+    const entry = inputMap.get(row.id);
+    if (!entry) {
+      throw badRequest("Partial fulfillment data is missing for one or more items.");
+    }
+
+    const deliveredQuantity = entry.deliveredQuantity;
+    if (!Number.isInteger(deliveredQuantity) || deliveredQuantity < 0 || deliveredQuantity > row.quantity) {
+      throw badRequest(`Invalid delivered quantity for ${row.product_name}.`);
+    }
+
+    const refundedQuantity = row.quantity - deliveredQuantity;
+    const unitCents = amountToCents(Number(row.unit_price));
+    const lineRefundCents = refundedQuantity * unitCents;
+    refundCents += lineRefundCents;
+
+    updates.push({
+      orderItemId: row.id,
+      deliveredQuantity,
+      refundedQuantity,
+    });
+
+    if (refundedQuantity > 0) {
+      refundItems.push({
+        productName: row.product_name,
+        deliveredQuantity,
+        refundedQuantity,
+        refundTotal: (refundedQuantity * Number(row.unit_price)),
+      });
+    }
+  }
+
+  if (refundCents <= 0) {
+    throw badRequest("No refund amount was calculated. Reduce delivered quantities to issue a refund.");
+  }
+
+  const stripe = getStripe();
+  const refund = await stripe.refunds.create({
+    payment_intent: order.stripe_payment_intent_id,
+    amount: refundCents,
+    reason: "requested_by_customer",
+    metadata: {
+      orderId: String(order.id),
+      adminUserId: String(input.adminUserId),
+      type: "partial_fulfillment",
+    },
+  });
+
+  const refundAmount = centsToAmount(refund.amount);
+
+  await withTransaction(async (connection) => {
+    await updateOrderItemFulfillment(order.id, updates, connection);
+    await createOrderRefund({
+      orderId: order.id,
+      userId: order.user_id,
+      adminUserId: input.adminUserId,
+      provider: "stripe",
+      providerRefundId: refund.id,
+      currency: refund.currency ?? "aud",
+      amount: refundAmount,
+      reason: input.reason ?? null,
+    }, connection);
+  });
+
+  const updatedOrder = await getAdminOrderById(order.id);
+
+  const env = getEnv();
+  const orderUrl = env.APP_BASE_URL ? `${env.APP_BASE_URL}/dashboard/orders/${order.id}` : undefined;
+  let emailSent = false;
+  if (order.user_email) {
+    try {
+      await sendSmtpMail({
+        to: order.user_email,
+        subject: `Partial refund processed for order #${order.id}`,
+        html: renderOrderPartialFulfillmentEmail({
+          name: order.user_name ?? "there",
+          orderId: order.id,
+          refundAmount,
+          items: refundItems,
+          orderUrl,
+        }),
+        text: buildPartialFulfillmentText({
+          name: order.user_name ?? "there",
+          orderId: order.id,
+          refundAmount,
+          items: refundItems,
+          orderUrl,
+        }),
+      });
+      emailSent = true;
+    } catch {
+      emailSent = false;
+    }
+  }
+
+  return {
+    order: updatedOrder,
+    refund: {
+      amount: refundAmount,
+      currency: refund.currency ?? "aud",
+      stripeRefundId: refund.id,
+    },
+    emailSent,
+  };
+}
+
 function mapOrderRecord(
   row: OrderRecord,
   itemRows: OrderItemRecord[],
@@ -696,6 +899,8 @@ function mapOrderItem(row: OrderItemRecord): OrderItem {
     productSku: row.product_sku,
     productImageUrl: row.product_image_url,
     quantity: row.quantity,
+    deliveredQuantity: Number(row.delivered_quantity ?? 0),
+    refundedQuantity: Number(row.refunded_quantity ?? 0),
     isWholesaleItem: Number(row.is_wholesale_item) === 1,
     unitPrice: Number(row.unit_price),
     wholesaleUnitPrice: row.wholesale_unit_price === null ? null : Number(row.wholesale_unit_price),

@@ -253,6 +253,8 @@ export interface OrderItem {
   productSku: string | null;
   productImageUrl: string | null;
   quantity: number;
+  deliveredQuantity: number;
+  refundedQuantity: number;
   isWholesaleItem: boolean;
   unitPrice: number;
   wholesaleUnitPrice: number | null;

@@ -801,6 +801,24 @@ export const apiClient = {
     });
   },
 
+  async adminPartialFulfillOrder(
+    id: number,
+    payload: {
+      items: Array<{ orderItemId: number; deliveredQuantity: number }>;
+      reason?: string;
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ item: Order; refund: { amount: number; currency: string; stripeRefundId: string }; emailSent: boolean }>(
+      `/api/admin/orders/${id}`,
+      {
+        method: "POST",
+        token,
+        body: JSON.stringify(payload),
+      },
+    );
+  },
+
   async getMyBusinessAccount(token?: string) {
     return apiFetch<{ item: BusinessAccount | null }>("/api/me/business-account", { token });
   },

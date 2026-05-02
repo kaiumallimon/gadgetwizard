@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireServerRole } from "@/lib/server/auth/server-session";
 import { getAdminOrderById } from "@/lib/server/services/order-service";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AdminOrderPartialFulfillment } from "@/components/admin/admin-order-partial-fulfillment";
 
 export const dynamic = "force-dynamic";
 
@@ -167,6 +168,8 @@ export default async function AdminOrderDetailPage({ params }: Props) {
           </div>
         </CardContent>
       </Card>
+
+      <AdminOrderPartialFulfillment order={order} />
 
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

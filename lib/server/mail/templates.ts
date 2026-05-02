@@ -122,3 +122,65 @@ export function renderNewsletterCampaignEmail(input: {
     footerNote: "You are receiving this email because you subscribed to GadgetWizard newsletter updates.",
   });
 }
+
+export function renderOrderPartialFulfillmentEmail(input: {
+  name: string;
+  orderId: number;
+  refundAmount: number;
+  items: Array<{
+    productName: string;
+    deliveredQuantity: number;
+    refundedQuantity: number;
+    refundTotal: number;
+  }>;
+  orderUrl?: string;
+}): string {
+  const itemRows = input.items.map((item) => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid #e4e4e7;color:#18181b;font-size:14px;">${item.productName}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e4e4e7;color:#3f3f46;font-size:13px;text-align:center;">${item.deliveredQuantity}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e4e4e7;color:#3f3f46;font-size:13px;text-align:center;">${item.refundedQuantity}</td>
+      <td style="padding:10px 0;border-bottom:1px solid #e4e4e7;color:#111827;font-size:13px;text-align:right;">A$${item.refundTotal.toFixed(2)}</td>
+    </tr>
+  `).join("");
+
+  const tableHtml = input.items.length > 0
+    ? `
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:16px;">
+        <thead>
+          <tr>
+            <th align="left" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Item</th>
+            <th align="center" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Delivered</th>
+            <th align="center" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Refunded</th>
+            <th align="right" style="padding:6px 0;border-bottom:1px solid #e4e4e7;color:#52525b;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;">Refund</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+        </tbody>
+      </table>
+    `
+    : "";
+
+  return baseEmailLayout({
+    preheader: `We've issued a partial refund for order #${input.orderId}.`,
+    title: "Partial Refund Processed",
+    subtitle: `Hello ${input.name}, we're sorry that we could only fulfill part of your order.`,
+    bodyHtml: `
+      <p style="margin:0;color:#3f3f46;font-size:14px;line-height:1.7;">
+        We have processed a refund for the unavailable items. The delivered items are on the way, and the refund will appear on your original payment method.
+      </p>
+      <div style="margin:16px 0 0;border:1px solid #fde68a;border-radius:14px;padding:14px 16px;background:#fffbeb;">
+        <p style="margin:0 0 6px;color:#92400e;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;font-weight:700;">Refund total</p>
+        <p style="margin:0;color:#111827;font-size:20px;font-weight:700;">A$${input.refundAmount.toFixed(2)}</p>
+      </div>
+      ${tableHtml}
+      <p style="margin:16px 0 0;color:#3f3f46;font-size:14px;line-height:1.7;">
+        We apologize for the inconvenience, and thank you for your understanding.
+      </p>
+    `,
+    ctaLabel: input.orderUrl ? "View Order" : undefined,
+    ctaUrl: input.orderUrl,
+    footerNote: "If you have any questions, reply to this email and our team will help right away.",
+  });
+}

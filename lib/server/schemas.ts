@@ -248,6 +248,14 @@ export const adminOrdersQuerySchema = z.object({
   search: z.string().trim().min(1).optional(),
 });
 
+export const adminOrderPartialFulfillmentSchema = z.object({
+  items: z.array(z.object({
+    orderItemId: z.number().int().positive(),
+    deliveredQuantity: z.number().int().min(0),
+  })).min(1),
+  reason: z.string().trim().max(500).optional(),
+});
+
 export const adminBannerSchema = z.object({
   title: z.string().trim().min(2).max(150),
   desktopImageUrl: z.string().trim().url().max(500),
