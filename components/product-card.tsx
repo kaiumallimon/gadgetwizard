@@ -20,7 +20,7 @@ interface ProductCardProps {
 }
 
 function format$(value: number): string {
-  return `A$${value.toLocaleString()}`;
+  return `AU$${value.toLocaleString()}`;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -114,7 +114,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.isBestSeller && <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Best Seller</Badge>}
             </div>
             {hasDiscount && discountAmount > 0 && (
-              <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+              <Badge className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                 Save {format$(discountAmount)}
               </Badge>
             )}

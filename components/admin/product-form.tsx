@@ -238,7 +238,7 @@ export function ProductForm({ mode, categories, brands, initialProduct }: Produc
   const router = useRouter();
   const { token } = useAuthStore();
   const createSkuTokenValue = useMemo(() => createSkuToken(), []);
-  const currencyHint = mode === "create" ? " (A$)" : "";
+  const currencyHint = mode === "create" ? " (AU$)" : "";
 
   const [showAdditional, setShowAdditional] = useState(mode === "edit");
   const [name, setName] = useState(initialProduct?.name ?? "");

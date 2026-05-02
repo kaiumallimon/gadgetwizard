@@ -180,21 +180,21 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
             <section className="space-y-6 border-y border-zinc-200/80 py-7">
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="text-4xl font-semibold tracking-tight text-zinc-900">A${discountedPrice.toLocaleString()}</span>
+                  <span className="text-4xl font-semibold tracking-tight text-zinc-900">AU${discountedPrice.toLocaleString()}</span>
                   {hasDiscount && (
-                    <span className="text-lg text-zinc-400 line-through">A${product.originalPrice.toLocaleString()}</span>
+                    <span className="text-lg text-zinc-400 line-through">AU${product.originalPrice.toLocaleString()}</span>
                   )}
                 </div>
 
                 {hasDiscount && (
                   <span className="text-sm font-medium text-green-600">
-                    Save A${savingsAmount.toLocaleString()} ({savingsPercent}%)
+                    Save AU${savingsAmount.toLocaleString()} ({savingsPercent}%)
                   </span>
                 )}
 
                 {hasWholesalePrice && (
                   <span className="mt-1 text-sm font-medium text-blue-600">
-                    Business Wholesale: A${product.wholesalePrice?.toLocaleString()} from {product.wholesaleMinQuantity}+ units
+                    Business Wholesale: AU${product.wholesalePrice?.toLocaleString()} from {product.wholesaleMinQuantity}+ units
                   </span>
                 )}
               </div>
