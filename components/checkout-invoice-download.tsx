@@ -69,7 +69,7 @@ export interface CheckoutInvoiceProps {
 // Helpers
 // ---------------------------------------------------------------------------
 const fmt = (n: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+  new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" }).format(n);
 
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-US", {

@@ -355,7 +355,7 @@ export async function createPaymentIntent(
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: amountInCents,
-    currency: "usd",
+    currency: "aud",
     automatic_payment_methods: { enabled: true },
     metadata: {
       userId: String(userId),
