@@ -32,6 +32,7 @@ import {
     Plus,
     ExternalLink,
     Activity,
+    RotateCcw,
 } from "lucide-react";
 
 import { useAuthStore } from "@/lib/stores/auth-store";
@@ -142,6 +143,7 @@ export function DashboardShell({ children, variant }: DashboardShellProps) {
                         label: "Sales & CRM",
                         items: [
                             { href: "/admin/orders", label: "Orders", icon: ClipboardList },
+                            { href: "/admin/refunds", label: "Refunds", icon: RotateCcw },
                             { href: "/admin/business-accounts", label: "Business Requests", icon: Building2 },
                             { href: "/admin/customers", label: "Customers", icon: Users }, // Moved from "Users" group
                             { href: "/admin/live-chat", label: "Live Chat", icon: MessageCircle },

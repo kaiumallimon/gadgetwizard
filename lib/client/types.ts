@@ -236,6 +236,25 @@ export interface AdminWishlistEntry {
   createdAt: string;
 }
 
+export interface AdminOrderRefund {
+  id: number;
+  orderId: number;
+  orderStatus: OrderStatus;
+  orderTotal: number;
+  userId: number;
+  userName: string;
+  userEmail: string;
+  adminUserId: number;
+  adminName: string;
+  adminEmail: string;
+  provider: "stripe";
+  providerRefundId: string;
+  currency: string;
+  amount: number;
+  reason: string | null;
+  createdAt: string;
+}
+
 export type OrderStatus =
   | "pending_payment"
   | "paid"
