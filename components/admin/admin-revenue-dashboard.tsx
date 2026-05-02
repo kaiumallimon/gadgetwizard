@@ -324,23 +324,7 @@ export function AdminRevenueDashboard() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Print-Only Report Header (Hidden on screen) */}
-      <div className="hidden print:block mb-8 border-b-2 border-zinc-900 pb-4">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-4xl font-black text-zinc-900 uppercase tracking-tighter">Financial Report</h1>
-            <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest mt-1">GadgetWizard E-commerce Analytics</p>
-          </div>
-          <div className="text-right">
-            <p className="text-xs font-black text-zinc-400 uppercase">Snapshot Range</p>
-            <p className="text-lg font-bold text-zinc-900">
-              {new Date(snapshot.range.startDate).toLocaleDateString()} — {new Date(snapshot.range.endDate).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm print:hidden">
+      <header className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold text-zinc-900 tracking-tight">Revenue Insights</h1>
@@ -386,19 +370,19 @@ export function AdminRevenueDashboard() {
         </div>
       </header>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 print:grid-cols-4 print:gap-2">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {summaryCards.map((card) => {
           const Icon = card.icon;
           return (
-            <Card key={card.title} className="shadow-xs print:shadow-none print:border-zinc-300">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 print:pb-1">
-                <CardTitle className="text-sm font-medium text-zinc-500 uppercase tracking-wider print:text-[10px]">{card.title}</CardTitle>
-                <div className={cn("p-2 rounded-full ring-1 print:hidden", card.color)}>
+            <Card key={card.title} className="shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-zinc-500 uppercase tracking-wider">{card.title}</CardTitle>
+                <div className={cn("p-2 rounded-full ring-1", card.color)}>
                   <Icon className="h-4 w-4" />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-zinc-900 print:text-xl">{card.value}</div>
+                <div className="text-2xl font-bold text-zinc-900">{card.value}</div>
                 {card.growth !== null && (
                   <p className={cn(
                     "mt-1 text-xs font-semibold flex items-center gap-1",
@@ -406,7 +390,7 @@ export function AdminRevenueDashboard() {
                   )}>
                     {card.growth >= 0 ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
                     {formatPercent(card.growth)}
-                    <span className="text-zinc-400 font-normal ml-0.5 print:hidden">vs previous {snapshot.range.days}d</span>
+                    <span className="text-zinc-400 font-normal ml-0.5">vs previous {snapshot.range.days}d</span>
                   </p>
                 )}
               </CardContent>
@@ -415,41 +399,41 @@ export function AdminRevenueDashboard() {
         })}
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-3 print:grid-cols-1">
+      <section className="grid gap-6 lg:grid-cols-3">
         {/* Main Revenue Chart */}
-        <Card className="lg:col-span-2 shadow-xs print:shadow-none print:border-zinc-300">
+        <Card className="lg:col-span-2 shadow-xs">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 print:text-lg">
-              <TrendingUp className="h-5 w-5 text-blue-500 print:hidden" />
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-500" />
               Revenue Over Time
             </CardTitle>
-            <CardDescription className="print:hidden">Daily revenue trends for the selected period.</CardDescription>
+            <CardDescription>Daily revenue trends for the selected period.</CardDescription>
           </CardHeader>
-          <CardContent className="pt-4 print:pt-2">
+          <CardContent className="pt-4">
             <RevenueLineChart series={snapshot.series} />
           </CardContent>
         </Card>
 
         {/* Purchase Mode Split */}
-        <Card className="shadow-xs print:shadow-none print:border-zinc-300">
+        <Card className="shadow-xs">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 print:text-lg">
-              <Users className="h-5 w-5 text-zinc-500 print:hidden" />
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-zinc-500" />
               Customer Segments
             </CardTitle>
-            <CardDescription className="print:hidden">Revenue split between Regular and Business.</CardDescription>
+            <CardDescription>Revenue split between Regular and Business.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6 pt-2 print:space-y-4">
+          <CardContent className="space-y-6 pt-2">
             {snapshot.byPurchaseMode.map((mode) => {
               const total = snapshot.byPurchaseMode.reduce((acc, m) => acc + m.revenue, 0);
               const percent = total > 0 ? (mode.revenue / total) * 100 : 0;
               return (
                 <div key={mode.mode} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm print:text-xs">
-                    <span className="font-semibold text-zinc-700 capitalize">{mode.mode} Checkout</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-semibold text-zinc-700 capitalize">{mode.mode} Channel</span>
                     <span className="text-zinc-500">{formatCurrency(mode.revenue)}</span>
                   </div>
-                  <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden print:h-1.5 print:border print:border-zinc-200">
+                  <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                     <div 
                       className={cn("h-full transition-all duration-1000", mode.mode === "regular" ? "bg-blue-500" : "bg-violet-500")}
                       style={{ width: `${percent}%` }}
@@ -463,7 +447,7 @@ export function AdminRevenueDashboard() {
               );
             })}
             
-            <div className="pt-4 border-t border-zinc-100 print:hidden">
+            <div className="pt-4 border-t border-zinc-100">
                <div className="flex items-center justify-between p-3 bg-zinc-50 rounded-xl">
                  <div className="flex items-center gap-3">
                     <div className="p-2 bg-white rounded-lg border border-zinc-200 shadow-sm">
@@ -483,31 +467,31 @@ export function AdminRevenueDashboard() {
         </Card>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2 print:grid-cols-1 print:gap-4">
+      <section className="grid gap-6 lg:grid-cols-2">
         {/* Status Breakdown */}
-        <Card className="shadow-xs print:shadow-none print:border-zinc-300">
+        <Card className="shadow-xs">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 print:text-lg">
-              <Layers className="h-5 w-5 text-zinc-500 print:hidden" />
+            <CardTitle className="flex items-center gap-2">
+              <Layers className="h-5 w-5 text-zinc-500" />
               Order Status Breakdown
             </CardTitle>
-            <CardDescription className="print:hidden">Current state of orders placed in this period.</CardDescription>
+            <CardDescription>Current state of orders placed in this period.</CardDescription>
           </CardHeader>
           <CardContent>
-             <div className="space-y-4 print:space-y-2">
+             <div className="space-y-4">
                 {snapshot.statusBreakdown.filter(s => s.orders > 0).map((s) => {
                   const total = snapshot.statusBreakdown.reduce((acc, b) => acc + b.orders, 0);
                   const percent = total > 0 ? (s.orders / total) * 100 : 0;
                   return (
                     <div key={s.status} className="flex items-center gap-4">
-                      <div className="w-32 text-xs font-medium text-zinc-600 truncate print:w-24 print:text-[10px]">{STATUS_LABELS[s.status]}</div>
-                      <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden print:h-1 print:border print:border-zinc-100">
+                      <div className="w-32 text-xs font-medium text-zinc-600 truncate">{STATUS_LABELS[s.status]}</div>
+                      <div className="flex-1 h-1.5 bg-zinc-100 rounded-full overflow-hidden">
                         <div 
                           className="h-full rounded-full" 
                           style={{ width: `${percent}%`, backgroundColor: STATUS_COLORS[s.status] }} 
                         />
                       </div>
-                      <div className="w-16 text-right text-xs font-bold text-zinc-900 print:text-[10px]">{s.orders}</div>
+                      <div className="w-16 text-right text-xs font-bold text-zinc-900">{s.orders}</div>
                     </div>
                   );
                 })}
@@ -519,32 +503,32 @@ export function AdminRevenueDashboard() {
         </Card>
 
         {/* Top Products */}
-        <Card className="shadow-xs print:shadow-none print:border-zinc-300">
+        <Card className="shadow-xs">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 print:text-lg">
-              <TrendingUp className="h-5 w-5 text-emerald-500 print:hidden" />
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
               Best Selling Products
             </CardTitle>
-            <CardDescription className="print:hidden">Top products by revenue contribution.</CardDescription>
+            <CardDescription>Top products by revenue contribution.</CardDescription>
           </CardHeader>
           <CardContent>
             {snapshot.topProducts.length > 0 ? (
-              <Table className="print:text-[10px]">
+              <Table>
                 <TableHeader>
-                  <TableRow className="hover:bg-transparent border-zinc-100 print:border-zinc-300">
-                    <TableHead className="h-10 text-[10px] uppercase tracking-widest font-bold print:h-6">Product</TableHead>
-                    <TableHead className="h-10 text-right text-[10px] uppercase tracking-widest font-bold print:h-6">Qty</TableHead>
-                    <TableHead className="h-10 text-right text-[10px] uppercase tracking-widest font-bold print:h-6">Revenue</TableHead>
+                  <TableRow className="hover:bg-transparent border-zinc-100">
+                    <TableHead className="h-10 text-[10px] uppercase tracking-widest font-bold">Product</TableHead>
+                    <TableHead className="h-10 text-right text-[10px] uppercase tracking-widest font-bold">Qty</TableHead>
+                    <TableHead className="h-10 text-right text-[10px] uppercase tracking-widest font-bold">Revenue</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {snapshot.topProducts.map((p) => (
-                    <TableRow key={p.productId} className="border-zinc-50 print:border-zinc-100">
-                      <TableCell className="py-3 print:py-1">
+                    <TableRow key={p.productId} className="border-zinc-50">
+                      <TableCell className="py-3">
                         <p className="font-semibold text-zinc-900 line-clamp-1">{p.productName}</p>
                       </TableCell>
-                      <TableCell className="py-3 text-right font-medium text-zinc-600 print:py-1">{p.units}</TableCell>
-                      <TableCell className="py-3 text-right font-bold text-zinc-900 print:py-1">{formatCurrency(p.revenue)}</TableCell>
+                      <TableCell className="py-3 text-right font-medium text-zinc-600">{p.units}</TableCell>
+                      <TableCell className="py-3 text-right font-bold text-zinc-900">{formatCurrency(p.revenue)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -557,20 +541,17 @@ export function AdminRevenueDashboard() {
       </section>
 
       {/* Footer Info */}
-      <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50 print:bg-white print:border-none print:pt-10">
+      <footer className="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50">
         <div className="flex items-center gap-3">
-           <div className="p-2 bg-white rounded-lg border border-zinc-200 print:hidden">
+           <div className="p-2 bg-white rounded-lg border border-zinc-200">
               <FileText className="h-5 w-5 text-zinc-400" />
            </div>
            <div>
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest print:text-[8px]">Data Integrity</p>
-              <p className="text-sm font-semibold text-zinc-700 print:text-xs">Snapshot generated at {new Date(snapshot.generatedAt).toLocaleString()}</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest">Data Integrity</p>
+              <p className="text-sm font-semibold text-zinc-700">Snapshot generated at {new Date(snapshot.generatedAt).toLocaleString()}</p>
            </div>
         </div>
-        <div className="flex gap-2 print:hidden">
-           <Button variant="outline" className="text-xs h-8 bg-white" onClick={() => window.print()}>
-              Export PDF
-           </Button>
+        <div className="flex gap-2">
            <Button variant="outline" className="text-xs h-8 bg-white" onClick={exportCSV}>
               Export CSV
            </Button>
