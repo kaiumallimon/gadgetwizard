@@ -104,7 +104,7 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             <CardTitle className="text-sm">Total Amount</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 text-2xl font-semibold text-zinc-900">
-            AU${order.totalAmount.toLocaleString()}
+            A${order.totalAmount.toLocaleString()}
           </CardContent>
         </Card>
         <Card>
@@ -155,11 +155,11 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                       {item.productSku && <p className="text-xs text-zinc-500">SKU: {item.productSku}</p>}
                     </TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>AU${item.unitPrice.toLocaleString()}</TableCell>
+                    <TableCell>A${item.unitPrice.toLocaleString()}</TableCell>
                     <TableCell>
-                      {item.wholesaleUnitPrice !== null ? `AU$${item.wholesaleUnitPrice.toLocaleString()}` : "-"}
+                      {item.wholesaleUnitPrice !== null ? `A$${item.wholesaleUnitPrice.toLocaleString()}` : "-"}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-zinc-900">AU${item.totalPrice.toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-semibold text-zinc-900">A${item.totalPrice.toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -20,7 +20,7 @@ interface ProductCardProps {
 }
 
 function format$(value: number): string {
-  return `AU$${value.toLocaleString()}`;
+  return `A$${value.toLocaleString()}`;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
@@ -113,11 +113,6 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.isNewArrival && <Badge className="bg-zinc-900 text-white hover:bg-zinc-900">New</Badge>}
               {product.isBestSeller && <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">Best Seller</Badge>}
             </div>
-            {hasDiscount && discountAmount > 0 && (
-              <Badge className="text-[10px] bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
-                Save {format$(discountAmount)}
-              </Badge>
-            )}
           </div>
 
           {product.stock === 0 && (
@@ -152,15 +147,42 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
 
-        <div className="space-y-2 rounded-xl px-2 py-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold tracking-tight text-zinc-950">
-              {format$(displayPrice)}
-            </span>
-            {hasDiscount && <span className="text-sm font-bold text-red-500 line-through">{format$(product.originalPrice)}</span>}
+        <div className="">
+          <div className="relative flex flex-col items-center mt-4">
+            {/* Small centered ticket-stub on top */}
+            {hasDiscount && (
+              <div className="relative z-10 rounded-t-md bg-red-500 px-4 py-0.5 text-center shadow-sm">
+                <span className="text-sm font-bold uppercase tracking-widest text-white line-through opacity-90">
+                  {format$(product.originalPrice)}
+                </span>
+              </div>
+            )}
+
+            {/* Main price block */}
+            <div className="w-full overflow-hidden rounded-xl border border-zinc-900/15 shadow-sm">
+              {/* Middle: big price on amber */}
+              <div className="bg-white px-3 py-3 text-center">
+                <span className="text-2xl font-black tracking-tight text-zinc-900">
+                  {format$(displayPrice)}
+                </span>
+              </div>
+
+              {/* Bottom: savings bar */}
+              <div className="bg-slate-300 px-3 py-1.5 text-center">
+                {hasDiscount && discountAmount > 0 ? (
+                  <span className="text-sm font-extrabold uppercase tracking-[0.08em] text-black">
+                    {format$(discountAmount)} off
+                  </span>
+                ) : (
+                  <span className="select-none text-sm font-extrabold uppercase tracking-[0.08em] text-orange-300">
+                    &nbsp;
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="min-h-6">
+          <div className="min-h-6 mt-5">
             {showMetaBadges ? (
               <div className="flex flex-wrap gap-1">
                 {hasWholesale && (

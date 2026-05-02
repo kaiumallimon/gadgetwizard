@@ -246,7 +246,7 @@ export default async function DashboardOrdersPage(context: {
                           {itemCount} item{itemCount !== 1 ? "s" : ""}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-zinc-900">
-                          AU${order.totalAmount.toLocaleString()}
+                          A${order.totalAmount.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="sm">
