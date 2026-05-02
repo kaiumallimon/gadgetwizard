@@ -70,6 +70,7 @@ export function SiteHeader() {
   const [loading, setLoading] = useState(true);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
   const [authDialogMode, setAuthDialogMode] = useState<"login" | "signup">("login");
+  const [returnTo, setReturnTo] = useState<string | null>(null);
   const [headerCategories, setHeaderCategories] = useState<Array<{ label: string; href: string }>>([]);
   const [searchText, setSearchText] = useState("");
   const [isClientMounted, setIsClientMounted] = useState(false);
@@ -175,9 +176,10 @@ export function SiteHeader() {
     const authParam = searchParams.get("auth");
     if (!renderUser && (authParam === "login" || authParam === "signup")) {
       setAuthDialogMode(authParam);
+      setReturnTo(pathname);
       setAuthDialogOpen(true);
     }
-  }, [searchParams, renderUser]);
+  }, [searchParams, renderUser, pathname]);
 
   useEffect(() => {
     setSearchText(searchParams.get("search") ?? "");
@@ -588,6 +590,7 @@ export function SiteHeader() {
         onOpenChange={onAuthDialogChange}
         mode={authDialogMode}
         onModeChange={setAuthDialogMode}
+        returnTo={returnTo}
       />
     </header>
   );

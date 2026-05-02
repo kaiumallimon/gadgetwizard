@@ -18,6 +18,7 @@ interface AuthDialogProps {
   onOpenChange: (open: boolean) => void;
   mode: "login" | "signup";
   onModeChange: (mode: "login" | "signup") => void;
+  returnTo?: string | null;
 }
 
 interface ValidationErrorDetails {
@@ -82,7 +83,7 @@ function getAuthErrorMessage(error: unknown, mode: "login" | "signup"): string {
   return mode === "login" ? "Unable to login right now." : "Unable to create account right now.";
 }
 
-export function AuthDialog({ open, onOpenChange, mode, onModeChange }: AuthDialogProps) {
+export function AuthDialog({ open, onOpenChange, mode, onModeChange, returnTo }: AuthDialogProps) {
   const router = useRouter();
   const { setAuth } = useAuthStore();
 
@@ -135,7 +136,9 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange }: AuthDialo
         return;
       }
 
-      router.push("/dashboard");
+      // Redirect to the page they came from, or default to dashboard
+      const redirectPath = returnTo && returnTo !== "/login" ? returnTo : "/dashboard";
+      router.push(redirectPath);
     } catch (submitError) {
       setError(getAuthErrorMessage(submitError, mode));
     } finally {
