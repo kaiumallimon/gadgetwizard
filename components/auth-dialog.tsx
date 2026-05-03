@@ -69,10 +69,26 @@ function getAuthErrorMessage(error: unknown, mode: "login" | "signup"): string {
     }
   }
 
+  if (error instanceof ApiError && error.code === "UNAUTHORIZED") {
+    if (error.message.trim() === "Authentication required") {
+      return mode === "login"
+        ? "Email or password is incorrect."
+        : "Your account was created, but we could not sign you in. Please log in.";
+    }
+
+    if (error.message.trim().length > 0) {
+      return error.message;
+    }
+  }
+
   const authError = error as { code?: string };
   const code = authError?.code;
 
   if (code === "CredentialsSignin") {
+    return "Email or password is incorrect.";
+  }
+
+  if (code === "CallbackRouteError") {
     return "Email or password is incorrect.";
   }
 
@@ -118,8 +134,10 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange, returnTo }:
         redirect: false,
       });
 
-      if (!signInResult?.ok) {
-        throw new Error("Email or password is incorrect.");
+      if (!signInResult || signInResult.error || !signInResult.ok) {
+        const signInError = new Error("Authentication failed");
+        (signInError as { code?: string }).code = signInResult?.error ?? "CredentialsSignin";
+        throw signInError;
       }
 
       const response = await apiClient.getMe();

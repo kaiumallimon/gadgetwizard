@@ -159,10 +159,10 @@ export function ProductCard({ product }: ProductCardProps) {
             )}
 
             {/* Main price block */}
-            <div className="w-full overflow-hidden rounded-xl border border-zinc-900/15 shadow-sm">
+            <div className="w-full overflow-hidden rounded-xl">
               {/* Middle: big price on amber */}
-              <div className="bg-white px-3 py-3 text-center">
-                <span className="text-2xl font-black tracking-tight text-zinc-900">
+              <div className="bg-primary px-3 py-3 text-center">
+                <span className="text-2xl font-black tracking-tight text-white">
                   {format$(displayPrice)}
                 </span>
               </div>
