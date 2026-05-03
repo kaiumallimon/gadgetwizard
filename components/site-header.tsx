@@ -187,6 +187,14 @@ export function SiteHeader() {
     setSearchText(searchParams.get("search") ?? "");
   }, [searchParams]);
 
+  function resolveReturnTo(): string {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("auth");
+    params.delete("returnTo");
+    const query = params.toString();
+    return query ? `${pathname}?${query}` : pathname;
+  }
+
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -406,6 +414,7 @@ export function SiteHeader() {
                           className="flex w-full items-center gap-3 py-3 text-left text-sm font-medium text-zinc-100 transition hover:text-orange-300"
                           onClick={() => {
                             setAuthDialogMode("login");
+                            setReturnTo(resolveReturnTo());
                             setAuthDialogOpen(true);
                           }}
                         >
@@ -506,6 +515,7 @@ export function SiteHeader() {
                   className="rounded-full"
                   onClick={() => {
                     setAuthDialogMode("login");
+                    setReturnTo(resolveReturnTo());
                     setAuthDialogOpen(true);
                   }}
                 >
