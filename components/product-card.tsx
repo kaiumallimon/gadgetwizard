@@ -197,8 +197,11 @@ export function ProductCard({ product }: ProductCardProps) {
             {showMetaBadges ? (
               <div className="flex flex-wrap justify-center items-center w-full gap-2 text-center">
                 {hasWholesale ? (
-                  <p className="border-none text-[11px] sm:text-xs font-bold leading-tight">
-                    Wholesale {format$(product.wholesalePrice ?? 0)} @ {product.wholesaleMinQuantity}+ qty
+                  <p className="border-none text-[11px] sm:text-xs font-semibold leading-tight inline-flex flex-wrap items-center justify-center gap-1">
+                    <span className="text-zinc-600">Wholesale</span>
+                    <span className="font-extrabold text-orange-600">{format$(product.wholesalePrice ?? 0)}</span>
+                    <span className="text-zinc-400">·</span>
+                    <span className="font-extrabold text-orange-600">{product.wholesaleMinQuantity}+ qty</span>
                   </p>
                 ) : (
                   <p className="border-none text-[11px] text-muted-foreground sm:text-xs font-bold leading-tight">
