@@ -93,7 +93,7 @@ export function SiteFooter() {
 
             <div className="mt-5 space-y-2 text-sm">
               <p className="inline-flex w-full items-center gap-2 rounded-lg bg-zinc-900/70 px-3 py-2 text-zinc-200 ring-1 ring-zinc-700/40">
-                <Phone className="h-4 w-4 text-orange-300" /> +880 1712-345678
+                <Phone className="h-4 w-4 text-orange-300" /> +61 424 346 968
               </p>
               <a
                 href="mailto:info@gadgetwizard.com.au"

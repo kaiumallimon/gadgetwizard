@@ -241,7 +241,7 @@ export function SiteHeader() {
 
           <div className="hidden items-center gap-3 md:inline-flex">
             <span className="hidden items-center gap-1.5 text-zinc-950/80 md:inline-flex">
-              <FiHeadphones className="h-3.5 w-3.5 text-zinc-950/80" /> Support: +880 1712-345678
+              <FiHeadphones className="h-3.5 w-3.5 text-zinc-950/80" /> Support: +61 424 346 968
             </span>
 
             {/* {!loading && !user && (
@@ -454,7 +454,7 @@ export function SiteHeader() {
                       <div className="mt-2 space-y-2 text-sm text-zinc-300">
                         <p className="inline-flex items-center gap-2">
                           <FiPhone className="h-4 w-4 text-zinc-500" />
-                          +880 1712-345678
+                          +61 424 346 968
                         </p>
                         <p className="inline-flex items-center gap-2">
                           <FiMail className="h-4 w-4 text-zinc-500" />
@@ -470,12 +470,6 @@ export function SiteHeader() {
                       <div className="mt-2 flex items-center gap-3">
                         <a href="https://www.facebook.com/profile.php?id=61576441719146" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Facebook">
                           <FiFacebook className="h-4 w-4" />
-                        </a>
-                        <a href="https://www.instagram.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Instagram">
-                          <FiInstagram className="h-4 w-4" />
-                        </a>
-                        <a href="https://www.twitter.com" target="_blank" rel="noreferrer" className="inline-flex h-9 w-9 items-center justify-center rounded-full border gw-soft-border-dark text-zinc-300 hover:text-orange-300" aria-label="Twitter">
-                          <FiTwitter className="h-4 w-4" />
                         </a>
                       </div>
                     </div>
