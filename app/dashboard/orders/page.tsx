@@ -15,6 +15,7 @@ import { getUserOrdersPaginated } from "@/lib/server/services/order-service";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 import {
   Pagination,
   PaginationContent,
@@ -97,11 +98,11 @@ function buildOrdersHref(input: { page: number; pageSize: number }): string {
 export default async function DashboardOrdersPage(context: {
   searchParams: Promise<RawSearchParams>;
 }) {
+  const rawSearchParams = await context.searchParams;
   const session = await getServerSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(buildLoginRedirect("/dashboard/orders", rawSearchParams));
   if (session.role === "admin") redirect("/admin");
 
-  const rawSearchParams = await context.searchParams;
   const requestedPage = parsePositiveInt(firstParam(rawSearchParams.page), 1);
   const pageSize = parsePageSize(firstParam(rawSearchParams.pageSize));
 

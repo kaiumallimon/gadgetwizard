@@ -12,12 +12,13 @@ import {
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getUserAddresses } from "@/lib/server/services/address-service";
 import { AddressManager } from "@/components/address-manager";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardAddressesPage() {
   const session = await getServerSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(buildLoginRedirect("/dashboard/addresses"));
   if (session.role === "admin") redirect("/admin");
 
   const addresses = await getUserAddresses(session.userId);

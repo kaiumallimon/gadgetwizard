@@ -32,6 +32,7 @@ import { apiClient } from "@/lib/client/api";
 import type { Category } from "@/lib/client/types";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useCartStore } from "@/lib/stores/cart-store";
+import { sanitizeReturnTo } from "@/lib/shared/return-to";
 import { AuthDialog } from "@/components/auth-dialog";
 
 import { Button } from "@/components/ui/button";
@@ -176,7 +177,8 @@ export function SiteHeader() {
     const authParam = searchParams.get("auth");
     if (!renderUser && (authParam === "login" || authParam === "signup")) {
       setAuthDialogMode(authParam);
-      setReturnTo(pathname);
+      const returnToParam = sanitizeReturnTo(searchParams.get("returnTo"));
+      setReturnTo(returnToParam ?? pathname);
       setAuthDialogOpen(true);
     }
   }, [searchParams, renderUser, pathname]);
@@ -206,6 +208,7 @@ export function SiteHeader() {
       if (authParam === "login" || authParam === "signup") {
         const params = new URLSearchParams(searchParams.toString());
         params.delete("auth");
+        params.delete("returnTo");
         const query = params.toString();
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
       }

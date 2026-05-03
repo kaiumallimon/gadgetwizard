@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { OrderReviewPanel } from "@/components/order-review-panel";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 import {
   Table,
   TableBody,
@@ -43,11 +44,11 @@ interface Props {
 }
 
 export default async function OrderDetailPage({ params }: Props) {
+  const { id } = await params;
   const session = await getServerSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(buildLoginRedirect(`/dashboard/orders/${id}`));
   if (session.role === "admin") redirect("/admin");
 
-  const { id } = await params;
   const orderId = Number(id);
   if (!Number.isInteger(orderId) || orderId <= 0) notFound();
 

@@ -6,6 +6,7 @@ import { getUserAddresses } from "@/lib/server/services/address-service";
 import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getEnv } from "@/lib/server/core/env";
 import { CheckoutPageClient } from "@/components/checkout-page-client";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,11 @@ interface CheckoutPageProps {
 }
 
 export default async function CheckoutPage({ searchParams }: CheckoutPageProps) {
+  const rawSearchParams = await searchParams;
   const session = await getServerSession();
 
   if (!session) {
-    redirect("/login");
+    redirect(buildLoginRedirect("/checkout", rawSearchParams));
   }
 
   if (session.role === "admin") {
@@ -66,7 +68,6 @@ export default async function CheckoutPage({ searchParams }: CheckoutPageProps) 
     redirect("/cart");
   }
 
-  const rawSearchParams = await searchParams;
   const selectedProductIds = parseSelectedProductIds(firstParam(rawSearchParams.selected));
   const checkoutItems = selectedProductIds.length > 0
     ? cart.items.filter((item) => selectedProductIds.includes(item.productId))

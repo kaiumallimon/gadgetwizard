@@ -2,7 +2,7 @@
 
 import { Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { apiClient } from "@/lib/client/api";
 import { cn } from "@/lib/utils";
@@ -19,10 +19,14 @@ interface AddToCartInlineProps {
 
 export function AddToCartInline({ productId, stock, colorOptions = [] }: AddToCartInlineProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [quantity, setQuantity] = useState(1);
   const [pending, setPending] = useState(false);
   const { session, token } = useAuthStore();
   const { setCart } = useCartStore();
+  const returnTo = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+  const loginHref = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 
   const normalizedColorOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -65,7 +69,7 @@ export function AddToCartInline({ productId, stock, colorOptions = [] }: AddToCa
 
   async function onAdd() {
     if (!session) {
-      router.push("/login");
+      router.push(loginHref);
       return;
     }
     if (session.role === "admin") {

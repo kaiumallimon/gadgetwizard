@@ -8,6 +8,7 @@ import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/client/api";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { sanitizeReturnTo } from "@/lib/shared/return-to";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -154,8 +155,9 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange, returnTo }:
         return;
       }
 
+      const safeReturnTo = sanitizeReturnTo(returnTo);
       // Redirect to the page they came from, or default to dashboard
-      const redirectPath = returnTo && returnTo !== "/login" ? returnTo : "/dashboard";
+      const redirectPath = safeReturnTo && safeReturnTo !== "/login" ? safeReturnTo : "/dashboard";
       router.push(redirectPath);
     } catch (submitError) {
       setError(getAuthErrorMessage(submitError, mode));

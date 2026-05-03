@@ -12,12 +12,13 @@ import {
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getBusinessAccountForUser } from "@/lib/server/services/business-account-service";
 import { BusinessAccountApplicationManager } from "@/components/business-account-application-manager";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardBusinessAccountPage() {
   const session = await getServerSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(buildLoginRedirect("/dashboard/business-account"));
   if (session.role === "admin") redirect("/admin");
 
   const account = await getBusinessAccountForUser(session.userId);

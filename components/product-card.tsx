@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Heart, Plus } from "lucide-react";
 
 import { apiClient } from "@/lib/client/api";
@@ -32,11 +32,15 @@ const gochiHand = Potta_One({
 
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [wishlistPending, setWishlistPending] = useState(false);
   const { session, token, user } = useAuthStore();
   const { setCart } = useCartStore();
   const { loadedForUserId, productIds, ensureLoaded, setWishlist } = useWishlistStore();
+  const returnTo = searchParams.toString() ? `${pathname}?${searchParams.toString()}` : pathname;
+  const loginHref = `/login?returnTo=${encodeURIComponent(returnTo)}`;
 
   useEffect(() => {
     if (!session || session.role !== "user") {
@@ -48,7 +52,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   async function onAddToCart() {
     if (!session) {
-      router.push("/login");
+      router.push(loginHref);
       return;
     }
 
@@ -67,7 +71,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   async function onToggleWishlist() {
     if (!session || session.role !== "user") {
-      router.push("/login");
+      router.push(loginHref);
       return;
     }
 

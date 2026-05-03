@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from "react";
 import { ChevronDown, Loader2, MessageCircle, SendHorizontal, Wifi, WifiOff } from "lucide-react";
 
@@ -92,6 +93,8 @@ export function LiveChatWidget({
   sourceType = "home",
   sourceRef = null,
 }: LiveChatWidgetProps) {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
@@ -118,6 +121,11 @@ export function LiveChatWidget({
     () => conversations.find((entry) => entry.id === activeConversationId) ?? null,
     [conversations, activeConversationId],
   );
+  const loginHref = useMemo(() => {
+    const query = searchParams.toString();
+    const returnTo = query ? `${pathname}?${query}` : pathname;
+    return `/login?returnTo=${encodeURIComponent(returnTo)}`;
+  }, [pathname, searchParams]);
 
   const realtimeStatus = resolveRealtimeStatus({
     isOnline,
@@ -547,7 +555,7 @@ export function LiveChatWidget({
         <div className="flex flex-1 flex-col items-center justify-center gap-3 bg-zinc-50 px-6 text-center">
           <p className="text-sm text-zinc-600">Please sign in to start a support conversation.</p>
           <Button asChild>
-            <Link href="/login">Sign In</Link>
+            <Link href={loginHref}>Sign In</Link>
           </Button>
         </div>
       ) : viewerRole === "admin" ? (

@@ -6,6 +6,7 @@ import { getServerSession } from "@/lib/server/auth/server-session";
 import { Button } from "@/components/ui/button";
 import { getOrderForUser } from "@/lib/server/services/order-service";
 import { CheckoutInvoiceDownload } from "@/components/checkout-invoice-download";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
@@ -14,10 +15,10 @@ interface SuccessPageProps {
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
+  const rawSearchParams = await searchParams;
   const session = await getServerSession();
-  if (!session) redirect("/login");
-
-  const { orderId: orderIdStr } = await searchParams;
+  if (!session) redirect(buildLoginRedirect("/checkout/success", rawSearchParams));
+  const { orderId: orderIdStr } = rawSearchParams;
   const orderId = orderIdStr ? Number(orderIdStr) : null;
 
   let order = null;

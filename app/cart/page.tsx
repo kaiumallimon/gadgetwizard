@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { CartClient } from "@/components/cart-client";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCartForUser } from "@/lib/server/services/cart-service";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
 export default async function CartPage() {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login");
+    redirect(buildLoginRedirect("/cart"));
   }
   if (session.role === "admin") {
     redirect("/admin");

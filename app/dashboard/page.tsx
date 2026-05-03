@@ -17,13 +17,17 @@ import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getCartForUser } from "@/lib/server/services/cart-service";
 import { getUserOrders } from "@/lib/server/services/order-service";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const session = await getServerSession();
   if (!session) {
-    redirect("/login");
+    redirect(buildLoginRedirect("/dashboard"));
+  }
+  if (session.role === "admin") {
+    redirect("/admin");
   }
 
   const [user, cart, orders] = await Promise.all([

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/pagination";
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { getWishlistPageForUser } from "@/lib/server/services/wishlist-service";
+import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
@@ -101,16 +102,16 @@ function buildWishlistHref(input: {
 export default async function WishlistPage(context: {
   searchParams: Promise<RawSearchParams>;
 }) {
+  const rawSearchParams = await context.searchParams;
   const session = await getServerSession();
   if (!session) {
-    redirect("/login");
+    redirect(buildLoginRedirect("/wishlist", rawSearchParams));
   }
 
   if (session.role === "admin") {
     redirect("/admin");
   }
 
-  const rawSearchParams = await context.searchParams;
   const search = firstParam(rawSearchParams.search)?.trim() || undefined;
   const requestedPage = parsePositiveInt(firstParam(rawSearchParams.page), 1);
   const pageSize = parsePageSize(firstParam(rawSearchParams.pageSize));
