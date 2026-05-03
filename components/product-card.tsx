@@ -14,6 +14,7 @@ import { useWishlistStore } from "@/lib/stores/wishlist-store";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Bubblegum_Sans, Gochi_Hand, Patrick_Hand, Permanent_Marker, Potta_One } from "next/font/google";
 
 interface ProductCardProps {
   product: Product;
@@ -22,6 +23,12 @@ interface ProductCardProps {
 function format$(value: number): string {
   return `A$${value.toLocaleString()}`;
 }
+
+const gochiHand = Potta_One({
+  variable: "--font-gochi-hand",
+  subsets: ["latin"],
+  weight: "400",
+});
 
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
@@ -152,17 +159,17 @@ export function ProductCard({ product }: ProductCardProps) {
             {/* Small centered ticket-stub on top */}
             {hasDiscount && (
               <div className="relative z-10 rounded-t-md bg-red-500 px-4 py-0.5 text-center shadow-sm">
-                <span className="text-sm font-bold uppercase tracking-widest text-white line-through opacity-90">
+                <span className={`text-sm font-bold uppercase tracking-widest text-white line-through opacity-90 ${gochiHand.className}`}>
                   {format$(product.originalPrice)}
                 </span>
               </div>
             )}
 
             {/* Main price block */}
-            <div className="w-full overflow-hidden rounded-xl">
+            <div className="w-full overflow-hidden rounded-xl border-l border-r border-t ">
               {/* Middle: big price on amber */}
-              <div className="bg-primary px-3 py-3 text-center">
-                <span className="text-2xl font-black tracking-tight text-white">
+              <div className="px-3 py-3 text-center">
+                <span className={`text-2xl font-black tracking-tight text-black ${gochiHand.className}`}>
                   {format$(displayPrice)}
                 </span>
               </div>
@@ -170,11 +177,11 @@ export function ProductCard({ product }: ProductCardProps) {
               {/* Bottom: savings bar */}
               <div className="bg-slate-300 px-3 py-1.5 text-center">
                 {hasDiscount && discountAmount > 0 ? (
-                  <span className="text-sm font-extrabold uppercase tracking-[0.08em] text-black">
+                  <span className={`text-sm font-extrabold uppercase tracking-[0.08em] text-black ${gochiHand.className}`}>
                     {format$(discountAmount)} off
                   </span>
                 ) : (
-                  <span className="select-none text-sm font-extrabold uppercase tracking-[0.08em] text-orange-300">
+                  <span className={`select-none text-sm font-extrabold uppercase tracking-[0.08em] text-orange-300 ${gochiHand.className}`}>
                     &nbsp;
                   </span>
                 )}
@@ -184,11 +191,18 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <div className="min-h-6 mt-5">
             {showMetaBadges ? (
-              <div className="flex flex-wrap gap-1">
-                {hasWholesale && (
-                  <Badge variant="outline" className="text-muted-foreground">
-                    Wholesale {format$(product.wholesalePrice ?? 0)} at {product.wholesaleMinQuantity}+ Qty.
-                  </Badge>
+              <div className="flex flex-wrap justify-center items-center w-full gap-2 text-center">
+                {hasWholesale ? (
+                  <p className="border-none text-[11px] sm:text-xs font-bold leading-tight">
+                    Wholesale {format$(product.wholesalePrice ?? 0)} @ {product.wholesaleMinQuantity}+ qty
+                  </p>
+                ) : (
+                  <p className="border-none text-[11px] text-muted-foreground sm:text-xs font-bold leading-tight">
+                    Business pricing?{" "}
+                    <Link href="/dashboard/business-account" className="text-orange-500 hover:underline">
+                      Apply
+                    </Link>
+                  </p>
                 )}
                 {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
               </div>
@@ -207,7 +221,7 @@ export function ProductCard({ product }: ProductCardProps) {
           ) : pending ? (
             "Adding..."
           ) : (
-            <span className="inline-flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1.5">
               <Plus className="h-4 w-4" /> Add To Cart
             </span>
           )}
