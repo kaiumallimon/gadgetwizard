@@ -85,12 +85,24 @@ function getAuthErrorMessage(error: unknown, mode: "login" | "signup"): string {
   const authError = error as { code?: string };
   const code = authError?.code;
 
+  if (code === "account_disabled") {
+    return "Your account is disabled. Please contact support.";
+  }
+
   if (code === "CredentialsSignin") {
     return "Email or password is incorrect.";
   }
 
-  if (code === "CallbackRouteError") {
+  if (code === "credentials") {
     return "Email or password is incorrect.";
+  }
+
+  if (code === "CallbackRouteError") {
+    return "We couldn't sign you in. Please try again.";
+  }
+
+  if (code === "SIGNIN_FAILED") {
+    return "Unable to login right now.";
   }
 
   if (error instanceof Error && error.message.trim().length > 0) {
@@ -136,8 +148,9 @@ export function AuthDialog({ open, onOpenChange, mode, onModeChange, returnTo }:
       });
 
       if (!signInResult || signInResult.error || !signInResult.ok) {
-        const signInError = new Error("Authentication failed");
-        (signInError as { code?: string }).code = signInResult?.error ?? "CredentialsSignin";
+        const failureCode = signInResult?.code ?? signInResult?.error ?? "SIGNIN_FAILED";
+        const signInError = new Error(failureCode);
+        (signInError as { code?: string }).code = failureCode;
         throw signInError;
       }
 

@@ -1,9 +1,14 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 
 import { authenticateUserWithPassword } from "@/lib/server/services/auth-service";
+import { HttpError } from "@/lib/server/core/errors";
 import type { UserRole } from "@/lib/server/types";
+
+class DisabledAccountError extends CredentialsSignin {
+  code = "account_disabled";
+}
 
 const credentialsSchema = z.object({
   email: z.string().trim().email(),
@@ -28,19 +33,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) {
           return null;
         }
+        try {
+          const result = await authenticateUserWithPassword({
+            email: parsed.data.email,
+            password: parsed.data.password,
+          });
 
-        const result = await authenticateUserWithPassword({
-          email: parsed.data.email,
-          password: parsed.data.password,
-        });
+          return {
+            id: result.user.id,
+            email: result.user.email,
+            name: result.user.name,
+            role: result.user.role,
+            authUid: result.user.authUid,
+          };
+        } catch (error) {
+          if (error instanceof HttpError && error.code === "UNAUTHORIZED") {
+            if (error.message === "User account is disabled") {
+              throw new DisabledAccountError();
+            }
+            return null;
+          }
 
-        return {
-          id: result.user.id,
-          email: result.user.email,
-          name: result.user.name,
-          role: result.user.role,
-          authUid: result.user.authUid,
-        };
+          throw error;
+        }
       },
     }),
   ],
