@@ -42,3 +42,5 @@ next-env.d.ts
 
 prompt.md
 VALIDATION-AUDIT.md
+
+.playwright-mcp/
