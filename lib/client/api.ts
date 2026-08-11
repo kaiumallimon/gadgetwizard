@@ -634,6 +634,32 @@ export const apiClient = {
     });
   },
 
+  async attachAddress(
+    paymentIntentId: string,
+    payload: {
+      selectedProductIds?: number[];
+      addressId?: number;
+      newAddress?: {
+        label?: string;
+        fullName: string;
+        phone: string;
+        addressLine1: string;
+        addressLine2?: string;
+        city: string;
+        state?: string;
+        postalCode?: string;
+        country: string;
+        saveAddress?: boolean;
+      };
+    },
+    token?: string,
+  ) {
+    return apiFetch<{ ok: boolean }>(
+      `/api/checkout/${encodeURIComponent(paymentIntentId)}/address`,
+      { method: "PATCH", token, body: JSON.stringify(payload) },
+    );
+  },
+
   // Orders (user)
   async createOrder(payload: {
     paymentIntentId: string;

@@ -52,12 +52,25 @@ import { getBusinessAccountById } from "@/lib/server/repositories/business-accou
 import { getCartByUserId, type CartItemRecord } from "@/lib/server/repositories/cart-repository";
 import { getBusinessCheckoutContext } from "@/lib/server/services/business-account-service";
 
-function getStripe(): Stripe {
+export function getStripeClient(): Stripe | null {
   const env = getEnv();
   if (!env.STRIPE_SECRET_KEY) {
-    throw badRequest("Payment processing is not configured on this server.");
+    return null;
   }
   return new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: "2026-04-22.dahlia" });
+}
+
+function getStripe(): Stripe {
+  const client = getStripeClient();
+  if (!client) {
+    throw badRequest("Payment processing is not configured on this server.");
+  }
+  return client;
+}
+
+function isDuplicatePaymentIntentError(error: unknown): boolean {
+  const dbError = error as { code?: string; errno?: number };
+  return dbError?.code === "ER_DUP_ENTRY" || dbError?.errno === 1062;
 }
 
 export interface CheckoutAddressInput {
@@ -408,6 +421,39 @@ export interface CreateOrderInput {
   addressInput: CheckoutAddressInput;
 }
 
+export async function attachAddressToPaymentIntent(
+  userId: number,
+  paymentIntentId: string,
+  input: CheckoutAddressInput,
+): Promise<void> {
+  const stripe = getStripe();
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  if (paymentIntent.metadata.userId !== String(userId)) {
+    throw notFound("Payment intent not found");
+  }
+  if (paymentIntent.status !== "requires_payment_method" && paymentIntent.status !== "requires_confirmation") {
+    throw badRequest(`Payment has already completed. Status: ${paymentIntent.status}`);
+  }
+
+  const fulfillmentMethod = paymentIntent.metadata.fulfillmentMethod === "pickup" ? "pickup" : "delivery";
+  const { snapshot } = await resolveShippingAddress(userId, {
+    ...input,
+    fulfillmentMethod,
+  });
+
+  const metadata: Record<string, string> = {
+    ...paymentIntent.metadata,
+    shippingAddressSnapshot: JSON.stringify(snapshot),
+  };
+
+  if (input.selectedProductIds && input.selectedProductIds.length > 0) {
+    metadata.selectedProductIds = JSON.stringify(input.selectedProductIds);
+  }
+
+  await stripe.paymentIntents.update(paymentIntentId, { metadata });
+}
+
 export interface OrderPayment {
   orderId: number;
   userId: number;
@@ -423,34 +469,47 @@ export interface OrderPayment {
   updatedAt: string;
 }
 
-export async function createOrderAfterPayment(input: CreateOrderInput): Promise<Order> {
-  const stripe = getStripe();
+function upsertPaymentForIntent(input: {
+  orderId: number;
+  userId: number;
+  paymentIntent: Stripe.PaymentIntent;
+  paidAt?: Date;
+}): Promise<void> {
+  return upsertOrderPayment({
+    orderId: input.orderId,
+    userId: input.userId,
+    provider: "stripe",
+    providerPaymentId: input.paymentIntent.id,
+    currency: input.paymentIntent.currency,
+    amount: centsToAmount(input.paymentIntent.amount),
+    amountReceived: centsToAmount(input.paymentIntent.amount_received),
+    status: input.paymentIntent.status,
+    paymentMethodTypes: input.paymentIntent.payment_method_types,
+    paidAt: input.paidAt ?? new Date(),
+  });
+}
 
-  const paymentIntent = await stripe.paymentIntents.retrieve(input.paymentIntentId);
-  if (paymentIntent.status !== "succeeded") {
-    throw badRequest(`Payment not completed. Status: ${paymentIntent.status}`);
-  }
-
-  const existing = await findOrderByPaymentIntent(input.paymentIntentId);
+async function createOrderFromPaidPaymentIntent(input: {
+  paymentIntent: Stripe.PaymentIntent;
+  userId: number;
+  purchaseMode: OrderPurchaseMode;
+  fulfillmentMethod: CheckoutFulfillmentMethod;
+  selectedProductIds?: number[];
+  addressSnapshot: AddressSnapshot;
+}): Promise<Order> {
+  const existing = await findOrderByPaymentIntent(input.paymentIntent.id);
   if (existing) {
-    await upsertOrderPayment({
+    await upsertPaymentForIntent({
       orderId: Number(existing.id),
       userId: Number(existing.user_id),
-      provider: "stripe",
-      providerPaymentId: paymentIntent.id,
-      currency: paymentIntent.currency,
-      amount: centsToAmount(paymentIntent.amount),
-      amountReceived: centsToAmount(paymentIntent.amount_received),
-      status: paymentIntent.status,
-      paymentMethodTypes: paymentIntent.payment_method_types,
-      paidAt: new Date(),
+      paymentIntent: input.paymentIntent,
     });
 
     return mapOrderRecord(existing, await getOrderItemsByOrderId(existing.id));
   }
 
-  const purchaseMode = input.purchaseMode ?? "regular";
-  const fulfillmentMethod = paymentIntent.metadata.fulfillmentMethod === "pickup" ? "pickup" : "delivery";
+  const purchaseMode = input.purchaseMode;
+  const fulfillmentMethod = input.fulfillmentMethod;
   const cart = await getCartByUserId(input.userId);
   if (!cart || cart.items.length === 0) {
     throw badRequest("Cart is empty — cannot create order.");
@@ -459,10 +518,6 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
   const checkoutItems = resolveCheckoutCartItems(cart.items, input.selectedProductIds);
 
   const checkoutContext = await getBusinessCheckoutContext(input.userId, purchaseMode);
-  const { snapshot } = await resolveShippingAddress(input.userId, {
-    ...input.addressInput,
-    fulfillmentMethod,
-  });
 
   let createdOrder: OrderRecord;
   try {
@@ -510,9 +565,9 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
           totalAmount: totals.total,
           subtotal,
           shippingAmount: totals.deliveryCharge,
-          stripePaymentIntentId: input.paymentIntentId,
-          stripePaymentStatus: paymentIntent.status,
-          shippingAddressSnapshot: snapshot,
+          stripePaymentIntentId: input.paymentIntent.id,
+          stripePaymentStatus: input.paymentIntent.status,
+          shippingAddressSnapshot: input.addressSnapshot,
           items,
         },
         connection,
@@ -522,20 +577,25 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
       return order;
     });
   } catch (error) {
+    if (isDuplicatePaymentIntentError(error)) {
+      const raced = await findOrderByPaymentIntent(input.paymentIntent.id);
+      if (raced) {
+        await upsertPaymentForIntent({
+          orderId: Number(raced.id),
+          userId: Number(raced.user_id),
+          paymentIntent: input.paymentIntent,
+        });
+
+        return mapOrderRecord(raced, await getOrderItemsByOrderId(raced.id));
+      }
+    }
     throw error;
   }
 
-  await upsertOrderPayment({
+  await upsertPaymentForIntent({
     orderId: Number(createdOrder.id),
     userId: input.userId,
-    provider: "stripe",
-    providerPaymentId: paymentIntent.id,
-    currency: paymentIntent.currency,
-    amount: centsToAmount(paymentIntent.amount),
-    amountReceived: centsToAmount(paymentIntent.amount_received),
-    status: paymentIntent.status,
-    paymentMethodTypes: paymentIntent.payment_method_types,
-    paidAt: new Date(),
+    paymentIntent: input.paymentIntent,
   });
 
   const items = await getOrderItemsByOrderId(createdOrder.id);
@@ -549,12 +609,102 @@ export async function createOrderAfterPayment(input: CreateOrderInput): Promise<
   return order;
 }
 
+export async function createOrderAfterPayment(input: CreateOrderInput): Promise<Order> {
+  const stripe = getStripe();
+
+  const paymentIntent = await stripe.paymentIntents.retrieve(input.paymentIntentId);
+  if (paymentIntent.status !== "succeeded") {
+    throw badRequest(`Payment not completed. Status: ${paymentIntent.status}`);
+  }
+
+  const purchaseMode = input.purchaseMode ?? "regular";
+  const fulfillmentMethod = paymentIntent.metadata.fulfillmentMethod === "pickup" ? "pickup" : "delivery";
+  const { snapshot } = await resolveShippingAddress(input.userId, {
+    ...input.addressInput,
+    fulfillmentMethod,
+  });
+
+  return createOrderFromPaidPaymentIntent({
+    paymentIntent,
+    userId: input.userId,
+    purchaseMode,
+    fulfillmentMethod,
+    selectedProductIds: input.selectedProductIds,
+    addressSnapshot: snapshot,
+  });
+}
+
+function parseMetadataProductIds(value: string | undefined): number[] | undefined {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) {
+      return undefined;
+    }
+
+    const ids = parsed.filter((entry): entry is number => typeof entry === "number" && Number.isInteger(entry) && entry > 0);
+    return ids.length > 0 ? ids : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+export async function createOrderFromStripePaymentIntent(paymentIntent: Stripe.PaymentIntent): Promise<Order> {
+  const userId = Number(paymentIntent.metadata.userId);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw badRequest("Payment intent is missing a valid userId");
+  }
+
+  const purchaseMode = paymentIntent.metadata.purchaseMode === "business" ? "business" : "regular";
+  const fulfillmentMethod = paymentIntent.metadata.fulfillmentMethod === "pickup" ? "pickup" : "delivery";
+
+  let addressSnapshot: AddressSnapshot;
+  if (fulfillmentMethod === "pickup") {
+    addressSnapshot = getShowroomPickupSnapshot();
+  } else {
+    const rawSnapshot = paymentIntent.metadata.shippingAddressSnapshot;
+    if (!rawSnapshot) {
+      throw badRequest("Payment intent is missing a shipping address snapshot");
+    }
+
+    try {
+      addressSnapshot = JSON.parse(rawSnapshot) as AddressSnapshot;
+    } catch {
+      throw badRequest("Payment intent has an invalid shipping address snapshot");
+    }
+  }
+
+  return createOrderFromPaidPaymentIntent({
+    paymentIntent,
+    userId,
+    purchaseMode,
+    fulfillmentMethod,
+    selectedProductIds: parseMetadataProductIds(paymentIntent.metadata.selectedProductIds),
+    addressSnapshot,
+  });
+}
+
 export async function getOrderForUser(orderId: number, userId: number): Promise<Order> {
   const order = await getOrderById(orderId);
   if (!order || order.user_id !== userId) {
     throw notFound("Order not found");
   }
   const items = await getOrderItemsByOrderId(orderId);
+  return mapOrderRecord(order, items);
+}
+
+export async function getOrderForUserByPaymentIntent(
+  paymentIntentId: string,
+  userId: number,
+): Promise<Order | null> {
+  const order = await findOrderByPaymentIntent(paymentIntentId);
+  if (!order || order.user_id !== userId) {
+    return null;
+  }
+  const items = await getOrderItemsByOrderId(order.id);
   return mapOrderRecord(order, items);
 }
 

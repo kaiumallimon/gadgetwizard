@@ -196,7 +196,7 @@ export const adminBusinessAccountReviewSchema = z.object({
   reviewNotes: z.string().trim().max(5000).nullable().optional(),
 });
 
-const checkoutAddressSchema = z.object({
+export const checkoutAddressSchema = z.object({
   label: z.string().trim().max(100).optional(),
   fullName: z.string().trim().min(1).max(255),
   phone: z.string().trim().min(1).max(30),

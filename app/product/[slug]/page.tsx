@@ -9,6 +9,7 @@ import { getServerSession } from "@/lib/server/auth/server-session";
 import { getCurrentUser } from "@/lib/server/services/auth-service";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
 import { getApprovedProductReviews } from "@/lib/server/services/review-service";
+import { renderOrNotFound } from "@/lib/server/utils/not-found";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   const { slug } = await context.params;
   const session = await getServerSession();
   const viewer = session?.role === "user" ? await getCurrentUser(session.userId).catch(() => null) : null;
-  const product = await getPublicProductBySlug(slug);
+  const product = await renderOrNotFound(() => getPublicProductBySlug(slug));
   const approvedReviews = await getApprovedProductReviews(product.id);
   const specificationSections = normalizeSpecificationSections(product.specifications);
   const colorOptions = parseColorOptions(product.color);

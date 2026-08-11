@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/pagination";
 import { getPublicBrandBySlug } from "@/lib/server/services/brand-service";
 import { getPublicProductFilterFacets, getPublicProducts } from "@/lib/server/services/product-service";
+import { renderOrNotFound } from "@/lib/server/utils/not-found";
 
 export const dynamic = "force-dynamic";
 
@@ -173,7 +174,7 @@ export default async function BrandPage(context: {
   searchParams: Promise<RawSearchParams>;
 }) {
   const [{ slug }, rawSearchParams] = await Promise.all([context.params, context.searchParams]);
-  const brand = await getPublicBrandBySlug(slug);
+  const brand = await renderOrNotFound(() => getPublicBrandBySlug(slug));
 
   const search = firstParam(rawSearchParams.search)?.trim() || undefined;
   const selectedBrandSlugs = Array.from(

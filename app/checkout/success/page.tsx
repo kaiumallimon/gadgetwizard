@@ -4,27 +4,39 @@ import { FiCheckCircle, FiPackage } from "react-icons/fi";
 
 import { getServerSession } from "@/lib/server/auth/server-session";
 import { Button } from "@/components/ui/button";
-import { getOrderForUser } from "@/lib/server/services/order-service";
+import { getOrderForUser, getOrderForUserByPaymentIntent } from "@/lib/server/services/order-service";
 import { CheckoutInvoiceDownload } from "@/components/checkout-invoice-download";
 import { buildLoginRedirect } from "@/lib/shared/return-to";
 
 export const dynamic = "force-dynamic";
 
 interface SuccessPageProps {
-  searchParams: Promise<{ orderId?: string }>;
+  searchParams: Promise<{ orderId?: string; payment_intent?: string }>;
 }
 
 export default async function CheckoutSuccessPage({ searchParams }: SuccessPageProps) {
   const rawSearchParams = await searchParams;
   const session = await getServerSession();
   if (!session) redirect(buildLoginRedirect("/checkout/success", rawSearchParams));
-  const { orderId: orderIdStr } = rawSearchParams;
+
+  const { orderId: orderIdStr, payment_intent: paymentIntentId } = rawSearchParams;
   const orderId = orderIdStr ? Number(orderIdStr) : null;
 
   let order = null;
+
+  // Try orderId first (normal flow)
   if (orderId && Number.isInteger(orderId)) {
     try {
       order = await getOrderForUser(orderId, session.userId);
+    } catch {
+      order = null;
+    }
+  }
+
+  // Fallback: Stripe redirect-back includes payment_intent param (3DS or redirect flow)
+  if (!order && paymentIntentId) {
+    try {
+      order = await getOrderForUserByPaymentIntent(paymentIntentId, session.userId);
     } catch {
       order = null;
     }

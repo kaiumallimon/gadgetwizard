@@ -188,6 +188,15 @@ export function CheckoutForm({
 
       await apiClient.validateCheckoutStock({ selectedProductIds }, token ?? undefined);
 
+      // Attach address snapshot to PaymentIntent metadata before confirming payment.
+      // This ensures the webhook can create a full order if the client redirects or abandons.
+      if (fulfillmentMethod === "delivery") {
+        const addressPayload = showNewAddressForm
+          ? { selectedProductIds, newAddress }
+          : { selectedProductIds, addressId: selectedAddressId! };
+        await apiClient.attachAddress(paymentIntentId, addressPayload, token ?? undefined);
+      }
+
       // Confirm Stripe payment
       const { error: stripeError } = await stripe.confirmPayment({
         elements,
