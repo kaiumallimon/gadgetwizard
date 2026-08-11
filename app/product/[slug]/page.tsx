@@ -110,7 +110,7 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
   return (
     <div className="w-full px-5 pb-16 pt-6 sm:px-6 lg:px-10 xl:px-14">
       <div className="mx-auto w-full max-w-6xl space-y-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200/80 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-4">
           <nav className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
             <Link href="/" className="transition-colors hover:text-zinc-900">Home</Link>
             <span>/</span>
@@ -119,12 +119,12 @@ export default async function ProductDetailsPage(context: { params: Promise<{ sl
             <span className="line-clamp-1 font-medium text-zinc-900">{product.name}</span>
           </nav>
 
-          <Link
+          {/* <Link
             href={`/category/${product.categorySlug}`}
             className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 transition-colors hover:text-zinc-900"
           >
             <ArrowLeft className="h-4 w-4" /> Back
-          </Link>
+          </Link> */}
         </div>
 
         <div className="grid gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:items-start xl:gap-16">
