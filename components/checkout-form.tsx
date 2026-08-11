@@ -387,6 +387,7 @@ export function CheckoutForm({
                     placeholder="Your full name"
                     value={newAddress.fullName}
                     onChange={(e) => handleAddressChange("fullName", e.target.value)}
+                    maxLength={255}
                   />
                   {formErrors.fullName && <p className="text-xs text-red-500">{formErrors.fullName}</p>}
                 </div>
@@ -397,6 +398,7 @@ export function CheckoutForm({
                     placeholder="+880..."
                     value={newAddress.phone}
                     onChange={(e) => handleAddressChange("phone", e.target.value)}
+                    maxLength={30}
                   />
                   {formErrors.phone && <p className="text-xs text-red-500">{formErrors.phone}</p>}
                 </div>
@@ -407,6 +409,7 @@ export function CheckoutForm({
                     placeholder="Street address, building, apartment..."
                     value={newAddress.addressLine1}
                     onChange={(e) => handleAddressChange("addressLine1", e.target.value)}
+                    maxLength={500}
                   />
                   {formErrors.addressLine1 && <p className="text-xs text-red-500">{formErrors.addressLine1}</p>}
                 </div>
@@ -426,6 +429,7 @@ export function CheckoutForm({
                     placeholder="Dhaka"
                     value={newAddress.city}
                     onChange={(e) => handleAddressChange("city", e.target.value)}
+                    maxLength={255}
                   />
                   {formErrors.city && <p className="text-xs text-red-500">{formErrors.city}</p>}
                 </div>

@@ -4,9 +4,11 @@ import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 import { handleRouteError, jsonResponse } from "@/lib/server/core/http";
 import { getApprovedProductReviews } from "@/lib/server/services/review-service";
 import { findProductBySlug } from "@/lib/server/repositories/product-repository";
-import { notFound } from "@/lib/server/core/errors";
+import { badRequest, notFound } from "@/lib/server/core/errors";
 
 export const dynamic = "force-dynamic";
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 async function GETHandler(
   _request: NextRequest,
@@ -14,6 +16,11 @@ async function GETHandler(
 ) {
   try {
     const { slug } = await params;
+
+    if (!slug || !SLUG_PATTERN.test(slug)) {
+      throw badRequest("Invalid product slug");
+    }
+
     const product = await findProductBySlug(slug, true);
     if (!product) throw notFound("Product not found");
 

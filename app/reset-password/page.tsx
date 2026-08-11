@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Check, X } from "lucide-react";
 
 import { ApiError, apiClient } from "@/lib/client/api";
 
@@ -14,6 +14,19 @@ import { Input } from "@/components/ui/input";
 interface ValidationErrorDetails {
   fieldErrors?: Record<string, string[] | undefined>;
   formErrors?: string[];
+}
+
+function PasswordRule({ label, met }: { label: string; met: boolean }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {met ? (
+        <Check className="h-3 w-3 text-emerald-600" />
+      ) : (
+        <X className="h-3 w-3 text-zinc-400" />
+      )}
+      <span className={met ? "text-emerald-600" : "text-zinc-500"}>{label}</span>
+    </div>
+  );
 }
 
 function getReadableResetError(error: unknown): string {
@@ -168,6 +181,15 @@ function ResetPasswordContent() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {password.length > 0 && (
+                <div className="space-y-1 text-[11px] leading-4">
+                  <PasswordRule label="At least 8 characters" met={password.length >= 8} />
+                  <PasswordRule label="One uppercase letter" met={/[A-Z]/.test(password)} />
+                  <PasswordRule label="One lowercase letter" met={/[a-z]/.test(password)} />
+                  <PasswordRule label="One number" met={/[0-9]/.test(password)} />
+                  <PasswordRule label="One special character" met={/[^A-Za-z0-9]/.test(password)} />
+                </div>
+              )}
               <div className="relative">
                 <Input
                   type={showConfirmPassword ? "text" : "password"}

@@ -3,8 +3,11 @@ import { withRouteAudit } from "@/lib/server/middleware/route-audit";
 
 import { handleRouteError, jsonResponse } from "@/lib/server/core/http";
 import { getPublicProductBySlug } from "@/lib/server/services/product-service";
+import { badRequest } from "@/lib/server/core/errors";
 
 export const dynamic = "force-dynamic";
+
+const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 async function GETHandler(
   _request: NextRequest,
@@ -12,6 +15,11 @@ async function GETHandler(
 ) {
   try {
     const { slug } = await context.params;
+
+    if (!slug || !SLUG_PATTERN.test(slug)) {
+      throw badRequest("Invalid product slug");
+    }
+
     const product = await getPublicProductBySlug(slug);
 
     return jsonResponse({ item: product });

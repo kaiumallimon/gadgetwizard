@@ -277,6 +277,7 @@ export function AddressManager({ initialAddresses }: AddressManagerProps) {
                   placeholder="Your full name"
                   value={form.fullName}
                   onChange={(e) => setForm((p) => ({ ...p, fullName: e.target.value }))}
+                  maxLength={255}
                 />
                 {errors.fullName && <p className="text-xs text-red-500">{errors.fullName}</p>}
               </div>
@@ -286,6 +287,7 @@ export function AddressManager({ initialAddresses }: AddressManagerProps) {
                   placeholder="+880..."
                   value={form.phone}
                   onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  maxLength={30}
                 />
                 {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
               </div>
@@ -295,6 +297,7 @@ export function AddressManager({ initialAddresses }: AddressManagerProps) {
                   placeholder="Street, building, apartment..."
                   value={form.addressLine1}
                   onChange={(e) => setForm((p) => ({ ...p, addressLine1: e.target.value }))}
+                  maxLength={500}
                 />
                 {errors.addressLine1 && <p className="text-xs text-red-500">{errors.addressLine1}</p>}
               </div>
@@ -312,6 +315,7 @@ export function AddressManager({ initialAddresses }: AddressManagerProps) {
                   placeholder="Dhaka"
                   value={form.city}
                   onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
+                  maxLength={255}
                 />
                 {errors.city && <p className="text-xs text-red-500">{errors.city}</p>}
               </div>
