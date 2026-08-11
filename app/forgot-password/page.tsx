@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
           <div className="w-full flex mx-auto justify-center items-center">
-            <Button asChild variant="ghost" className="mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900">
+            <Button asChild variant="outline" className="w-full mt-4 px-0 text-sm text-zinc-600 hover:bg-transparent hover:text-zinc-900">
             <Link href="/?auth=login">
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to login
