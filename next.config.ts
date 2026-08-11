@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   experimental: {
     turbopackFileSystemCacheForDev: false,
+    imgOptTimeoutInSeconds: 30,
   },
   images: {
     remotePatterns: [
@@ -33,6 +34,7 @@ const nextConfig: NextConfig = {
         hostname: "blocks.astratic.com",
       }
     ],
+    minimumCacheTTL: 60 * 60 * 24,
   },
 };
 
