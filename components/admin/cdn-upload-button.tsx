@@ -53,6 +53,10 @@ export function CdnUploadButton() {
     }
 
     try {
+      if (!navigator.clipboard) {
+        toast.error("Clipboard not available");
+        return;
+      }
       await navigator.clipboard.writeText(uploadedUrl);
       toast.success("URL copied to clipboard");
     } catch {

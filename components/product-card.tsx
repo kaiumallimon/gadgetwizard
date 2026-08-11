@@ -107,7 +107,6 @@ export function ProductCard({ product }: ProductCardProps) {
   const displayPrice = hasDiscount ? (product.discountedPrice ?? product.originalPrice) : product.originalPrice;
   const discountAmount = hasDiscount ? Math.max(0, product.originalPrice - displayPrice) : 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
-  const showMetaBadges = hasDiscount || hasWholesale || isLowStock;
   const metaLabel = product.brandName ? `${product.brandName} | ${product.categoryName}` : product.categoryName;
   const isWishlisted = productIds.includes(product.id);
   const canUseWishlist = Boolean(session && session.role === "user");
@@ -161,10 +160,16 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="">
           <div className="relative flex flex-col items-center mt-4">
             {/* Small centered ticket-stub on top */}
-            {hasDiscount && (
+            {hasDiscount ? (
               <div className="relative z-10 rounded-t-md bg-red-500 px-4 py-0.5 text-center shadow-sm">
                 <span className={`text-sm font-bold uppercase tracking-widest text-white line-through opacity-90 ${gochiHand.className}`}>
                   {format$(product.originalPrice)}
+                </span>
+              </div>
+            ) : (
+              <div className="relative z-10 rounded-t-md bg-zinc-400 px-3 py-0.5 text-center shadow-sm">
+                <span className={`text-[11px] font-semibold uppercase tracking-widest text-white ${gochiHand.className}`}>
+                  {displayPrice > 0 ? format$(product.originalPrice) : "Unavailable"}
                 </span>
               </div>
             )}
@@ -173,47 +178,43 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="w-full overflow-hidden rounded-xl border-l border-r border-t ">
               {/* Middle: big price on amber */}
               <div className="px-3 py-3 text-center">
-                <span className={`text-2xl font-black tracking-tight text-black ${gochiHand.className}`}>
-                  {format$(displayPrice)}
+                <span className={`${displayPrice > 0 ? "text-2xl font-black" : "text-lg font-bold"} tracking-tight text-black ${gochiHand.className}`}>
+                  {displayPrice > 0 ? format$(displayPrice) : "Unavailable"}
                 </span>
               </div>
 
               {/* Bottom: savings bar */}
               <div className="bg-slate-300 px-3 py-1.5 text-center">
-                {hasDiscount && discountAmount > 0 ? (
-                  <span className={`text-sm font-extrabold uppercase tracking-[0.08em] text-black ${gochiHand.className}`}>
-                    {format$(discountAmount)} off
-                  </span>
-                ) : (
-                  <span className={`select-none text-sm font-extrabold uppercase tracking-[0.08em] text-orange-300 ${gochiHand.className}`}>
-                    &nbsp;
-                  </span>
-                )}
+                <span className={`${displayPrice > 0 ? "text-sm font-extrabold uppercase tracking-[0.08em]" : "text-[11px] font-semibold uppercase tracking-[0.06em]"} ${hasDiscount && discountAmount > 0 ? "text-black" : "text-orange-300"} ${gochiHand.className}`}>
+                  {hasDiscount && discountAmount > 0 ? `${format$(discountAmount)} off` : "Unavailable"}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="min-h-6 mt-5">
-            {showMetaBadges ? (
-              <div className="flex flex-wrap justify-center items-center w-full gap-2 text-center">
-                {hasWholesale ? (
-                  <p className="border-none text-[11px] sm:text-xs font-semibold leading-tight inline-flex flex-wrap items-center justify-center gap-1">
-                    <span className="text-zinc-600">Wholesale</span>
-                    <span className="font-extrabold text-orange-600">{format$(product.wholesalePrice ?? 0)}</span>
-                    <span className="text-zinc-400">·</span>
-                    <span className="font-extrabold text-orange-600">{product.wholesaleMinQuantity}+ qty</span>
-                  </p>
-                ) : (
-                  <p className="border-none text-[11px] text-muted-foreground sm:text-xs font-bold leading-tight">
-                    Business pricing?{" "}
+            <div className="flex flex-wrap justify-center items-center w-full gap-2 text-center">
+              {hasWholesale ? (
+                <p className={`border-none text-[11px] sm:text-xs font-semibold leading-tight inline-flex flex-wrap items-center justify-center gap-1 ${product.stock === 0 ? "opacity-50" : ""}`}>
+                  <span className="text-zinc-600">Wholesale</span>
+                  <span className="font-extrabold text-orange-600">{format$(product.wholesalePrice ?? 0)}</span>
+                  <span className="text-zinc-400">·</span>
+                  <span className="font-extrabold text-orange-600">{product.wholesaleMinQuantity}+ qty</span>
+                </p>
+              ) : (
+                <p className={`border-none text-[11px] text-muted-foreground sm:text-xs font-bold leading-tight ${product.stock === 0 ? "opacity-50" : ""}`}>
+                  Business pricing?{" "}
+                  {product.stock === 0 ? (
+                    <span className="text-zinc-400">Apply</span>
+                  ) : (
                     <Link href="/dashboard/business-account" className="text-orange-500 hover:underline">
                       Apply
                     </Link>
-                  </p>
-                )}
-                {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
-              </div>
-            ) : null}
+                  )}
+                </p>
+              )}
+              {isLowStock && <Badge variant="outline">Only {product.stock} left</Badge>}
+            </div>
           </div>
         </div>
 
