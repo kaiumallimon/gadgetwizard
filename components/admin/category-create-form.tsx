@@ -104,6 +104,8 @@ export function CategoryCreateForm({ categories }: CategoryCreateFormProps) {
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               placeholder="Category name"
               disabled={isSaving}
+              minLength={2}
+              maxLength={120}
             />
           </label>
           <label className={fieldWrapClass}>

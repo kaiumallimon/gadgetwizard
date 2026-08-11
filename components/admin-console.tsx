@@ -106,6 +106,14 @@ export function AdminConsole({
     sortOrder: "0",
   });
 
+  const [isCategoryEditDialogOpen, setIsCategoryEditDialogOpen] = useState(false);
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null);
+  const [categoryEditForm, setCategoryEditForm] = useState({ name: "", slug: "" });
+
+  const [isProductEditDialogOpen, setIsProductEditDialogOpen] = useState(false);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [productEditForm, setProductEditForm] = useState({ name: "", price: "", stock: "" });
+
   const headerCategoryCount = useMemo(
     () => categories.filter((category) => category.isHeaderCategory).length,
     [categories],
@@ -164,11 +172,32 @@ export function AdminConsole({
   }
 
   async function handleQuickEditCategory(category: Category) {
-    const name = window.prompt("Category name", category.name);
-    if (!name) return;
+    setEditingCategoryId(category.id);
+    setCategoryEditForm({ name: category.name, slug: category.slug });
+    setIsCategoryEditDialogOpen(true);
+  }
 
-    const slug = window.prompt("Category slug", category.slug);
-    if (!slug) return;
+  async function handleSaveCategoryEdit() {
+    if (editingCategoryId === null) return;
+
+    const category = categories.find((c) => c.id === editingCategoryId);
+    if (!category) return;
+
+    const name = categoryEditForm.name.trim();
+    const slug = categoryEditForm.slug.trim();
+
+    if (!name) {
+      setNotice("Category name is required.");
+      return;
+    }
+    if (!slug) {
+      setNotice("Category slug is required.");
+      return;
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+      setNotice("Slug must contain only lowercase letters, numbers, and hyphens.");
+      return;
+    }
 
     try {
       await apiClient.adminUpdateCategory(
@@ -186,6 +215,7 @@ export function AdminConsole({
         token ?? undefined,
       );
       await refreshCategories();
+      setIsCategoryEditDialogOpen(false);
       setNotice("Category updated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Category update failed"));
@@ -311,14 +341,33 @@ export function AdminConsole({
   }
 
   async function handleQuickEditProduct(product: Product) {
-    const name = window.prompt("Product name", product.name);
-    if (!name) return;
+    setEditingProductId(product.id);
+    setProductEditForm({ name: product.name, price: String(product.price), stock: String(product.stock) });
+    setIsProductEditDialogOpen(true);
+  }
 
-    const priceInput = window.prompt("Price", String(product.price));
-    if (!priceInput) return;
+  async function handleSaveProductEdit() {
+    if (editingProductId === null) return;
 
-    const stockInput = window.prompt("Stock", String(product.stock));
-    if (!stockInput) return;
+    const product = products.find((p) => p.id === editingProductId);
+    if (!product) return;
+
+    const name = productEditForm.name.trim();
+    const price = Number(productEditForm.price);
+    const stock = Number(productEditForm.stock);
+
+    if (!name) {
+      setNotice("Product name is required.");
+      return;
+    }
+    if (!Number.isFinite(price) || price < 0) {
+      setNotice("Price must be a non-negative number.");
+      return;
+    }
+    if (!Number.isInteger(stock) || stock < 0) {
+      setNotice("Stock must be a non-negative whole number.");
+      return;
+    }
 
     try {
       await apiClient.adminUpdateProduct(
@@ -327,9 +376,9 @@ export function AdminConsole({
           name,
           slug: product.slug,
           description: product.description,
-          price: Number(priceInput),
+          price,
           discountedPrice: product.discountedPrice,
-          stock: Number(stockInput),
+          stock,
           categoryId: product.categoryId,
           images: product.images,
           specifications: product.specifications,
@@ -338,6 +387,7 @@ export function AdminConsole({
         token ?? undefined,
       );
       await refreshProducts();
+      setIsProductEditDialogOpen(false);
       setNotice("Product updated.");
     } catch (error) {
       setNotice(safeErrorMessage(error, "Product update failed"));
@@ -951,6 +1001,82 @@ export function AdminConsole({
                     Cancel
                   </Button>
                   <Button onClick={handleSaveBannerEdit}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={isCategoryEditDialogOpen}
+              onOpenChange={(open) => {
+                setIsCategoryEditDialogOpen(open);
+                if (!open) setEditingCategoryId(null);
+              }}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Category</DialogTitle>
+                  <DialogDescription>Update category name and slug.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3">
+                  <Input
+                    value={categoryEditForm.name}
+                    onChange={(event) => setCategoryEditForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="Category name"
+                    maxLength={120}
+                  />
+                  <Input
+                    value={categoryEditForm.slug}
+                    onChange={(event) => setCategoryEditForm((prev) => ({ ...prev, slug: event.target.value }))}
+                    placeholder="category-slug"
+                    maxLength={150}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsCategoryEditDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSaveCategoryEdit}>Save Changes</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog
+              open={isProductEditDialogOpen}
+              onOpenChange={(open) => {
+                setIsProductEditDialogOpen(open);
+                if (!open) setEditingProductId(null);
+              }}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Edit Product</DialogTitle>
+                  <DialogDescription>Update product name, price, and stock.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-3">
+                  <Input
+                    value={productEditForm.name}
+                    onChange={(event) => setProductEditForm((prev) => ({ ...prev, name: event.target.value }))}
+                    placeholder="Product name"
+                    maxLength={200}
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={productEditForm.price}
+                    onChange={(event) => setProductEditForm((prev) => ({ ...prev, price: event.target.value }))}
+                    placeholder="Price"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={productEditForm.stock}
+                    onChange={(event) => setProductEditForm((prev) => ({ ...prev, stock: event.target.value }))}
+                    placeholder="Stock"
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsProductEditDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleSaveProductEdit}>Save Changes</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

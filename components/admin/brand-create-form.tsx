@@ -111,6 +111,8 @@ export function BrandCreateForm({ brands }: BrandCreateFormProps) {
               onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
               placeholder="Brand name"
               disabled={isSaving}
+              minLength={2}
+              maxLength={140}
             />
           </label>
           <label className="space-y-1">

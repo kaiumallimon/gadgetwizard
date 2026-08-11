@@ -149,6 +149,8 @@ export function AdminUserManager({ initialUsers, currentUserId }: AdminUserManag
                 onChange={(event) => setName(event.target.value)}
                 placeholder="Admin Name"
                 disabled={isCreating}
+                minLength={2}
+                maxLength={120}
               />
             </div>
 

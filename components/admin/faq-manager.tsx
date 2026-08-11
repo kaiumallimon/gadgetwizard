@@ -239,6 +239,8 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
                 onChange={(event) => setCreateForm((previous) => ({ ...previous, question: event.target.value }))}
                 placeholder="Type FAQ question"
                 disabled={isCreating}
+                minLength={5}
+                maxLength={255}
               />
             </label>
 
@@ -332,6 +334,8 @@ export function FaqManager({ initialFaqs }: FaqManagerProps) {
                 value={editForm.question}
                 onChange={(event) => setEditForm((previous) => ({ ...previous, question: event.target.value }))}
                 disabled={isSavingEdit}
+                minLength={5}
+                maxLength={255}
               />
             </label>
 
